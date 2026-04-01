@@ -11,7 +11,19 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("GetDressAI API is working 🚀");
 });
+app.post("/generate", async (req, res) => {
+  try {
+    const { image } = req.body;
 
+    res.json({
+      success: true,
+      result: "AI processed image (demo)"
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // TEST API
 app.post("/generate", async (req, res) => {
   try {
