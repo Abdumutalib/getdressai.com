@@ -1,0 +1,25 @@
+{
+  "name": "dressai-backend",
+  "version": "1.0.0",
+  "description": "DressAI backend with outfit analysis and image generation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "expo": "^55.0.9",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
+    "openai": "^4.104.0",
+    "react": "19.2.0",
+    "react-native": "0.83.4",
+    "react-native-iap": "^14.7.19",
+    "stripe": "^21.0.1"
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "bb3b82a7-cb1f-4486-b546-e2a3f34588bf",
+    "name": "DressAI Test",
+    "email": "dressai.test.20260330165149@example.com",
+    "passwordHash": "$2b$10$KrJF9Xv1eCEzBCGdJebef.rNwWkmRY4b.2G4/s16c2bYDPPlSPvcq",
+    "plan": "free",
+    "imageGenerationCount": 0,
+    "createdAt": "2026-03-30T13:51:51.611Z",
+    "updatedAt": "2026-03-30T13:51:51.611Z",
+    "stripeCustomerEmail": null,
+    "lastCheckoutSessionId": null
+  },
+  {
+    "id": "e5a1ccba-b453-4ecc-bcdb-7b18620dcaa3",
+    "name": "Billing Test",
+    "email": "dressai.pay.20260330165222@example.com",
+    "passwordHash": "$2b$10$KcZWxuwt8/pnxaMgz3NG..BRxmquC7ipvz8djwpPwYPkm9Sr7IeY6",
+    "plan": "free",
+    "imageGenerationCount": 0,
+    "createdAt": "2026-03-30T13:52:22.293Z",
+    "updatedAt": "2026-03-30T13:52:22.293Z",
+    "stripeCustomerEmail": null,
+    "lastCheckoutSessionId": null
+  }
+]
