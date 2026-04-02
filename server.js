@@ -40,7 +40,15 @@ const Stripe = require("stripe");
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 const usersFilePath = path.join(__dirname, "data", "users.json");
+const webDistPath = path.join(__dirname, "dressai-web", "dist");
+const webIndexPath = path.join(webDistPath, "index.html");
 const jwtSecret = process.env.JWT_SECRET || "dev-only-secret-change-me";
+const adminEmailSet = new Set(
+  String(process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "")
+    .split(",")
+    .map((entry) => normalizeEmail(entry))
+    .filter(Boolean)
+);
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const stripePriceId = process.env.STRIPE_PRO_PRICE_ID || "";
 
@@ -228,6 +236,18 @@ function getUserRemainingImageGenerations(user) {
   return Math.max(limit - getUserUsageCount(user), 0);
 }
 
+function isAdminUser(user) {
+  if (!user) {
+    return false;
+  }
+
+  if (String(user.role || "").trim().toLowerCase() === "admin") {
+    return true;
+  }
+
+  return adminEmailSet.has(normalizeEmail(user.email));
+}
+
 function buildPublicUser(user) {
   if (!user) {
     return null;
@@ -237,10 +257,52 @@ function buildPublicUser(user) {
     id: user.id,
     name: user.name,
     plan: normalizePlan(user.plan),
+    isAdmin: isAdminUser(user),
     imageGenerationCount: getUserUsageCount(user),
     remainingGenerations: getUserRemainingImageGenerations(user),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+  };
+}
+
+function buildAdminUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    plan: normalizePlan(user.plan),
+    isAdmin: isAdminUser(user),
+    imageGenerationCount: getUserUsageCount(user),
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    lastPaymentStatus: user.lastPaymentStatus || null,
+  };
+}
+
+function buildAdminStats() {
+  const users = readUsers();
+  const totalUsers = users.length;
+  const proUsers = users.filter((user) => normalizePlan(user.plan) === "pro").length;
+  const freeUsers = totalUsers - proUsers;
+  const adminUsers = users.filter((user) => isAdminUser(user)).length;
+  const totalImageGenerations = users.reduce((sum, user) => sum + getUserUsageCount(user), 0);
+  const recentUsers = users.filter((user) => {
+    if (!user.createdAt) {
+      return false;
+    }
+
+    return Date.now() - new Date(user.createdAt).getTime() <= 7 * 24 * 60 * 60 * 1000;
+  }).length;
+
+  return {
+    totalUsers,
+    proUsers,
+    freeUsers,
+    adminUsers,
+    recentUsers,
+    totalImageGenerations,
+    paymentEnabled: Boolean(stripe && stripePriceId),
+    webEnabled: fs.existsSync(webDistPath),
   };
 }
 
@@ -317,6 +379,18 @@ function requireAuth(req, res, next) {
   } catch {
     return res.status(401).json({ error: "Invalid or expired token." });
   }
+}
+
+function requireAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  if (!isAdminUser(req.user)) {
+    return res.status(403).json({ error: "Admin access required." });
+  }
+
+  return next();
 }
 
 function resolvePlan(req, requestedPlan) {
@@ -462,6 +536,8 @@ app.get("/config", (req, res) => {
     authEnabled: true,
     paymentEnabled: Boolean(stripe && stripePriceId),
     paymentProvider: stripe && stripePriceId ? "stripe" : null,
+    webEnabled: fs.existsSync(webDistPath),
+    adminEnabled: adminEmailSet.size > 0,
   });
 });
 
@@ -562,6 +638,20 @@ app.get("/auth/me", requireAuth, (req, res) => {
     user: buildPublicUser(req.user),
     paymentEnabled: Boolean(stripe && stripePriceId),
   });
+});
+
+app.get("/admin/stats", requireAuth, requireAdmin, (req, res) => {
+  return res.json({
+    stats: buildAdminStats(),
+  });
+});
+
+app.get("/admin/users", requireAuth, requireAdmin, (req, res) => {
+  const users = readUsers()
+    .map((user) => buildAdminUser(user))
+    .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime());
+
+  return res.json({ users });
 });
 
 app.post("/billing/create-checkout-session", requireAuth, async (req, res) => {
@@ -822,6 +912,29 @@ app.post("/generate", async (req, res) => {
 app.get("/shop", (req, res) => {
   res.json(shopProducts);
 });
+
+if (!fs.existsSync(webDistPath)) {
+  app.get("/", (req, res) => {
+    res.json({
+      name: "DressAI Backend",
+      status: "ok",
+      message: "Build the web frontend with `npm run web:build` to serve the website from this backend.",
+      routes: ["/health", "/config", "/auth/register", "/auth/login", "/analyze", "/image", "/shop"],
+    });
+  });
+}
+
+if (fs.existsSync(webDistPath)) {
+  app.use(express.static(webDistPath));
+
+  app.get("*", (req, res, next) => {
+    if (req.accepts("html")) {
+      return res.sendFile(webIndexPath);
+    }
+
+    return next();
+  });
+}
 
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found." });

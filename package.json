@@ -4,7 +4,9 @@
   "description": "DressAI backend with outfit analysis and image generation",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "web:dev": "npm --prefix dressai-web run dev",
+    "web:build": "npm --prefix dressai-web run build"
   },
   "engines": {
     "node": ">=18.18.0"
