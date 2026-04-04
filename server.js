@@ -1,20 +1,7 @@
 // ...existing code...
 // ...existing code...
-// --- Shop mock data ---
-const shopProducts = [
-  {
-    id: 1,
-    name: "Black T-shirt",
-    image: "https://via.placeholder.com/200",
-    link: "https://example.com/product1"
-  },
-  {
-    id: 2,
-    name: "Blue Jeans",
-    image: "https://via.placeholder.com/200",
-    link: "https://example.com/product2"
-  }
-];
+// --- Shop catalog ---
+const shopProducts = require("./data/shop-catalog");
 
 // --- AI outfit генерация endpoint ---
 // Бу код express, app, openai, ва бошқа конфиглардан кейин қўйилиши керак!
@@ -36,37 +23,49 @@ const OpenAI = require("openai");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Stripe = require("stripe");
+const { createCorsOriginDelegate, getRuntimeConfig } = require("./lib/runtime-config");
+const { createShopStore } = require("./lib/shop-store");
+const { createUserStore } = require("./lib/user-store");
 
+const runtimeConfig = getRuntimeConfig();
 const app = express();
-const port = Number(process.env.PORT) || 3000;
+const port = runtimeConfig.port;
 const usersFilePath = path.join(__dirname, "data", "users.json");
 const webDistPath = path.join(__dirname, "dressai-web", "dist");
 const webIndexPath = path.join(webDistPath, "index.html");
-const jwtSecret = process.env.JWT_SECRET || "dev-only-secret-change-me";
+const jwtSecret = runtimeConfig.jwtSecret;
+const userStore = createUserStore({
+  driver: runtimeConfig.userStoreDriver,
+  usersFilePath,
+  supabaseUrl: runtimeConfig.supabaseUrl,
+  supabaseServiceRoleKey: runtimeConfig.supabaseServiceRoleKey,
+  tableName: runtimeConfig.supabaseUsersTable,
+});
+const shopStore = createShopStore({
+  fallbackProducts: shopProducts,
+  supabaseUrl: runtimeConfig.supabaseUrl,
+  supabaseServiceRoleKey: runtimeConfig.supabaseServiceRoleKey,
+  tableName: runtimeConfig.supabaseShopTable,
+});
 const adminEmailSet = new Set(
-  String(process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "")
-    .split(",")
-    .map((entry) => normalizeEmail(entry))
-    .filter(Boolean)
+  runtimeConfig.adminEmails.map((entry) => normalizeEmail(entry))
 );
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const stripePriceId = process.env.STRIPE_PRO_PRICE_ID || "";
+const stripe = runtimeConfig.stripeSecretKey ? new Stripe(runtimeConfig.stripeSecretKey) : null;
+const stripePriceId = runtimeConfig.stripePriceId;
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY is required in the environment.");
-}
-
-if (!process.env.JWT_SECRET) {
+if (!runtimeConfig.isProduction && !process.env.JWT_SECRET) {
   console.warn("JWT_SECRET is not set. Using a development fallback secret.");
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = runtimeConfig.openAiEnabled
+  ? new OpenAI({
+      apiKey: runtimeConfig.openAiApiKey,
+    })
+  : null;
 
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN || "*",
+    origin: createCorsOriginDelegate(runtimeConfig),
   })
 );
 
@@ -86,7 +85,7 @@ async function processSuccessfulCheckoutSession(session) {
 }
 
 app.post("/billing/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+  if (!stripe || !runtimeConfig.stripeWebhookSecret) {
     return res.status(503).json({
       error: "Stripe webhook is not configured.",
     });
@@ -103,7 +102,7 @@ app.post("/billing/webhook", express.raw({ type: "application/json" }), async (r
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(req.body, signature, runtimeConfig.stripeWebhookSecret);
   } catch (error) {
     return res.status(400).json({
       error: "Invalid Stripe webhook signature.",
@@ -151,35 +150,6 @@ const PLAN_IMAGE_LIMITS = {
 
 const imageGenerationUsage = new Map();
 
-function ensureUserStore() {
-  const directory = path.dirname(usersFilePath);
-
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-
-  if (!fs.existsSync(usersFilePath)) {
-    fs.writeFileSync(usersFilePath, "[]\n", "utf8");
-  }
-}
-
-function readUsers() {
-  ensureUserStore();
-
-  try {
-    const content = fs.readFileSync(usersFilePath, "utf8");
-    const parsed = JSON.parse(content);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users) {
-  ensureUserStore();
-  fs.writeFileSync(usersFilePath, `${JSON.stringify(users, null, 2)}\n`, "utf8");
-}
-
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -192,33 +162,24 @@ function signAuthToken(user) {
   return jwt.sign({ sub: user.id }, jwtSecret, { expiresIn: "30d" });
 }
 
-function getUserById(userId) {
-  return readUsers().find((user) => user.id === userId) || null;
+async function readUsers() {
+  return userStore.listUsers();
 }
 
-function getUserByEmail(email) {
-  const normalizedEmail = normalizeEmail(email);
-  return readUsers().find((user) => normalizeEmail(user.email) === normalizedEmail) || null;
+async function getUserById(userId) {
+  return userStore.getUserById(userId);
 }
 
-function updateUser(userId, updater) {
-  const users = readUsers();
-  const userIndex = users.findIndex((user) => user.id === userId);
+async function getUserByEmail(email) {
+  return userStore.getUserByEmail(email);
+}
 
-  if (userIndex === -1) {
-    return null;
-  }
+async function createUser(user) {
+  return userStore.createUser(user);
+}
 
-  const currentUser = users[userIndex];
-  const nextUser = {
-    ...currentUser,
-    ...updater(currentUser),
-    updatedAt: new Date().toISOString(),
-  };
-
-  users[userIndex] = nextUser;
-  writeUsers(users);
-  return nextUser;
+async function updateUser(userId, updater) {
+  return userStore.updateUser(userId, updater);
 }
 
 function getUserUsageCount(user) {
@@ -279,8 +240,8 @@ function buildAdminUser(user) {
   };
 }
 
-function buildAdminStats() {
-  const users = readUsers();
+async function buildAdminStats() {
+  const users = await readUsers();
   const totalUsers = users.length;
   const proUsers = users.filter((user) => normalizePlan(user.plan) === "pro").length;
   const freeUsers = totalUsers - proUsers;
@@ -337,7 +298,7 @@ function getBearerToken(req) {
   return token;
 }
 
-function attachUserIfPresent(req, res, next) {
+async function attachUserIfPresent(req, res, next) {
   const token = getBearerToken(req);
 
   if (!token) {
@@ -347,7 +308,7 @@ function attachUserIfPresent(req, res, next) {
 
   try {
     const payload = jwt.verify(token, jwtSecret);
-    const user = getUserById(payload.sub);
+    const user = await getUserById(payload.sub);
 
     if (!user) {
       return res.status(401).json({ error: "Authentication required." });
@@ -360,7 +321,7 @@ function attachUserIfPresent(req, res, next) {
   }
 }
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   // JWT орқали аниқлаш, user’ни req.user’га қўйиш
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -369,7 +330,7 @@ function requireAuth(req, res, next) {
   const token = authHeader.slice(7);
   try {
     const payload = jwt.verify(token, jwtSecret);
-    const user = getUserById(payload.sub);
+    const user = await getUserById(payload.sub);
     if (!user) {
       return res.status(401).json({ error: "User not found." });
     }
@@ -409,6 +370,19 @@ function getPlanConfig(plan) {
   return PLAN_CONFIG[normalizePlan(plan)];
 }
 
+function ensureAiEnabled(res) {
+  if (openai) {
+    return true;
+  }
+
+  res.status(503).json({
+    error: "AI features are not configured.",
+    details: "Set OPENAI_API_KEY to enable analyze and image generation endpoints.",
+  });
+
+  return false;
+}
+
 function getClientIdentifier(req) {
   const forwardedFor = req.headers["x-forwarded-for"];
 
@@ -440,13 +414,13 @@ function getRemainingImageGenerations(req, plan) {
   return Math.max(limit - usedCount, 0);
 }
 
-function consumeImageGeneration(req, plan) {
+async function consumeImageGeneration(req, plan) {
   if (req.user) {
     if (normalizePlan(plan) === "pro") {
       return req.user;
     }
 
-    const updatedUser = updateUser(req.user.id, (currentUser) => ({
+    const updatedUser = await updateUser(req.user.id, (currentUser) => ({
       imageGenerationCount: getUserUsageCount(currentUser) + 1,
     }));
 
@@ -482,6 +456,40 @@ function validateRequiredFields(payload, fields) {
   });
 
   return missing;
+}
+
+function sanitizeShopProductPayload(input) {
+  return {
+    name: String(input?.name || "").trim(),
+    brand: String(input?.brand || "").trim(),
+    store: String(input?.store || input?.brand || "").trim(),
+    category: String(input?.category || "").trim(),
+    description: String(input?.description || "").trim(),
+    image: String(input?.image || "").trim(),
+    link: String(input?.link || "").trim(),
+    sortOrder: Number(input?.sortOrder) || 0,
+  };
+}
+
+function validateShopProductPayload(payload) {
+  const missingFields = ["name", "brand", "store", "category", "image", "link"].filter((field) => {
+    const value = payload[field];
+    return typeof value !== "string" || value.trim() === "";
+  });
+
+  if (missingFields.length > 0) {
+    return { missingFields };
+  }
+
+  if (!isValidRedirectUrl(payload.link)) {
+    return { error: "Product link must be a valid URL." };
+  }
+
+  if (!isValidRedirectUrl(payload.image)) {
+    return { error: "Product image must be a valid URL." };
+  }
+
+  return null;
 }
 
 function buildAnalyzePrompt({ gender, style, occasion }) {
@@ -528,16 +536,30 @@ function safeJsonParse(text) {
 app.use(attachUserIfPresent);
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({
+    status: "ok",
+    pid: process.pid,
+    port,
+    environment: runtimeConfig.nodeEnv,
+  });
 });
 
 app.get("/config", (req, res) => {
+  const shopDiagnostics = shopStore.getDiagnostics();
+
   res.json({
+    pid: process.pid,
+    port,
     authEnabled: true,
     paymentEnabled: Boolean(stripe && stripePriceId),
     paymentProvider: stripe && stripePriceId ? "stripe" : null,
+    aiEnabled: runtimeConfig.openAiEnabled,
     webEnabled: fs.existsSync(webDistPath),
     adminEnabled: adminEmailSet.size > 0,
+    storageDriver: userStore.mode,
+    supabaseEnabled: userStore.isSupabaseEnabled,
+    shopCatalog: shopDiagnostics,
+    environment: runtimeConfig.nodeEnv,
   });
 });
 
@@ -558,7 +580,7 @@ app.post("/auth/register", async (req, res) => {
     });
   }
 
-  if (getUserByEmail(email)) {
+  if (await getUserByEmail(email)) {
     return res.status(409).json({
       error: "An account with this email already exists.",
     });
@@ -572,12 +594,13 @@ app.post("/auth/register", async (req, res) => {
   if (referral && typeof referral === 'string') {
     referral_source = referral;
     // Referral бўйича бонус: referral_source топилса, унга ва янги user’га бонус бериш
-    const users = readUsers();
+    const users = await readUsers();
     const refUser = users.find(u => u.id === referral || u.email === referral);
     if (refUser) {
-      refUser.imageGenerationCount = (refUser.imageGenerationCount || 0) + 3; // Referral’чига 3 бонус
+      await updateUser(refUser.id, (currentUser) => ({
+        imageGenerationCount: (currentUser.imageGenerationCount || 0) + 3,
+      }));
       bonus = 3; // Янги user’га ҳам 3 бонус
-      writeUsers(users);
     }
   }
   const user = {
@@ -594,9 +617,7 @@ app.post("/auth/register", async (req, res) => {
     lastCheckoutSessionId: null,
   };
 
-  const users = readUsers();
-  users.push(user);
-  writeUsers(users);
+  await createUser(user);
 
   return res.status(201).json({
     token: signAuthToken(user),
@@ -615,7 +636,7 @@ app.post("/auth/login", async (req, res) => {
     });
   }
 
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
 
   if (!user) {
     return res.status(401).json({ error: "Invalid email or password." });
@@ -641,17 +662,129 @@ app.get("/auth/me", requireAuth, (req, res) => {
 });
 
 app.get("/admin/stats", requireAuth, requireAdmin, (req, res) => {
-  return res.json({
-    stats: buildAdminStats(),
-  });
+  return buildAdminStats().then((stats) => res.json({
+    stats,
+  })).catch((error) => res.status(500).json({
+    error: "Failed to load admin stats.",
+    details: error.message,
+  }));
 });
 
-app.get("/admin/users", requireAuth, requireAdmin, (req, res) => {
-  const users = readUsers()
-    .map((user) => buildAdminUser(user))
-    .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime());
+app.get("/admin/users", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const users = (await readUsers())
+      .map((user) => buildAdminUser(user))
+      .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime());
 
-  return res.json({ users });
+    return res.json({ users });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to load admin users.",
+      details: error.message,
+    });
+  }
+});
+
+app.get("/admin/shop-products", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const products = await shopStore.listProducts();
+
+    return res.json({
+      products,
+      diagnostics: shopStore.getDiagnostics(),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to load admin shop catalog.",
+      details: error.message,
+    });
+  }
+});
+
+app.post("/admin/shop-products", requireAuth, requireAdmin, async (req, res) => {
+  const payload = sanitizeShopProductPayload(req.body || {});
+  const validation = validateShopProductPayload(payload);
+
+  if (validation?.missingFields) {
+    return res.status(400).json({
+      error: "Missing required product fields.",
+      missingFields: validation.missingFields,
+    });
+  }
+
+  if (validation?.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  try {
+    const product = await shopStore.createProduct(payload);
+    return res.status(201).json({ product });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to create catalog product.",
+      details: error.message,
+    });
+  }
+});
+
+app.put("/admin/shop-products/:id", requireAuth, requireAdmin, async (req, res) => {
+  const productId = Number(req.params.id);
+
+  if (!Number.isInteger(productId) || productId <= 0) {
+    return res.status(400).json({ error: "A valid numeric product id is required." });
+  }
+
+  const payload = sanitizeShopProductPayload(req.body || {});
+  const validation = validateShopProductPayload(payload);
+
+  if (validation?.missingFields) {
+    return res.status(400).json({
+      error: "Missing required product fields.",
+      missingFields: validation.missingFields,
+    });
+  }
+
+  if (validation?.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  try {
+    const product = await shopStore.updateProduct(productId, payload);
+
+    if (!product) {
+      return res.status(404).json({ error: "Catalog product not found." });
+    }
+
+    return res.json({ product });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to update catalog product.",
+      details: error.message,
+    });
+  }
+});
+
+app.delete("/admin/shop-products/:id", requireAuth, requireAdmin, async (req, res) => {
+  const productId = Number(req.params.id);
+
+  if (!Number.isInteger(productId) || productId <= 0) {
+    return res.status(400).json({ error: "A valid numeric product id is required." });
+  }
+
+  try {
+    const deleted = await shopStore.deleteProduct(productId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Catalog product not found." });
+    }
+
+    return res.json({ success: true, deletedId: productId });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to delete catalog product.",
+      details: error.message,
+    });
+  }
 });
 
 app.post("/billing/create-checkout-session", requireAuth, async (req, res) => {
@@ -689,7 +822,7 @@ app.post("/billing/create-checkout-session", requireAuth, async (req, res) => {
       },
     });
 
-    const updatedUser = updateUser(req.user.id, () => ({
+    const updatedUser = await updateUser(req.user.id, () => ({
       stripeCustomerEmail: req.user.email,
       lastCheckoutSessionId: session.id,
     }));
@@ -761,6 +894,10 @@ app.get("/billing/confirm", requireAuth, async (req, res) => {
 });
 
 app.post("/analyze", async (req, res) => {
+  if (!ensureAiEnabled(res)) {
+    return;
+  }
+
   const { gender, style, occasion, plan } = req.body || {};
   const missingFields = validateRequiredFields(req.body || {}, ["gender", "style", "occasion"]);
 
@@ -825,6 +962,10 @@ app.post("/analyze", async (req, res) => {
 });
 
 app.post("/image", async (req, res) => {
+  if (!ensureAiEnabled(res)) {
+    return;
+  }
+
   const { prompt, plan } = req.body || {};
   const missingFields = validateRequiredFields(req.body || {}, ["prompt"]);
 
@@ -864,7 +1005,7 @@ app.post("/image", async (req, res) => {
       });
     }
 
-    consumeImageGeneration(req, normalizedPlan);
+    await consumeImageGeneration(req, normalizedPlan);
 
     return res.json({
       plan: normalizedPlan,
@@ -887,6 +1028,10 @@ app.post("/image", async (req, res) => {
 
 // --- AI outfit генерация endpoint ---
 app.post("/generate", async (req, res) => {
+  if (!ensureAiEnabled(res)) {
+    return;
+  }
+
   try {
     const { image } = req.body;
 
@@ -909,8 +1054,16 @@ app.post("/generate", async (req, res) => {
   }
 });
 
-app.get("/shop", (req, res) => {
-  res.json(shopProducts);
+app.get("/shop", async (req, res) => {
+  try {
+    const products = await shopStore.listProducts();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to load shop catalog.",
+      details: error.message,
+    });
+  }
 });
 
 if (!fs.existsSync(webDistPath)) {
@@ -918,6 +1071,8 @@ if (!fs.existsSync(webDistPath)) {
     res.json({
       name: "DressAI Backend",
       status: "ok",
+      storageDriver: userStore.mode,
+      shopCatalog: shopStore.getDiagnostics(),
       message: "Build the web frontend with `npm run web:build` to serve the website from this backend.",
       routes: ["/health", "/config", "/auth/register", "/auth/login", "/analyze", "/image", "/shop"],
     });
@@ -940,6 +1095,17 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found." });
 });
 
-app.listen(port, "0.0.0.0", () => {
-  console.log("🚀 Server running");
+const server = app.listen(port, "0.0.0.0", () => {
+  console.log(`DressAI server running on ${port} using ${userStore.mode} storage.`);
+});
+
+server.on("error", (error) => {
+  if (error && error.code === "EADDRINUSE") {
+    console.error(`Port ${port} is already in use. Run \`npm run port:3000\` to inspect the owner, stop the existing process, or set a different PORT value.`);
+    process.exit(1);
+    return;
+  }
+
+  console.error("Failed to start DressAI server:", error);
+  process.exit(1);
 });

@@ -1,0 +1,13 @@
+{
+  "name": "vertical-video-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "One-command vertical video generator with local FFmpeg bootstrap",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

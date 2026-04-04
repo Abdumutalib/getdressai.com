@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: dressai
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SUPABASE_USERS_TABLE
+        value: app_users
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: AFFILIATE_TAG
+        sync: false

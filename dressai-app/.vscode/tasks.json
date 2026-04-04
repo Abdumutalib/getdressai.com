@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "lint dressai-app",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"run",
+				"lint"
+			],
+			"isBackground": false,
+			"group": "test"
+		}
+	]
+}

@@ -2,6 +2,8 @@ node_modules/
 .expo/
 *.log
 .env
+dressai-web/dist/
+.localtunnel.log
 # Mac/Windows system files
 .DS_Store
 Thumbs.db
