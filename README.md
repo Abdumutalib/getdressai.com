@@ -2,6 +2,8 @@
 
 Node.js backend that serves the API and the built web frontend from one service.
 
+By default, production should use Supabase for durable user storage. For quick Render demos, the repo can opt into JSON file storage with `ALLOW_FILE_STORE_IN_PRODUCTION=true`, but that data is ephemeral and may reset on redeploy/restart.
+
 ## Local Run
 
 1. Create `.env` from `.env.example`.
@@ -19,7 +21,7 @@ Node.js backend that serves the API and the built web frontend from one service.
 
 The backend serves the web app after build from `dressai-web/dist`.
 
-In production, JSON file storage is blocked and the backend requires the Supabase/PostgreSQL configuration.
+In production, JSON file storage is blocked unless `ALLOW_FILE_STORE_IN_PRODUCTION=true` is explicitly set. For real deployments, use the Supabase/PostgreSQL configuration.
 
 ## Render Deploy
 
@@ -38,6 +40,8 @@ This repo includes `render.yaml`, so Render can create the web service automatic
 	`STRIPE_PRO_PRICE_ID`
 	`ALLOWED_ORIGIN`
 6. After first deploy, copy your Render URL and set `ALLOWED_ORIGIN` to that exact URL.
+
+For a demo-only deploy without Supabase, keep `ALLOW_FILE_STORE_IN_PRODUCTION=true` and omit `SUPABASE_URL` plus `SUPABASE_SERVICE_ROLE_KEY`. User data will not persist reliably on Render free instances.
 
 ## Supabase Setup
 

@@ -11,6 +11,8 @@ services:
         value: 20.18.0
       - key: JWT_SECRET
         generateValue: true
+      - key: ALLOW_FILE_STORE_IN_PRODUCTION
+        value: true
       - key: SUPABASE_USERS_TABLE
         value: app_users
       - key: OPENAI_API_KEY
