@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const { createShopStore } = require("../lib/shop-store");
+const { isSupabaseHttpUrl } = require("../lib/runtime-config");
 const shopProducts = require("../data/shop-catalog");
 
 async function main() {
@@ -10,6 +11,12 @@ async function main() {
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
+  }
+
+  if (!isSupabaseHttpUrl(supabaseUrl)) {
+    throw new Error(
+      "SUPABASE_URL must be the HTTPS project URL, for example https://your-project.supabase.co, not a Postgres connection string."
+    );
   }
 
   const shopStore = createShopStore({

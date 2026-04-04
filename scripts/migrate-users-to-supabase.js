@@ -3,6 +3,7 @@ require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
+const { isSupabaseHttpUrl } = require("../lib/runtime-config");
 
 const usersFilePath = path.join(__dirname, "..", "data", "users.json");
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -26,6 +27,12 @@ function readUsers() {
 async function main() {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
+  }
+
+  if (!isSupabaseHttpUrl(supabaseUrl)) {
+    throw new Error(
+      "SUPABASE_URL must be the HTTPS project URL, for example https://your-project.supabase.co, not a Postgres connection string."
+    );
   }
 
   const users = readUsers();

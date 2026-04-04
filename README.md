@@ -41,6 +41,8 @@ This repo includes `render.yaml`, so Render can create the web service automatic
 	`ALLOWED_ORIGIN`
 6. After first deploy, copy your Render URL and set `ALLOWED_ORIGIN` to that exact URL.
 
+`SUPABASE_URL` must be your HTTPS project URL such as `https://your-project.supabase.co`. Do not paste the Postgres connection string into this variable.
+
 For a demo-only deploy without Supabase, keep `ALLOW_FILE_STORE_IN_PRODUCTION=true` and omit `SUPABASE_URL` plus `SUPABASE_SERVICE_ROLE_KEY`. User data will not persist reliably on Render free instances.
 
 ## Supabase Setup
