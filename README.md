@@ -32,7 +32,7 @@ npm run verify
 
 ## Deploy
 
-- Веб: `getdressai` → Vercel / Netlify (`npm run publish:web -- --prod`).
+- Веб: `getdressai` → Vercel / Netlify (`npm run publish:web -- --prod`). **Vercel (GitHub):** репо илдизи билан import қилинг; `vercel.json` статик чиқаришни `getdressai/` га йўналтиради. Агар build хато берса, Settings → **Root Directory** ни `getdressai` га ўрнating — `getdressai/vercel.json` ҳам шу учун мавжуд.
 - API: `dressai-api` → Node хостинг (HTTPS, `ALLOWED_ORIGIN`).
 - Илова: `mobile` → EAS (`npm run publish:mobile`).
 
