@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "fluid": false,
+  "installCommand": "npm ci --omit=dev",
+  "buildCommand": "true",
   "functions": {
     "api/outfit.js": {
       "maxDuration": 60

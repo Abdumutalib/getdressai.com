@@ -73,7 +73,7 @@ Open **http://127.0.0.1:8787** (not `file://`).
 ## 5. Deploy Vercel
 
 - **GitHub import:** Vercel → Project → Settings → **Root Directory** — бўш қолдиринг (репо ичида `vercel.json` `getdressai` ни `outputDirectory` сифатида кўрсатади). Ёки Root Directory ни **`getdressai`** га қўйинг — у ҳолда `getdressai/vercel.json` ишлайди, илдиздаги `vercel.json` эътиборсиз қолиши мумкин.
-- **Framework:** Other / Static (автоматик `index.html` + `api/*` serverless).
+- **Framework:** Vercel `vercel.json` да `framework: null` (Node авто-режимини ўчириш). Dashboard да **Override** бўлса, **Other** ёки **No Framework** га мосланг.
 - Env: `OPENROUTER_API_KEY` (and optional referer/title).
 - Add Vercel URL to Supabase **Authentication → URL configuration → Redirect URLs**.
 
