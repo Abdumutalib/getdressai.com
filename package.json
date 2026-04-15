@@ -2,6 +2,7 @@
   "name": "dressai-super",
   "version": "1.0.0",
   "private": true,
+  "main": "index.cjs",
   "description": "DressAI + GetdressAI — web (static + cheap AI proxy), mobile (Expo), monetized API (Stripe + affiliate)",
   "scripts": {
     "dev:web": "npm run dev --prefix getdressai",
