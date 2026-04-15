@@ -1,8 +1,9 @@
 ================================================================================
 Hetzner VPS — dressai-api (GitHub: Abdumutalib/getdressai.com)
 ================================================================================
-Windows: Super Robot → Desktop\super_robot\run_hetzner_cloud.bat
-  (консоль https://console.hetzner.com/projects/14119548/servers + чеклист)
+Windows: Super Robot → Desktop\super_robot\run_hetzner_cloud.bat (консоль + чеклист)
+  Remote deploy (SSH): run_hetzner_deploy.bat ёки  hetzner_remote_deploy.ps1 -SshHost IP
+  ($env:HETZNER_SSH_HOST; git + dressai-api/getdressai npm ci + systemctl restart)
 ================================================================================
 
 Репо тузилиши: `dressai-api/` (Express, :3000), `getdressai/` (статик + dev/proxy),
