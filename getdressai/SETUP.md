@@ -133,10 +133,9 @@ Open **http://127.0.0.1:8787** (not `file://`).
 
 ---
 
-## 7. Production on Hetzner (VPS)
+## 7. Production API (Node + HTTPS)
 
-For a **dedicated VPS**, use **`deploy/hetzner/SETUP-HETZNER.txt`** (Caddy, systemd, deploy scripts).  
-**Render** is not part of this repo’s production path — prefer **Hetzner** (or your own VPS); env keys: `dressai-api/.env.example` and repo `README.md` / `deploy/hetzner/SETUP-HETZNER.txt`.
+`dressai-api` ni istalgan Node хостингда ишлатинг (HTTPS, `ALLOWED_ORIGIN` веб домени билан мос). Калитлар: `dressai-api/.env.example`, умумий йўналиш — репо `README.md` да **Deploy** бўлими. Веб: **§5** (Vercel).
 
 ---
 

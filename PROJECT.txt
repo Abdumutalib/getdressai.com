@@ -7,7 +7,7 @@ NIMA BO'LADI
   o‘lcham/uslub/fason bo‘yicha moslik foizi, virtual kiyib ko‘rish (demo),
   hamkor havolalari (Amazon Associates tag). AI matn uchun POST /api/outfit —
   kalitlar serverda; Groq/OpenRouter (arzon) yoki
-  Ollama (bepul lokal). Vercel yoki getdressai/SETUP.md; production VPS — deploy/hetzner/SETUP-HETZNER.txt (Render emas).
+  Ollama (bepul lokal). Vercel yoki getdressai/SETUP.md; production API — README.md Deploy (VPS majburiy emas).
 - dressai-api/    — Express: ro‘yxatdan o‘tish, JWT, Stripe PRO, /analyze
   (tavsiya + affiliate URL), /image (OpenAI rasmi). Mobil ilova shu yerga
   ulanadi.
@@ -31,7 +31,7 @@ DAROMAD
 - eBay Developer (OAuth): .env da EBAY_APP_ID, EBAY_CERT_ID, EBAY_DEV_ID, EBAY_RUNAME — getdressai/SETUP.md.
 
 HYBRID VTON (GPU server, ixtiyoriy)
-- FASHN / OmniTry / FastFit: getdressai/SETUP.md §7 (git clone + pip).
+- FASHN / OmniTry / FastFit: getdressai/SETUP.md §8 (git clone + pip).
 - Veb: index.html → GETDRESSAI_HYBRID_VTON_URL (.env) ёки /api/hybrid-vton; try-on аввал реал, кейин демо.
 - dressai-api: HYBRID_VTON_SERVICE_URL → POST /v1/hybrid-vton (mobil Expo Try-on tab).
 

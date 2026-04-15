@@ -1,7 +1,0 @@
-# /etc/caddy/Caddyfile ga ko'chiring.
-# dressai-api — 127.0.0.1:3000. Statik veb odatda Vercel (getdressai/); bu yerda API субдомени.
-
-api.getdressai.com {
-	encode gzip
-	reverse_proxy 127.0.0.1:3000
-}
