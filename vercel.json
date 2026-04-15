@@ -2,15 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "fluid": false,
-  "installCommand": "cd getdressai && npm ci --omit=dev",
+  "installCommand": "",
   "buildCommand": "true",
-  "outputDirectory": "getdressai",
-  "functions": {
-    "getdressai/api/outfit.js": {
-      "maxDuration": 60
-    }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

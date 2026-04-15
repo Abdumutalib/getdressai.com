@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GetDressAI</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: #f8fafc;
+      background: linear-gradient(145deg, #64748b 0%, #4c1d95 48%, #6d28d9 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: clamp(1.85rem, 5vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.25);
+    }
+    .tagline {
+      margin: 0 0 2.5rem;
+      opacity: 0.92;
+      font-size: 1rem;
+    }
+    .plans {
+      display: grid;
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 720px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 560px) {
+      .plans { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 1.25rem;
+      padding: 1.75rem 1.5rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+    .card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.35rem;
+    }
+    .price {
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin: 0.75rem 0 1.25rem;
+    }
+    .price span { font-size: 1rem; font-weight: 500; opacity: 0.85; }
+    button {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e1b4b;
+      background: linear-gradient(180deg, #f5f3ff 0%, #ddd6fe 100%);
+      border: none;
+      border-radius: 0.65rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+    button:active { transform: translateY(0); }
+    .card.pro {
+      border-color: rgba(250, 204, 21, 0.45);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(250, 204, 21, 0.15);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.35rem;
+      background: rgba(250, 204, 21, 0.25);
+      color: #fef9c3;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>GetDressAI</h1>
+  <p class="tagline">AI yordamida libos tanlash va xarid</p>
+
+  <div class="plans">
+    <article class="card">
+      <h2>Basic</h2>
+      <p class="price">$9.99 <span>/ oy</span></p>
+      <button type="button" onclick="showSoon()">Тўлов</button>
+    </article>
+    <article class="card pro">
+      <span class="badge">Pro</span>
+      <h2>Pro</h2>
+      <p class="price">$29.99 <span>/ oy</span></p>
+      <button type="button" onclick="showSoon()">Тўлов</button>
+    </article>
+  </div>
+
+  <script>
+    function showSoon() {
+      alert("Тез орада");
+    }
+  </script>
+</body>
+</html>
