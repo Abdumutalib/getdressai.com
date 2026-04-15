@@ -1,6 +1,6 @@
 # GetdressAI / DressAI — backend stack
 
-Бу репозиторий [getdressai.com](https://getdressai.com) учун **асосий код база** (аввалги монолит `server.js` + `dressai-web` ўрнига).
+Бу репозиторий [getdressai.com](https://getdressai.com) учун **асосий код база**: `getdressai/` (веб), `dressai-api/` (Express API), `mobile/` (Expo).
 
 ## Тузilish
 
@@ -51,4 +51,4 @@ git remote add origin https://github.com/Abdumutalib/getdressai.com.git
 git push -u origin main --force
 ```
 
-`--force` аввалги `dressai-web` / монолит тарихини ўчиради — фақат ишончингиз комил бўлса ишлатинг. GitHub да **Personal access token** ёки SSH калит керак.
+`--force` узоқ tarixни ёзиб юборади — фақат ишончингиз комил бўлса ишлатинг. GitHub да **Personal access token** ёки SSH калит керак.

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# dressai foydalanuvchisi sifatida: npm ci + build (bir marta va har deployda).
+# dressai foydalanuvchisi: API va veb papkalarida npm ci (monolit `npm run build` йўқ).
 set -euo pipefail
 APP_DIR="/home/dressai/getdressai.com"
-cd "${APP_DIR}"
+cd "${APP_DIR}/dressai-api"
 npm ci
-npm run build
+cd "${APP_DIR}/getdressai"
+npm ci
+# Mobil build VPSда одатда шарт эмас; керак бўлса:
+# cd "${APP_DIR}/mobile" && npm ci

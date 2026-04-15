@@ -58,8 +58,8 @@ systemctl enable dressai
 
 echo ""
 echo "Keyingi qadamlar:"
-echo "  1) nano ${APP_DIR}/.env   (GitHub .env.example bo'yicha)"
-echo "  2) chown ${APP_USER}:${APP_USER} ${APP_DIR}/.env && chmod 600 ${APP_DIR}/.env"
+echo "  1) nano ${APP_DIR}/dressai-api/.env   (dressai-api/.env.example bo'yicha)"
+echo "  2) chown ${APP_USER}:${APP_USER} ${APP_DIR}/dressai-api/.env && chmod 600 ${APP_DIR}/dressai-api/.env"
 echo "  3) sudo -u ${APP_USER} ${DEPLOY_HELPER_DIR}/02-npm-build.sh"
 echo "  4) /etc/caddy/Caddyfile — Caddyfile.example dan nusxa (domenni to'g'rilang)"
 echo "  5) systemctl reload caddy && systemctl start dressai && systemctl status dressai"

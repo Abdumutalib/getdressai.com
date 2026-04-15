@@ -1,7 +1,7 @@
 # /etc/caddy/Caddyfile ga ko'chiring.
-# Domenlarni o'z domeningiz bilan almashtiring.
+# dressai-api — 127.0.0.1:3000. Statik veb odatda Vercel (getdressai/); bu yerda API субдомени.
 
-getdressai.com, www.getdressai.com {
+api.getdressai.com {
 	encode gzip
 	reverse_proxy 127.0.0.1:3000
 }

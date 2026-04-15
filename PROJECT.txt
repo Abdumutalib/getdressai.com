@@ -1,5 +1,5 @@
 ================================================================================
-DressAI Super — bitta monorepo (web + API + mobil)
+DressAI backend — getdressai (web) + dressai-api + mobile
 ================================================================================
 
 NIMA BO'LADI
@@ -45,8 +45,8 @@ ISHGA TUSHIRISH
 VS Code: vazifalar — "GetdressAI: dev server" va "DressAI: API (3000)".
 
 SIFAT / SUPER ROBOT
-- Desktop\super_robot\run_dressai_quality.bat — getdressai npm test + dressai-api node --check
-- Monorepo ildizida: npm run test:web
+- Desktop\super_robot\run_dressai_quality.bat — ildizda npm run verify
+- Yoki: npm run verify
 - CI: .github/workflows/ci.yml (GitHub’da)
 
 ================================================================================

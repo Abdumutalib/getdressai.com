@@ -1,15 +1,14 @@
 [Unit]
-Description=DressAI Node (server.js)
+Description=DressAI API (dressai-api/server.js)
 After=network.target
 
 [Service]
 Type=simple
 User=dressai
 Group=dressai
-WorkingDirectory=/home/dressai/getdressai.com
+WorkingDirectory=/home/dressai/getdressai.com/dressai-api
 Environment=NODE_ENV=production
-# Stripe webhook va boshqa maxfiy o'zgaruvchilar
-EnvironmentFile=/home/dressai/getdressai.com/.env
+EnvironmentFile=/home/dressai/getdressai.com/dressai-api/.env
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5

@@ -1,6 +1,10 @@
 ================================================================================
-Hetzner VPS — DressAI (GitHub: Abdumutalib/getdressai.com)
+Hetzner VPS — dressai-api (GitHub: Abdumutalib/getdressai.com)
 ================================================================================
+
+Репо тузилиши: `dressai-api/` (Express, :3000), `getdressai/` (статик + dev/proxy),
+`mobile/` (Expo). VPSда одатда **фақат API** ишлайди; вебни Vercel/Cloudflare Pages
+да хостинг қилиш тавсия этилади (бир доменда HTML + API аралашмасин).
 
 Men sizning Hetzner akkauntingizga kira olmayman. Quyidagilarni O‘ZINGIZ qilasiz:
 1) Hetzner Cloud’da server yarating
@@ -11,73 +15,63 @@ Men sizning Hetzner akkauntingizga kira olmayman. Quyidagilarni O‘ZINGIZ qilas
 1) Hetzner’da server
 --------------------------------------------------------------------------------
 - Image: Ubuntu 22.04 LTS
-- Type: masalan CX22 (2 vCPU, 4 GB RAM) — loyiha uchun yetarli
-- Location: yaqin region (Nuremberg / Helsinki)
-- SSH key qo‘shing (parol o‘rniga)
+- Type: masalan CX22 (2 vCPU, 4 GB RAM)
+- SSH key qo‘shing
 
 --------------------------------------------------------------------------------
 2) Birinchi marta (root sifatida)
 --------------------------------------------------------------------------------
-Butun papkani VPSga ko‘chiring (ichida dressai.service ham bo‘lsin), masalan:
-
   scp -r deploy/hetzner root@SERVER_IP:/root/dressai-hetzner
-
-Keyin VPSda:
-
   chmod +x /root/dressai-hetzner/scripts/*.sh
   /root/dressai-hetzner/scripts/01-bootstrap-root.sh
 
-Bu: Node 20, git, ufw (22,80,443), Caddy, `dressai` foydalanuvchi, repo klon,
-    systemd unit o‘rnatadi.
+Bu: Node 20, git, ufw, Caddy, `dressai` user, repo klon (`/home/dressai/getdressai.com`),
+    systemd `dressai.service` (ishchi каталог: `dressai-api/`).
 
 --------------------------------------------------------------------------------
-3) .env
+3) .env (dressai-api)
 --------------------------------------------------------------------------------
-  nano /home/dressai/getdressai.com/.env
+  nano /home/dressai/getdressai.com/dressai-api/.env
 
-GitHub’dagi .env.example bo‘yicha to‘ldiring (OPENAI, Supabase, Stripe, ...).
-Fayl huquqi:
+`dressai-api/.env.example` bo‘yicha to‘ldiring (JWT, Supabase service role, Stripe, ...).
 
-  chown dressai:dressai /home/dressai/getdressai.com/.env
-  chmod 600 /home/dressai/getdressai.com/.env
+  chown dressai:dressai /home/dressai/getdressai.com/dressai-api/.env
+  chmod 600 /home/dressai/getdressai.com/dressai-api/.env
 
 --------------------------------------------------------------------------------
-4) Caddy (HTTPS + domen)
+4) Caddy (HTTPS → API :3000)
 --------------------------------------------------------------------------------
   nano /etc/caddy/Caddyfile
 
-Bu papkadagi Caddyfile.example mazmunini qo‘ying — `getdressai.com` o‘rniga
-o‘z domeningiz.
+`Caddyfile.example`: `api.getdressai.com` → reverse_proxy 127.0.0.1:3000 (тавсия).
+Агар бутун доменни API га берсангиз, статик веб шу доменда очилмайди.
 
   systemctl reload caddy
 
-Cloudflare ishlatilsa: SSL mode "Full (strict)"; origin Hetzner IP.
+Cloudflare: SSL "Full (strict)"; origin — Hetzner IP.
 
 --------------------------------------------------------------------------------
-5) Yangilash (keyingi deploylar)
+5) Bir marta build (npm ci)
+--------------------------------------------------------------------------------
+  sudo -u dressai /home/dressai/hetzner-deploy/02-npm-build.sh
+
+--------------------------------------------------------------------------------
+6) Keyingi yangilashlar
 --------------------------------------------------------------------------------
   sudo bash /home/dressai/hetzner-deploy/03-deploy-update.sh
 
-yoki qo‘lda:
-
-  cd /home/dressai/getdressai.com && sudo -u dressai git pull && \
-  sudo -u dressai npm ci && sudo -u dressai npm run build && \
-  sudo systemctl restart dressai
-
 --------------------------------------------------------------------------------
-6) Tekshiruv
+7) Tekshiruv
 --------------------------------------------------------------------------------
   systemctl status dressai
   curl -sS http://127.0.0.1:3000/health
 
-Tashqaridan: https://getdressai.com/health
+Tashqaridan (domen API га уланган бўлса): https://api.getdressai.com/health
 
 --------------------------------------------------------------------------------
-7) Stripe webhook
+8) Stripe / Paddle webhook
 --------------------------------------------------------------------------------
-Stripe Dashboard → webhook URL: https://getdressai.com/billing/webhook
-Kerakli o‘zgaruvchilar (STRIPE_WEBHOOK_SECRET va boshqalar): loyiha ildizidagi
-`dressai-api/.env.example` va `PROJECT.txt` bo‘yicha to‘ldiring — Render ishlatilmaydi,
-production Hetzner VPS (ushbu qo‘llanma) uchun mo‘ljallangan.
+Stripe: `https://<API-домен>/billing/webhook`
+Paddle: `https://<API-домен>/billing/paddle-webhook`
 
 ================================================================================
