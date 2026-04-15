@@ -39,3 +39,16 @@ npm run verify
 ## Supabase
 
 Лойиҳа реф: `rmsluskirebmjxbnebyu` — `getdressai/.env.example` ва `dressai-api/.env.example` да URL намунаси.
+
+## GitHub — репони тўлиқ алмаштириш
+
+Локал репо тайёр: `git init`, `main`, `.env` gitдан ташқари.
+
+```bash
+cd dressai-backend
+git remote add origin https://github.com/Abdumutalib/getdressai.com.git
+# агар origin бўлса: git remote set-url origin https://github.com/Abdumutalib/getdressai.com.git
+git push -u origin main --force
+```
+
+`--force` аввалги `dressai-web` / монолит тарихини ўчиради — фақат ишончингиз комил бўлса ишлатинг. GitHub да **Personal access token** ёки SSH калит керак.
