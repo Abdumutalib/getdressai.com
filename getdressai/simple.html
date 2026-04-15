@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GetdressAI — Simple</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!--
+      Oddiy demo: npm run dev → http://127.0.0.1:8787/simple.html
+      To‘liq ilova: index.html
+    -->
+    <script>
+      window.GETDRESSAI_CONFIG = {
+        openaiProxyUrl: "/api/outfit",
+        aiModel: "gpt-4o-mini",
+        // Amazon Associates tracking id (masalan: mysite-20). Bo‘sh qoldirsangiz YOUR_TAG ishlatiladi.
+        amazonAffiliateTag: "yourname-20",
+      };
+    </script>
+  </head>
+
+  <body class="flex min-h-screen items-center justify-center bg-gray-50">
+    <div class="w-[400px] rounded-2xl bg-white p-8 text-center shadow-xl">
+      <h1 class="mb-4 text-2xl font-bold">GetdressAI 🤖</h1>
+
+      <input
+        id="prompt"
+        class="mb-4 w-full rounded-lg border p-3"
+        placeholder="summer outfit for men"
+      />
+
+      <button
+        type="button"
+        onclick="runAI()"
+        class="w-full rounded-lg bg-black px-6 py-3 text-white hover:opacity-80"
+      >
+        Generate Outfit
+      </button>
+
+      <div id="result" class="mt-6 text-left text-sm"></div>
+    </div>
+
+    <script src="simple-app.js"></script>
+  </body>
+</html>

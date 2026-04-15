@@ -1,0 +1,39 @@
+================================================================================
+GetdressAI — narx, tezlik, uzluksizlik (operatsion reja)
+================================================================================
+
+1) NARXNI NAZORAT QILISH
+------------------------
+• AI: OpenRouter / Groq / dashboardda oylik budget + alert (email).
+• OpenAI: Usage limits + “hard limit” yoqish.
+• Vercel: Pro/Enterprise — bandwidth va Function invocations grafigi.
+• Supabase: Usage — DB size, egress, MAU; limit yaqinlashganda alert.
+• Ilova: arzon model (masalan gpt-4o-mini), takroriy so‘rovda kesh (app.js sessiya +
+  wardrobe) allaqachon API chaqiruvini kamaytiradi.
+• Server: so‘rov hajmi cheklovi — api/validate-chat.js + MAX_CHAT_BODY_CHARS (.env).
+
+2) TIZIM TO‘XTAMASIN (reliability)
+---------------------------------
+• Bir nechta AI kaliti: OpenRouter + Groq + OpenAI (oxirgi zaxira) — outfit.js tartibi.
+• Vercel: health uchun alohida GET route (ixtiyoriy) yoki monitoring URL.
+• Supabase: ulangan loyiha SLA; muntazam backup (Supabase dashboard).
+• Xatolikda foydalanuvchiga aniq toast/xabar (502/429).
+
+3) JUDA TEZ ISHLASH
+--------------------
+• Statik fayllar: CDN (Vercel avtomatik), cache headers (ixtiyoriy).
+• AI: tez model tanlash; ortiqcha kontekst yubormaslik.
+• Regional: Vercel edge yaqin region; Supabase project region foydalanuvchiga yaqin.
+• Keyingi qadam (katta trafik): Upstash Redis — prompt hash bo‘yicha javob keshi;
+  Cloudflare/Vercel Edge rate limit (IP/user).
+
+4) KODDA MAVJUD
+---------------
+• api/validate-chat.js — xavfsizlik va token “spam” dan himoya.
+• api/outfit.js — javob sarlavhasi: X-GetdressAI-Provider (monitoring).
+• scripts/dev-server.mjs — xuddi shu tekshiruv mahalliyda.
+
+.env misoli:
+  MAX_CHAT_BODY_CHARS=80000
+
+================================================================================

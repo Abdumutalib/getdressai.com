@@ -1,0 +1,16 @@
+{
+  "name": "getdressai",
+  "private": true,
+  "type": "module",
+  "description": "GetdressAI — static UI + Supabase + OpenRouter/Groq proxy (no OpenAI)",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "test": "node --test tests/validate-chat.test.js"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "amazon-paapi": "^1.0.7"
+  }
+}

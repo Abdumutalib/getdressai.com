@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title id="doc-title">GetdressAI</title>
+  <meta id="doc-desc" name="description" content="GetdressAI — AI outfit ideas, wardrobe, and shop.">
+
+  <!--
+    Dev: npm run dev → http://127.0.0.1:8787
+    SUPABASE_URL + SUPABASE_ANON_KEY in getdressai/.env replace PASTE_YOUR_* below automatically.
+    AI keys only in .env / server — never commit real secrets.
+  -->
+  <script>
+    window.GETDRESSAI_CONFIG = {
+      supabaseUrl: "PASTE_YOUR_SUPABASE_URL",
+      supabaseAnonKey: "PASTE_YOUR_SUPABASE_ANON_KEY",
+      openaiProxyUrl: "/api/outfit",
+      aiModel: "mistralai/mixtral-8x7b",
+      /* Associates store tag (&tag=...) — .env: AMAZON_PARTNER_TAG (dev-server инъекцияси) */
+      amazonAffiliateTag: "GETDRESSAI_AMAZON_PARTNER_TAG_PLACEHOLDER",
+      /* Бўш = шу origin да /api/hybrid-vton; тўлиқ URL = GPU сервер (CORS) */
+      hybridVtonUrl: "GETDRESSAI_HYBRID_VTON_URL_PLACEHOLDER",
+      /* Бир хил origin: /api/hybrid-marketplace-search; бошқа сервер: тўлиқ URL */
+      hybridMarketplaceUrl: "/api/hybrid-marketplace-search",
+    };
+  </script>
+  <script src="./locales.js"></script>
+  <script src="./public/hybrid-tryon.js"></script>
+
+  <!-- Tailwind + Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #fafafa; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeInUp 0.4s ease-out forwards; }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    #camera-preview { transform: scaleX(-1); }
+    .tryon-overlay { position: relative; overflow: hidden; border-radius: 24px; }
+    .tryon-result-img { transition: transform 0.3s ease; }
+    .tryon-result-img:hover { transform: scale(1.02); }
+
+    @media (max-width: 768px) {
+      .desktop-nav { display: none; }
+      .mobile-bottom-nav { display: flex; }
+    }
+    @media (min-width: 769px) {
+      .mobile-bottom-nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen flex flex-col"></div>
+
+<script>
+  const CFG = window.GETDRESSAI_CONFIG || {};
+  const CONFIG = {
+    supabaseUrl: (CFG.supabaseUrl || "").trim() || "https://your-project.supabase.co",
+    supabaseAnonKey: (CFG.supabaseAnonKey || "").trim() || "your-anon-key",
+    aiProxyUrl: (CFG.openaiProxyUrl || CFG.aiProxyUrl || "/api/outfit").trim() || "/api/outfit",
+    aiModel: (CFG.aiModel || CFG.openaiModel || "mistralai/mixtral-8x7b").trim(),
+    pexelsApiKey: (CFG.pexelsApiKey || "").trim(),
+    amazonAffiliateTag: (CFG.amazonAffiliateTag || "yourtag-20").trim(),
+    hybridVtonUrl: (CFG.hybridVtonUrl || "").trim(),
+    hybridMarketplaceUrl: (CFG.hybridMarketplaceUrl || "/api/hybrid-marketplace-search").trim(),
+    siteUrl: window.location.origin
+  };
+
+  let currentUser = null;
+  let currentView = "matches";
+  let userMeasurements = null;
+  let userProfile = { gender: "", style: "", budget: "", fitPreference: "" };
+  const OUTFIT_PICKS = {
+    genders: ["male", "female"],
+    styles: ["casual", "business", "sporty", "street", "minimal", "evening", "party"],
+    fasons: ["slim", "regular", "relaxed", "oversized", "tailored", "bodycon", "aline"],
+  };
+
+  function outfitOptionKey(kind, val) {
+    if (kind === "gender") return `genderOpt_${val}`;
+    if (kind === "style") return `styleOpt_${val}`;
+    return `fasonOpt_${val}`;
+  }
+
+  function coerceFason(stored) {
+    const s = String(stored || "").toLowerCase().trim();
+    if (!s) return "regular";
+    for (const f of OUTFIT_PICKS.fasons) {
+      if (s === f || s.includes(f)) return f;
+    }
+    if (s.includes("slim")) return "slim";
+    if (s.includes("relax")) return "relaxed";
+    if (s.includes("over")) return "oversized";
+    if (s.includes("tailor")) return "tailored";
+    if (s.includes("body")) return "bodycon";
+    if (s.includes("a-line") || s.includes("aline")) return "aline";
+    return "regular";
+  }
+
+  function coerceGender(stored) {
+    const s = String(stored || "").toLowerCase().trim();
+    if (s === "male" || s === "m") return "male";
+    if (s === "female" || s === "f") return "female";
+    return OUTFIT_PICKS.genders.includes(stored) ? stored : "female";
+  }
+
+  function coerceStyle(stored) {
+    const s = String(stored || "").toLowerCase().trim();
+    if (OUTFIT_PICKS.styles.includes(s)) return s;
+    if (s.includes("business") || s.includes("office")) return "business";
+    if (s.includes("sport")) return "sporty";
+    if (s.includes("street")) return "street";
+    if (s.includes("minimal")) return "minimal";
+    if (s.includes("evening")) return "evening";
+    if (s.includes("party")) return "party";
+    return "casual";
+  }
+
+  /** @param {"gender"|"style"|"fason"} kind */
+  function outfitSelectOptionsHtml(kind, currentStored) {
+    let cur = currentStored;
+    if (kind === "gender") cur = coerceGender(currentStored);
+    else if (kind === "style") cur = coerceStyle(currentStored);
+    else cur = coerceFason(currentStored);
+    const keys =
+      kind === "gender"
+        ? OUTFIT_PICKS.genders
+        : kind === "style"
+          ? OUTFIT_PICKS.styles
+          : OUTFIT_PICKS.fasons;
+    return keys
+      .map(
+        (v) =>
+          `<option value="${v}" ${cur === v ? "selected" : ""}>${escapeHtml(t(outfitOptionKey(kind, v)))}</option>`
+      )
+      .join("");
+  }
+
+  let cart = [];
+  let savedOutfits = [];
+  let lastGeneratedOutfits = [];
+
+  const RECENT_STORAGE_KEY = "getdressai_recent_v1";
+  const RECENT_TTL_MS = 24 * 60 * 60 * 1000;
+
+  function pruneRecentBucket(data) {
+    const now = Date.now();
+    const gen = (data.generations || []).filter((x) => now - (x.at || 0) < RECENT_TTL_MS);
+    const pv = (data.productViews || []).filter((x) => now - (x.at || 0) < RECENT_TTL_MS);
+    return { generations: gen, productViews: pv };
+  }
+
+  function loadRecentBucket() {
+    try {
+      const raw = localStorage.getItem(RECENT_STORAGE_KEY);
+      if (!raw) return { generations: [], productViews: [] };
+      const data = JSON.parse(raw);
+      const next = pruneRecentBucket({
+        generations: data.generations || [],
+        productViews: data.productViews || [],
+      });
+      localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    } catch {
+      return { generations: [], productViews: [] };
+    }
+  }
+
+  function saveRecentBucket(data) {
+    const next = pruneRecentBucket(data);
+    localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next));
+    return next;
+  }
+
+  function appendRecentGeneration(looks, prompt) {
+    const cur = loadRecentBucket();
+    cur.generations.unshift({
+      at: Date.now(),
+      looks: looks || [],
+      prompt: String(prompt || "").slice(0, 500),
+    });
+    cur.generations = cur.generations.slice(0, 30);
+    saveRecentBucket(cur);
+  }
+
+  window.noteRecentProductView = (productId) => {
+    const p = getMarketplaceCatalog().find((x) => x.id === productId);
+    if (!p) return;
+    const cur = loadRecentBucket();
+    cur.productViews = (cur.productViews || []).filter((x) => x.id !== p.id);
+    cur.productViews.unshift({
+      at: Date.now(),
+      id: p.id,
+      name: p.name,
+      image: p.image,
+      price: p.price,
+    });
+    cur.productViews = cur.productViews.slice(0, 24);
+    saveRecentBucket(cur);
+  };
+
+  const TRANSLATIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.TRANSLATIONS) || {};
+  const LANG_OPTIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.LANG_OPTIONS) || [{ id: "en", label: "English" }];
+
+  let currentLang = localStorage.getItem("getdressai_lang") || "uz";
+  if (!TRANSLATIONS[currentLang]) currentLang = "en";
+
+  function t(key) {
+    const pack = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+    const fb = TRANSLATIONS.en || {};
+    return (pack && pack[key]) || fb[key] || key;
+  }
+
+  function applyDocumentLang() {
+    const rtl = currentLang === "ar";
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = rtl ? "rtl" : "ltr";
+    const titleEl = document.getElementById("doc-title");
+    const descEl = document.getElementById("doc-desc");
+    if (titleEl) titleEl.textContent = t("pageTitle");
+    if (descEl) descEl.setAttribute("content", t("metaDescription"));
+  }
+
+  function langSelectHtml(extraClass) {
+    const opts = LANG_OPTIONS.map(
+      (o) =>
+        `<option value="${o.id}" ${currentLang === o.id ? "selected" : ""}>${o.label}</option>`
+    ).join("");
+    return `<label class="flex flex-wrap items-center justify-end gap-2 text-sm ${extraClass || ""}"><span class="text-neutral-500 whitespace-nowrap">${t("langLabel")}</span><select onchange="setLang(this.value)" class="border rounded-lg px-2 py-1.5 bg-white max-w-[min(240px,70vw)]">${opts}</select></label>`;
+  }
+
+  function setLang(lang) {
+    if (!TRANSLATIONS[lang]) return;
+    currentLang = lang;
+    localStorage.setItem("getdressai_lang", lang);
+    applyDocumentLang();
+    render();
+  }
+
+  function toast(msg, type = "info") {
+    const toastDiv = document.createElement("div");
+    const bg =
+      type === "error" ? "bg-red-600" :
+      type === "success" ? "bg-emerald-600" :
+      "bg-neutral-800";
+    toastDiv.className = `fixed bottom-24 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white text-sm animate-fade-in ${bg}`;
+    toastDiv.textContent = msg;
+    document.body.appendChild(toastDiv);
+    setTimeout(() => toastDiv.remove(), 3000);
+  }
+
+  async function searchHybridMarketplaces() {
+    const styleEl = document.getElementById("mp-style");
+    const budgetEl = document.getElementById("mp-budget");
+    const sizeEl = document.getElementById("mp-size");
+    const box = document.getElementById("mp-results");
+    const style = styleEl ? String(styleEl.value || "").trim() : "";
+    if (!style) {
+      toast(t("mpNeedKeywords"), "error");
+      return;
+    }
+    const sources = [];
+    if (document.getElementById("mp-amazon")?.checked) sources.push("amazon");
+    if (document.getElementById("mp-ebay")?.checked) sources.push("ebay");
+    if (document.getElementById("mp-ali")?.checked) sources.push("aliexpress");
+    if (!sources.length) {
+      toast(t("mpNeedStore"), "error");
+      return;
+    }
+    const payload = { keywords: style, style, sources };
+    const sizeVal = sizeEl ? String(sizeEl.value || "").trim() : "";
+    if (sizeVal) payload.size = sizeVal;
+    else {
+      const rs = inferRecommendedSize(userMeasurements);
+      if (rs) payload.measurements = { recommendedSize: rs };
+    }
+    const bud = budgetEl ? parseInt(String(budgetEl.value || "").trim(), 10) : NaN;
+    if (Number.isFinite(bud) && bud > 0) payload.budget = { max: bud };
+    if (userProfile.budget) {
+      const pb = parseInt(String(userProfile.budget).replace(/\D/g, ""), 10);
+      if (Number.isFinite(pb) && pb > 0 && !payload.budget) payload.budget = { max: pb };
+    }
+    const base = CONFIG.hybridMarketplaceUrl.startsWith("http")
+      ? CONFIG.hybridMarketplaceUrl
+      : new URL(CONFIG.hybridMarketplaceUrl, CONFIG.siteUrl).href;
+    if (box) {
+      box.innerHTML = `<p class="text-center py-8 text-neutral-600">${escapeHtml(t("mpSearching"))}</p>`;
+    }
+    try {
+      const res = await fetch(base, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || data.message || res.statusText || "Search failed");
+      }
+      const products = Array.isArray(data.products) ? data.products : [];
+      const total = data.totalCount != null ? data.totalCount : products.length;
+      const errs = data.marketplaceErrors;
+      let errHtml = "";
+      if (errs && errs.length) {
+        errHtml =
+          '<div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-sm mb-4">' +
+          errs.map((e) => escapeHtml(`${e.marketplace}: ${e.error}`)).join(" · ") +
+          "</div>";
+      }
+      if (!box) return;
+      if (!products.length) {
+        box.innerHTML =
+          errHtml +
+          `<p class="text-center py-8 text-neutral-500">${escapeHtml(t("mpNoResults"))}</p>`;
+        return;
+      }
+      const cards = products
+        .map((p) => {
+          const badge =
+            p.marketplace === "amazon"
+              ? "bg-orange-100 text-orange-800"
+              : p.marketplace === "ebay"
+                ? "bg-blue-100 text-blue-800"
+                : "bg-red-100 text-red-800";
+          const score = Math.round(Number(p.totalFitScore) || 0);
+          const price =
+            p.price != null && p.price !== "" && Number.isFinite(Number(p.price))
+              ? Number(p.price).toFixed(2)
+              : "—";
+          const img = String(p.image || "").trim();
+          const href = String(p.affiliateUrl || "#").trim();
+          const title = escapeHtml(p.title || "");
+          const mk = escapeHtml(p.marketplace || "");
+          return (
+            `<div class="bg-white rounded-2xl border border-neutral-200 p-4 flex gap-4 flex-col sm:flex-row">` +
+            (img
+              ? `<img src="${escapeHtml(img)}" alt="" class="w-full sm:w-28 h-48 sm:h-28 object-cover rounded-xl bg-neutral-100" loading="lazy">`
+              : `<div class="w-full sm:w-28 h-32 sm:h-28 rounded-xl bg-neutral-100 flex items-center justify-center text-xs text-neutral-400">no img</div>`) +
+            `<div class="flex-1 min-w-0">` +
+            `<span class="text-xs px-2 py-0.5 rounded-full ${badge}">${mk}</span>` +
+            `<h3 class="font-semibold mt-2 text-neutral-900">${title}</h3>` +
+            `<div class="flex flex-wrap justify-between gap-2 mt-2">` +
+            `<span class="text-lg font-bold">$${escapeHtml(price)}</span>` +
+            `<span class="text-sm text-neutral-500">${score}% ${escapeHtml(t("mpFit"))}</span>` +
+            `</div>` +
+            (href && href !== "#"
+              ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="inline-block mt-3 text-sm text-blue-600 font-medium">${escapeHtml(t("mpShop"))} →</a>`
+              : "") +
+            `</div></div>`
+          );
+        })
+        .join("");
+      box.innerHTML =
+        errHtml +
+        `<p class="text-sm text-neutral-600 mb-4">${escapeHtml(t("mpFound"))}: <strong>${total}</strong></p>` +
+        `<div class="space-y-4">${cards}</div>`;
+    } catch (e) {
+      if (box) {
+        box.innerHTML =
+          `<p class="text-center py-8 text-red-600 text-sm">${escapeHtml(e.message || String(e))}</p>`;
+      }
+      toast(e.message || "Search failed", "error");
+    }
+  }
+  window.searchHybridMarketplaces = searchHybridMarketplaces;
+
+  function saveUserData() {
+    if (currentUser) {
+      localStorage.setItem(`getdressai_user_${currentUser.id}`, JSON.stringify({ profile: userProfile, measurements: userMeasurements, cart }));
+    }
+  }
+  function loadUserData() {
+    if (currentUser) {
+      const data = localStorage.getItem(`getdressai_user_${currentUser.id}`);
+      if (data) {
+        const parsed = JSON.parse(data);
+        userProfile = { gender: "", style: "", budget: "", fitPreference: "", ...(parsed.profile || {}) };
+        userMeasurements = parsed.measurements || null;
+        cart = parsed.cart || [];
+      }
+    }
+  }
+
+  let supabaseClient = null;
+  let authListenerBound = false;
+
+  function isSupabaseConfigured() {
+    const u = (CONFIG.supabaseUrl || "").trim();
+    const k = (CONFIG.supabaseAnonKey || "").trim();
+    if (!u || !k) return false;
+    if (u.includes("PASTE_YOUR") || k.includes("PASTE_YOUR")) return false;
+    if (u.includes("your-project.supabase.co")) return false;
+    if (k === "your-anon-key") return false;
+    return true;
+  }
+
+  async function ensureSupabase() {
+    if (supabaseClient) return supabaseClient;
+    if (!isSupabaseConfigured()) return null;
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    supabaseClient = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: "pkce",
+      },
+    });
+    return supabaseClient;
+  }
+
+  function applyAuthUser(user) {
+    if (!user) return;
+    currentUser = {
+      id: user.id,
+      email: user.email || "",
+      name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+    };
+    loadUserData();
+  }
+
+  async function initAuth() {
+    const sb = await ensureSupabase();
+    if (!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) applyAuthUser(session.user);
+    if (authListenerBound) return;
+    authListenerBound = true;
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        currentUser = null;
+        userMeasurements = null;
+        cart = [];
+        savedOutfits = [];
+        render();
+        return;
+      }
+      if (session?.user) {
+        applyAuthUser(session.user);
+        render();
+      }
+    });
+  }
+
+  async function initCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const video = document.getElementById("camera-preview");
+      if (video) { video.srcObject = stream; await video.play(); }
+      return stream;
+    } catch (err) { toast(t("toastCameraDenied"), "error"); return null; }
+  }
+  function capturePhoto(videoElement) {
+    const canvas = document.createElement("canvas");
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    canvas.getContext("2d").drawImage(videoElement, 0, 0);
+    return canvas.toDataURL("image/jpeg", 0.9);
+  }
+  async function analyzePhotoFromFile(file) {
+    toast(t("toastAnalyzingBody"), "info");
+    setTimeout(() => {
+      userMeasurements = {
+        chest: Math.floor(Math.random() * 20 + 80),
+        waist: Math.floor(Math.random() * 15 + 70),
+        hips: Math.floor(Math.random() * 15 + 85),
+        height: 170,
+        weight: 70,
+        recommendedSize: ["XS", "S", "M", "L", "XL"][Math.floor(Math.random() * 5)]
+      };
+      toast(t("measurementsSaved"), "success");
+      saveUserData();
+      render();
+    }, 1500);
+  }
+
+  function inferRecommendedSize(m) {
+    if (!m) return null;
+    if (m.recommendedSize && String(m.recommendedSize).trim()) return String(m.recommendedSize).trim().toUpperCase();
+    const ch = parseFloat(m.chest);
+    if (!Number.isFinite(ch)) return null;
+    if (ch < 88) return "S";
+    if (ch < 96) return "M";
+    if (ch < 104) return "L";
+    return "XL";
+  }
+
+  function scoreMatchForProduct(product) {
+    let score = 0.12;
+    const size = inferRecommendedSize(userMeasurements);
+    const sizes = product.sizes || [];
+    if (size && sizes.some((sz) => String(sz).toUpperCase() === String(size).toUpperCase())) {
+      score += 0.4;
+    } else if (product.category === "pants" && userMeasurements?.waist) {
+      const w = parseFloat(userMeasurements.waist);
+      if (sizes.some((sz) => /^\d{2}$/.test(String(sz)) && Math.abs(parseFloat(sz) - w) <= 2)) score += 0.38;
+      else if (Number.isFinite(w)) score += 0.15;
+    } else if (size) {
+      score += 0.2;
+    }
+    const toks = String(userProfile.style || "")
+      .toLowerCase()
+      .split(/[,\s]+/)
+      .filter(Boolean);
+    const pStyles = (product.styles || []).map((x) => String(x).toLowerCase());
+    let hit = 0;
+    for (const tok of toks) {
+      if (pStyles.some((ps) => ps.includes(tok) || tok.includes(ps))) hit++;
+    }
+    score += Math.min(0.32, hit * 0.11);
+    const fitTok = String(userProfile.fitPreference || "")
+      .toLowerCase()
+      .trim();
+    if (fitTok && product.fit && String(product.fit).toLowerCase().includes(fitTok)) score += 0.12;
+    const budget = parseFloat(String(userProfile.budget || "").replace(/[^0-9.]/g, ""));
+    if (Number.isFinite(budget) && product.price <= budget) score += 0.08;
+    return Math.min(0.999, Math.max(0.04, score));
+  }
+
+  function getMarketplaceCatalog() {
+    return [
+      { id: "p1", name: t("productP1"), price: 49.99, image: "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?w=300", category: "shirts", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["office", "minimal", "classic"], fit: "slim", partnerQuery: "mens white dress shirt slim fit" },
+      { id: "p2", name: t("productP2"), price: 79.99, image: "https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?w=300", category: "pants", vtonGarmentType: "lower", sizes: ["28", "30", "32", "34"], styles: ["casual", "street", "weekend"], fit: "slim", partnerQuery: "mens slim fit jeans dark wash" },
+      { id: "p3", name: t("productP3"), price: 199.99, image: "https://images.pexels.com/photos/1464629/pexels-photo-1464629.jpeg?w=300", category: "outerwear", vtonGarmentType: "upper", sizes: ["S", "M", "L"], styles: ["street", "casual", "layered"], fit: "regular", partnerQuery: "mens black leather jacket" },
+      { id: "p4", name: t("productP4"), price: 89.99, image: "https://images.pexels.com/photos/985265/pexels-photo-985265.jpeg?w=300", category: "dresses", vtonGarmentType: "dress", sizes: ["XS", "S", "M", "L"], styles: ["summer", "minimal", "casual"], fit: "regular", partnerQuery: "womens linen midi dress summer" },
+      { id: "p5", name: t("productP5"), price: 249.99, image: "https://images.pexels.com/photos/7671165/pexels-photo-7671165.jpeg?w=300", category: "outerwear", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["office", "minimal", "warm"], fit: "tailored", partnerQuery: "womens tailored wool coat camel" },
+      { id: "p6", name: t("productP6"), price: 69.99, image: "https://images.pexels.com/photos/45982/pexels-photo-45982.jpeg?w=300", category: "knitwear", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["casual", "cozy", "weekend"], fit: "relaxed", partnerQuery: "unisex cable knit sweater cream" },
+    ];
+  }
+
+  function stripDataUrlBase64(s) {
+    const t = String(s || "").trim();
+    const m = /^data:image\/[a-z0-9.+-]+;base64,(.+)$/i.exec(t);
+    return m ? m[1] : t.replace(/^data:/, "");
+  }
+
+  /**
+   * Renders a simple full-body schematic “virtual mannequin” from profile measurements (canvas → PNG data URL).
+   * Used when the user prefers not to upload a real photo.
+   */
+  function buildVirtualMannequinDataUrl() {
+    const m = userMeasurements || {};
+    let heightCm = parseFloat(m.height);
+    let chestCm = parseFloat(m.chest);
+    let waistCm = parseFloat(m.waist);
+    if (!Number.isFinite(heightCm)) heightCm = 170;
+    if (!Number.isFinite(chestCm)) chestCm = 96;
+    if (!Number.isFinite(waistCm)) waistCm = 78;
+
+    const g = coerceGender(userProfile.gender || "female");
+    const male = g === "male";
+    const W = 360;
+    const H = 520;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(0, 0, W, H);
+
+    const chestRef = 96;
+    const waistRef = 78;
+    const shoulderHalf = Math.min(78, 48 * (chestCm / chestRef) * (male ? 1.08 : 1));
+    const waistHalf = Math.min(62, 38 * (waistCm / waistRef));
+    const cx = W / 2;
+    const headR = male ? 26 : 24;
+    let y = 52;
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.beginPath();
+    ctx.arc(cx, y, headR, 0, Math.PI * 2);
+    ctx.fill();
+
+    y += headR + 6;
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillRect(cx - (male ? 15 : 13), y, male ? 30 : 26, 20);
+    y += 20;
+
+    const topY = y;
+    const torsoLen = 155 * (Math.min(205, Math.max(150, heightCm)) / 175);
+    const botY = topY + torsoLen;
+    ctx.beginPath();
+    ctx.moveTo(cx - shoulderHalf, topY);
+    ctx.lineTo(cx + shoulderHalf, topY);
+    ctx.lineTo(cx + waistHalf, botY - 18);
+    ctx.lineTo(cx - waistHalf, botY - 18);
+    ctx.closePath();
+    ctx.fill();
+
+    const legTop = botY - 18;
+    const legGap = male ? 14 : 12;
+    const legW = (male ? 22 : 20) * (waistCm / waistRef);
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillRect(cx - legGap - legW, legTop, legW, 168);
+    ctx.fillRect(cx + legGap, legTop, legW, 168);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "600 13px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText(`${Math.round(heightCm)} cm · ${male ? "M" : "F"}`, 12, H - 56);
+    ctx.fillText(`${t("chest")} ${Math.round(chestCm)} · ${t("waist")} ${Math.round(waistCm)}`, 12, H - 38);
+    const rs = inferRecommendedSize({ chest: String(chestCm), waist: String(waistCm) });
+    if (rs) ctx.fillText(`${t("recommendedSize")}: ${rs}`, 12, H - 20);
+
+    return canvas.toDataURL("image/png");
+  }
+
+  async function fetchImageAsBase64(url) {
+    const r = await fetch(url, { mode: "cors" });
+    if (!r.ok) throw new Error("Garment image HTTP " + r.status);
+    const blob = await r.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const d = reader.result;
+        const raw = typeof d === "string" ? stripDataUrlBase64(d) : "";
+        resolve(raw);
+      };
+      reader.onerror = () => reject(new Error("read failed"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function tryHybridVtonThenDemo(product, photoDataUrl, tryOnMeta) {
+    if (window.hybridTryOn) {
+      window.hybridTryOn.apiUrl = CONFIG.hybridVtonUrl || "/api/hybrid-vton";
+    }
+    const endpoint = CONFIG.hybridVtonUrl || "/api/hybrid-vton";
+    try {
+      const garmentB64 = await fetchImageAsBase64(product.image);
+      const personB64 = stripDataUrlBase64(photoDataUrl);
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personImageBase64: personB64,
+          garments: [{ image: garmentB64, type: product.vtonGarmentType || "upper" }],
+          accessories: [],
+          useFastCache: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && window.hybridTryOn && typeof window.hybridTryOn.displayResult === "function") {
+        window.hybridTryOn.displayResult(data, photoDataUrl);
+        toast(t("tryOnRealSuccess"), "success");
+        return;
+      }
+      throw new Error(data.error || res.statusText || "VTON failed");
+    } catch (e) {
+      console.warn("Hybrid VTON:", e);
+      toast(t("tryOnDemoFallback"), "info");
+      await virtualTryOn(product, photoDataUrl, tryOnMeta);
+    }
+  }
+
+  function getAmazonLink(query) {
+    const tag = CONFIG.amazonAffiliateTag;
+    if (!tag) return `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+    return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${encodeURIComponent(tag)}`;
+  }
+
+  function partnerUrlForProduct(product) {
+    const q = product?.partnerQuery || product?.name || "";
+    return getAmazonLink(q);
+  }
+
+  function showTryOnModal(product, userPhotoBase64, meta) {
+    const isVirtual = Boolean(meta && meta.isVirtual);
+    const leftLabel = isVirtual ? t("virtualModelLabel") : t("yourPhotoLabel");
+    const virtualBanner = isVirtual
+      ? `<p class="text-xs text-sky-900 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2 mb-2">${escapeHtml(t("tryOnVirtualBanner"))}</p>`
+      : "";
+    const old = document.getElementById("tryon-modal-root");
+    if (old) old.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "tryon-modal-root";
+    wrap.className = "fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm";
+    const href = partnerUrlForProduct(product);
+    wrap.innerHTML = `
+      <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border p-6">
+        <div class="flex justify-between items-start gap-2 mb-4">
+          <h3 class="text-lg font-bold">${escapeHtml(t("tryOn"))}</h3>
+          <button type="button" class="text-neutral-500 hover:text-neutral-900 text-xl leading-none" data-close-modal>&times;</button>
+        </div>
+        <p class="text-sm text-neutral-600 mb-4">${escapeHtml(product?.name || "")}</p>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <p class="text-xs text-neutral-500 mb-1">${escapeHtml(leftLabel)}</p>
+            <img src="${userPhotoBase64}" alt="" class="w-full rounded-xl object-cover aspect-[3/4] bg-neutral-100">
+          </div>
+          <div>
+            <p class="text-xs text-neutral-500 mb-1">${escapeHtml(t("shop"))}</p>
+            <img src="${escapeHtml(product?.image || "")}" alt="" class="w-full rounded-xl object-cover aspect-[3/4] bg-neutral-100">
+          </div>
+        </div>
+        ${virtualBanner}
+        <p class="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-4">${escapeHtml(t("tryOnSimulated"))}</p>
+        <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer sponsored" class="block w-full text-center bg-neutral-900 text-white py-3 rounded-xl font-medium">${escapeHtml(t("buyPartner"))}</a>
+      </div>
+    `;
+    wrap.querySelector("[data-close-modal]").onclick = () => wrap.remove();
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap) wrap.remove();
+    });
+    document.body.appendChild(wrap);
+  }
+
+  async function virtualTryOn(product, userPhotoBase64, meta) {
+    toast(t("toastGeneratingTryOn"), "info");
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        showTryOnModal(product, userPhotoBase64, meta || {});
+        resolve({ success: true, resultImage: userPhotoBase64, confidence: 0.92, method: "demo" });
+      }, 2000);
+    });
+  }
+
+  function showTryOnModePicker(productId) {
+    const product = getMarketplaceCatalog().find((p) => p.id === productId);
+    if (!product) return;
+    const old = document.getElementById("tryon-mode-modal");
+    if (old) old.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "tryon-mode-modal";
+    wrap.className = "fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm";
+    wrap.innerHTML = `
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border p-6">
+        <div class="flex justify-between items-start gap-2 mb-3">
+          <h3 class="text-lg font-bold">${escapeHtml(t("tryOnChooseTitle"))}</h3>
+          <button type="button" class="text-neutral-500 hover:text-neutral-900 text-xl leading-none" data-close-mode>&times;</button>
+        </div>
+        <p class="text-sm text-neutral-600 mb-4">${escapeHtml(product.name || "")}</p>
+        <p class="text-xs text-neutral-500 mb-4">${escapeHtml(t("tryOnVirtualExplain"))}</p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button type="button" data-mode-photo class="flex-1 border border-neutral-300 rounded-xl py-3 px-4 text-sm font-medium hover:bg-neutral-50">${escapeHtml(t("tryOnUseMyPhoto"))}</button>
+          <button type="button" data-mode-virtual class="flex-1 bg-neutral-900 text-white rounded-xl py-3 px-4 text-sm font-medium hover:bg-neutral-800">${escapeHtml(t("tryOnUseVirtual"))}</button>
+        </div>
+      </div>
+    `;
+    const close = () => wrap.remove();
+    wrap.querySelector("[data-close-mode]").onclick = close;
+    wrap.querySelector("[data-mode-photo]").onclick = () => {
+      close();
+      startTryOnPhotoUpload(productId);
+    };
+    wrap.querySelector("[data-mode-virtual]").onclick = () => {
+      close();
+      runTryOnVirtual(productId);
+    };
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap) close();
+    });
+    document.body.appendChild(wrap);
+  }
+
+  function startTryOnPhotoUpload(productId) {
+    const product = getMarketplaceCatalog().find((p) => p.id === productId);
+    if (!product) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const photo = ev.target.result;
+        toast(t("toastProcessingTryOn"), "info");
+        await tryHybridVtonThenDemo(product, photo, { isVirtual: false });
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
+  async function runTryOnVirtual(productId) {
+    const product = getMarketplaceCatalog().find((p) => p.id === productId);
+    if (!product) return;
+    const m = userMeasurements || {};
+    const has = ["height", "chest", "waist"].some((k) => {
+      const v = m[k];
+      return v !== undefined && v !== "" && String(v).trim() !== "" && Number.isFinite(parseFloat(v));
+    });
+    if (!has) toast(t("toastVirtualDefaults"), "info");
+    const photoDataUrl = buildVirtualMannequinDataUrl();
+    toast(t("toastProcessingTryOn"), "info");
+    await tryHybridVtonThenDemo(product, photoDataUrl, { isVirtual: true });
+  }
+
+  async function generateOutfits(prompt) {
+    const response = await fetch(CONFIG.aiProxyUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: CONFIG.aiModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a fashion stylist for a partner marketplace app. Suggest wearable looks the user can buy via search/affiliate links. Prefer items that match the user's stated size, style, and fit. Return ONLY JSON: {\"looks\":[{\"title\":\"...\",\"pieces\":[{\"name\":\"...\",\"note\":\"...\"}],\"colors\":[\"...\"],\"tips\":[\"...\"]}]}",
+          },
+          {
+            role: "user",
+            content: `Outfit request: ${prompt}. Gender: ${userProfile.gender || "any"}. Style: ${userProfile.style || "any"}. Silhouette / fit: ${userProfile.fitPreference || "any"}. Budget: ${userProfile.budget || "flexible"}. Size hint: ${userMeasurements?.recommendedSize || inferRecommendedSize(userMeasurements) || "unknown"}.`,
+          },
+        ],
+        temperature: 0.7,
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err = data.error || data.message || response.statusText;
+      throw new Error(typeof err === "string" ? err : t("errGeneration"));
+    }
+    const content = data.choices?.[0]?.message?.content;
+    try { return JSON.parse(content); } catch { return { looks: [] }; }
+  }
+
+  function getMockProducts() {
+    return getMarketplaceCatalog();
+  }
+
+  function addToCart(productId) {
+    const product = getMarketplaceCatalog().find((p) => p.id === productId);
+    if (!product) return;
+    cart.push({ ...product, qty: 1 });
+    saveUserData();
+    toast(t("addToCart"), "success");
+    render();
+  }
+  function removeFromCart(productId) { cart = cart.filter(p => p.id !== productId); saveUserData(); render(); }
+
+  function render() {
+    const app = document.getElementById("app");
+    if (!currentUser) {
+      app.innerHTML = `
+        <div class="min-h-screen flex flex-col bg-white">
+          <header class="border-b px-6 py-4 flex justify-between items-center">
+            <span class="text-xl font-bold">${t("appName")}</span>
+            ${langSelectHtml("")}
+          </header>
+          <div class="flex-1 flex items-center justify-center px-6 py-16">
+            <div class="max-w-md w-full bg-neutral-50 rounded-2xl p-8 shadow-sm border">
+              <h2 class="text-2xl font-bold text-center">${t("signin")}</h2>
+              <button type="button" id="btn-google-signin" onclick="signInWithGoogle()" class="mt-6 w-full flex items-center justify-center gap-3 border border-neutral-200 rounded-xl py-3 bg-white hover:bg-neutral-50 shadow-sm font-medium text-neutral-800">
+                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>${t("google")}</span>
+              </button>
+              <p class="mt-2 text-xs text-neutral-500 text-center leading-relaxed">${t("googleOAuthHint")}</p>
+              <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t"></div></div><div class="relative flex justify-center text-xs"><span class="bg-neutral-50 px-3">${t("loginOr")}</span></div></div>
+              <input id="loginEmail" type="email" autocomplete="email" placeholder="${t("email")}" class="w-full border rounded-xl px-4 py-3 mb-3">
+              <input id="loginPassword" type="password" autocomplete="current-password" placeholder="${t("password")}" class="w-full border rounded-xl px-4 py-3 mb-4">
+              <button type="button" onclick="signInWithEmail()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium">${t("signin")}</button>
+              <p class="text-center text-sm mt-4"><button type="button" onclick="handleEmailSignup()" class="text-neutral-600 underline">${t("signup")}</button></p>
+              <p class="text-center text-xs text-neutral-500 mt-6 max-w-sm mx-auto leading-relaxed">${escapeHtml(t("premiumSubtitle"))}</p>
+              <p class="text-center mt-2"><a href="public/premium.html" class="text-purple-600 font-semibold hover:underline">${t("premiumOpenFull")}</a></p>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      const mpSelSize = inferRecommendedSize(userMeasurements) || "";
+      app.innerHTML = `
+        <div class="min-h-screen bg-neutral-50">
+          <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b px-4 py-3 flex justify-between items-center">
+            <span class="text-xl font-bold">${t("appName")}</span>
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end max-w-[min(100%,42rem)]">
+              ${langSelectHtml("")}
+              <span class="text-sm text-neutral-500 hidden sm:inline truncate max-w-[14rem]" title="${escapeHtml(currentUser.email)}">${escapeHtml(currentUser.name ? currentUser.name + " · " + currentUser.email : currentUser.email)}</span>
+              <button onclick="logout()" class="border rounded-full px-4 py-1.5 text-sm shrink-0">${t("signOut")}</button>
+            </div>
+          </header>
+
+          <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex flex-col lg:flex-row gap-6">
+              <aside class="desktop-nav w-64 shrink-0">
+                <nav class="sticky top-20 space-y-1">
+                  ${["matches","generate","recent","wardrobe","shop","marketplace","cart","premium","profile"].map(v => `<button onclick="switchView('${v}')" id="nav-${v}" class="w-full text-left px-4 py-3 rounded-xl ${currentView===v ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'}">${t(v)}</button>`).join("")}
+                </nav>
+              </aside>
+
+              <main class="flex-1 min-w-0">
+                <div id="view-matches" class="${currentView === 'matches' ? 'block' : 'hidden'} animate-fade-in">
+                  <h2 class="text-2xl font-bold">${t("matches")}</h2>
+                  <p class="text-sm text-neutral-600 mt-2 max-w-2xl">${t("shopSubtitle")}</p>
+                  <div id="matchGrid" class="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+                  <p class="text-xs text-neutral-500 mt-6">${t("partnerDisclosure")}</p>
+                </div>
+
+                <div id="view-generate" class="${currentView === 'generate' ? 'block' : 'hidden'} animate-fade-in">
+                  <div class="bg-white rounded-2xl border p-6 shadow-sm">
+                    <p class="text-sm text-neutral-600 mb-4">${t("genPickHint")}</p>
+                    <div class="grid sm:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label for="gen-gender" class="text-sm font-medium text-neutral-800">${t("lblGender")}</label>
+                        <select id="gen-gender" onchange="syncOutfitPicksFromUi()" class="w-full border border-neutral-200 rounded-xl px-3 py-2 mt-1 bg-white">${outfitSelectOptionsHtml("gender", userProfile.gender)}</select>
+                      </div>
+                      <div>
+                        <label for="gen-style" class="text-sm font-medium text-neutral-800">${t("lblStyle")}</label>
+                        <select id="gen-style" onchange="syncOutfitPicksFromUi()" class="w-full border border-neutral-200 rounded-xl px-3 py-2 mt-1 bg-white">${outfitSelectOptionsHtml("style", userProfile.style)}</select>
+                      </div>
+                      <div>
+                        <label for="gen-fason" class="text-sm font-medium text-neutral-800">${t("lblFason")}</label>
+                        <select id="gen-fason" onchange="syncOutfitPicksFromUi()" class="w-full border border-neutral-200 rounded-xl px-3 py-2 mt-1 bg-white">${outfitSelectOptionsHtml("fason", userProfile.fitPreference)}</select>
+                      </div>
+                    </div>
+                    <textarea id="promptInput" rows="3" class="w-full border rounded-xl px-4 py-3" placeholder="${t("promptPlaceholder")}"></textarea>
+                    <button onclick="handleGenerate()" id="generateBtn" class="mt-4 bg-neutral-900 text-white px-6 py-2 rounded-full">${t("generateBtn")}</button>
+                  </div>
+                  <div id="outfitResults" class="mt-6 space-y-6"></div>
+                </div>
+
+                <div id="view-recent" class="${currentView === 'recent' ? 'block' : 'hidden'} animate-fade-in">
+                  <h2 class="text-2xl font-bold">${t("recentTitle")}</h2>
+                  <div class="mt-4 p-4 rounded-2xl border border-amber-200 bg-amber-50 text-amber-950 text-sm leading-relaxed">${escapeHtml(t("recentRetentionBanner"))}</div>
+                  <h3 class="text-lg font-semibold mt-8 mb-3">${t("recentSectionGen")}</h3>
+                  <div id="recentGenerationsList" class="mt-2 min-h-[2rem]"></div>
+                  <h3 class="text-lg font-semibold mt-8 mb-3">${t("recentSectionViews")}</h3>
+                  <div id="recentProductViewsList" class="mt-2 min-h-[2rem]"></div>
+                </div>
+
+                <div id="view-wardrobe" class="${currentView === 'wardrobe' ? 'block' : 'hidden'}">
+                  <h2 class="text-2xl font-bold">${t("wardrobe")}</h2>
+                  <div id="wardrobeList" class="mt-4 space-y-4"></div>
+                </div>
+
+                <div id="view-shop" class="${currentView === 'shop' ? 'block' : 'hidden'}">
+                  <h2 class="text-2xl font-bold">${t("shop")}</h2>
+                  <p class="text-sm text-neutral-600 mt-2">${t("shopSubtitle")}</p>
+                  <div id="productGrid" class="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+                  <p class="text-xs text-neutral-500 mt-6">${t("partnerDisclosure")}</p>
+                  <p class="text-sm mt-4"><button type="button" onclick="switchView('marketplace')" class="text-blue-600 hover:underline font-medium">${t("marketplace")} →</button></p>
+                </div>
+
+                <div id="view-marketplace" class="${currentView === 'marketplace' ? 'block' : 'hidden'} animate-fade-in">
+                  <h2 class="text-2xl font-bold">${t("marketplace")}</h2>
+                  <p class="text-sm text-neutral-600 mt-2 max-w-2xl">${t("marketplaceSubtitle")}</p>
+                  <div class="mt-6 bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                      <div>
+                        <label class="text-sm font-medium text-neutral-800">${t("mpSizeLabel")}</label>
+                        <select id="mp-size" class="w-full border border-neutral-200 rounded-xl px-4 py-2 mt-1 bg-white">
+                          <option value="">${t("mpSizeAuto")}</option>
+                          ${["XS","S","M","L","XL","XXL"].map((s) => `<option value="${s}" ${mpSelSize === s ? "selected" : ""}>${s}</option>`).join("")}
+                        </select>
+                      </div>
+                      <div>
+                        <label for="mp-style" class="text-sm font-medium text-neutral-800">${t("mpStyleLabel")}</label>
+                        <select id="mp-style" class="w-full border border-neutral-200 rounded-xl px-4 py-2 mt-1 bg-white">${outfitSelectOptionsHtml("style", userProfile.style)}</select>
+                      </div>
+                      <div>
+                        <label class="text-sm font-medium text-neutral-800">${t("mpBudgetLabel")}</label>
+                        <input id="mp-budget" type="number" min="0" class="w-full border border-neutral-200 rounded-xl px-4 py-2 mt-1" placeholder="150" value="${escapeHtml(String(userProfile.budget || "").replace(/[^0-9.]/g, "") || "")}">
+                      </div>
+                    </div>
+                    <p class="text-sm font-medium text-neutral-800 mb-2">${t("mpSources")}</p>
+                    <div class="flex flex-wrap gap-4 mb-6">
+                      <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" id="mp-amazon" checked class="rounded"> ${t("mpAmazon")}</label>
+                      <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" id="mp-ebay" checked class="rounded"> ${t("mpEbay")}</label>
+                      <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" id="mp-ali" class="rounded"> ${t("mpAli")}</label>
+                    </div>
+                    <button type="button" onclick="searchHybridMarketplaces()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium hover:bg-neutral-800">${t("mpSearchBtn")}</button>
+                    <div id="mp-results" class="mt-8 space-y-4"></div>
+                  </div>
+                </div>
+
+                <div id="view-cart" class="${currentView === 'cart' ? 'block' : 'hidden'}">
+                  <h2 class="text-2xl font-bold">${t("cart")}</h2>
+                  <div id="cartList" class="mt-4 space-y-3"></div>
+                </div>
+
+                <div id="view-premium" class="${currentView === 'premium' ? 'block' : 'hidden'} animate-fade-in">
+                  <h2 class="text-2xl font-bold">${t("premium")}</h2>
+                  <p class="text-sm text-neutral-600 mt-2 max-w-2xl">${escapeHtml(t("premiumSubtitle"))}</p>
+                  <div class="mt-6 max-w-4xl grid md:grid-cols-2 gap-4">
+                    <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-6 shadow-sm">
+                      <span class="text-xs font-bold text-emerald-800 uppercase tracking-wide">${escapeHtml(t("billingYearlyHead"))}</span>
+                      <p class="text-sm text-neutral-800 mt-3 leading-relaxed">${escapeHtml(t("billingYearlySub"))}</p>
+                    </div>
+                    <div class="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm">
+                      <h3 class="text-sm font-bold text-neutral-900">${escapeHtml(t("billingGensPolicy"))}</h3>
+                      <ul class="mt-3 text-sm text-neutral-700 space-y-2 list-disc pl-5">
+                        <li>${escapeHtml(t("billingOveragePolicy"))}</li>
+                        <li>${escapeHtml(t("billingDepositPolicy"))}</li>
+                      </ul>
+                      <p class="text-xs text-neutral-500 mt-4 leading-relaxed">${escapeHtml(t("billingStripeNote"))}</p>
+                    </div>
+                  </div>
+                  <div class="mt-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-8 text-center max-w-2xl">
+                    <span class="text-5xl">🎁</span>
+                    <h3 class="text-2xl font-bold mt-3">3 Days Free Trial</h3>
+                    <p class="text-white/85 mt-2">Try premium — then <strong>yearly first</strong> at checkout; monthly also available.</p>
+                    <a href="public/premium.html" class="inline-block mt-6 bg-white text-purple-600 px-8 py-3 rounded-full font-semibold hover:shadow-lg transition">${t("premiumOpenFull")}</a>
+                  </div>
+                  <p class="text-xs text-neutral-500 mt-6 max-w-2xl">${t("partnerDisclosure")}</p>
+                </div>
+
+                <div id="view-profile" class="${currentView === 'profile' ? 'block' : 'hidden'}">
+                  <h2 class="text-2xl font-bold">${t("profile")}</h2>
+                  <div class="mt-4 grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl border p-6">
+                      <h3 class="font-semibold mb-4">👤 ${t("profile")}</h3>
+                      <label class="text-sm font-medium text-neutral-800">${t("lblGender")}</label>
+                      <select id="profileGender" class="w-full border rounded-xl px-4 py-2 mb-3 mt-1 bg-white">${outfitSelectOptionsHtml("gender", userProfile.gender)}</select>
+                      <label class="text-sm font-medium text-neutral-800">${t("lblStyle")}</label>
+                      <select id="profileStyle" class="w-full border rounded-xl px-4 py-2 mb-3 mt-1 bg-white">${outfitSelectOptionsHtml("style", userProfile.style)}</select>
+                      <label class="text-sm font-medium text-neutral-800">${t("lblFason")}</label>
+                      <select id="profileFit" class="w-full border rounded-xl px-4 py-2 mb-3 mt-1 bg-white">${outfitSelectOptionsHtml("fason", userProfile.fitPreference)}</select>
+                      <label class="text-sm font-medium text-neutral-800">${t("phBudget")}</label>
+                      <input id="profileBudget" placeholder="${t("phBudget")}" class="w-full border rounded-xl px-4 py-2 mb-3 mt-1" value="${userProfile.budget}">
+                      <button onclick="saveProfile()" class="bg-neutral-900 text-white px-6 py-2 rounded-full">${t("saveBtn")}</button>
+                    </div>
+                    <div class="bg-white rounded-2xl border p-6">
+                      <h3 class="font-semibold mb-4">📏 ${t("tryOn")}</h3>
+                      <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-4">
+                          <div class="min-w-0">
+                            <label for="measHeight" class="block text-xs font-semibold text-neutral-700 mb-1">${escapeHtml(t("height"))} <span class="text-neutral-500 font-normal">(${escapeHtml(t("unitCm"))})</span></label>
+                            <input id="measHeight" type="number" inputmode="decimal" autocomplete="off" placeholder="175" value="${userMeasurements?.height || ''}" class="w-full border rounded-xl px-3 py-2">
+                          </div>
+                          <div class="min-w-0">
+                            <label for="measWeight" class="block text-xs font-semibold text-neutral-700 mb-1">${escapeHtml(t("weight"))} <span class="text-neutral-500 font-normal">(${escapeHtml(t("unitKg"))})</span></label>
+                            <input id="measWeight" type="number" inputmode="decimal" autocomplete="off" placeholder="70" value="${userMeasurements?.weight || ''}" class="w-full border rounded-xl px-3 py-2">
+                          </div>
+                          <div class="min-w-0">
+                            <label for="measChest" class="block text-xs font-semibold text-neutral-700 mb-1">${escapeHtml(t("chest"))} <span class="text-neutral-500 font-normal">(${escapeHtml(t("unitCm"))})</span></label>
+                            <input id="measChest" type="number" inputmode="decimal" autocomplete="off" placeholder="96" value="${userMeasurements?.chest || ''}" oninput="updateMeasSizePreview()" class="w-full border rounded-xl px-3 py-2">
+                          </div>
+                          <div class="min-w-0">
+                            <label for="measWaist" class="block text-xs font-semibold text-neutral-700 mb-1">${escapeHtml(t("waist"))} <span class="text-neutral-500 font-normal">(${escapeHtml(t("unitCm"))})</span></label>
+                            <input id="measWaist" type="number" inputmode="decimal" autocomplete="off" placeholder="78" value="${userMeasurements?.waist || ''}" oninput="updateMeasSizePreview()" class="w-full border rounded-xl px-3 py-2">
+                          </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-neutral-200">
+                          <p class="text-sm text-neutral-700">
+                            <span class="font-semibold">${escapeHtml(t("recommendedSize"))}:</span>
+                            <span id="measSizePreviewValue" class="text-xl font-bold text-neutral-900 ms-2">${escapeHtml(inferRecommendedSize(userMeasurements) || "—")}</span>
+                          </p>
+                          <p class="text-xs text-neutral-500 mt-2 leading-relaxed">${escapeHtml(t("sizeDerivedHint"))}</p>
+                        </div>
+                        <button onclick="saveMeasurements()" class="w-full bg-neutral-800 text-white py-2 rounded-xl">${t("analyzeBody")}</button>
+                        <button onclick="openVirtualTryOn()" class="w-full border py-2 rounded-xl">${t("tryOn")}</button>
+                        <p class="text-xs text-neutral-500">${t("pickProductForTryOn")}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+            </div>
+          </div>
+
+          <nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 justify-around z-50">
+            ${["matches","generate","recent","wardrobe","shop","marketplace","cart","premium","profile"].map(v => `<button onclick="switchView('${v}')" class="flex flex-col items-center gap-1 text-xs ${currentView===v ? 'text-neutral-900 font-semibold' : 'text-neutral-400'}">${t(v)}</button>`).join("")}
+          </nav>
+
+          <div id="chatWidget" class="fixed bottom-24 end-4 z-50">
+            <div id="chatPanel" class="absolute bottom-16 end-0 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border hidden flex-col overflow-hidden">
+              <div class="bg-neutral-900 text-white p-3 flex justify-between items-center gap-2"><span>🤖 ${t("chatTitle")}</span><button type="button" onclick="toggleChat()" class="shrink-0" aria-label="${t("closeBtn")}">✕</button></div>
+              <div id="chatMessages" class="h-80 overflow-y-auto p-3 space-y-2 bg-neutral-50"></div>
+              <div class="border-t p-2 flex gap-2"><input id="chatInput" class="flex-1 border rounded-xl px-3 py-2 text-sm" placeholder="${t("chatPlaceholder")}"><button type="button" onclick="sendChat()" class="bg-neutral-900 text-white px-4 py-2 rounded-xl shrink-0">${t("chatSend")}</button></div>
+            </div>
+            <button onclick="toggleChat()" class="w-14 h-14 rounded-full bg-neutral-900 text-white shadow-lg flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg></button>
+          </div>
+        </div>
+      `;
+
+      renderProducts();
+      renderMatches();
+      renderCart();
+      renderOutfitResults();
+      renderWardrobe();
+      renderRecentPanel();
+      setTimeout(() => {
+        if (typeof window.updateMeasSizePreview === "function") window.updateMeasSizePreview();
+      }, 0);
+    }
+  }
+
+  function productCardHtml(p) {
+    const sc = Math.round(scoreMatchForProduct(p) * 100);
+    const partner = partnerUrlForProduct(p);
+    const styles = (p.styles || []).join(", ");
+    return `
+      <div class="bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition flex flex-col cursor-pointer" onclick="noteRecentProductView('${p.id}')">
+        <div class="bg-neutral-900 text-white text-xs font-semibold px-3 py-1.5 text-center">${t("matchScore")}: ${sc}%</div>
+        <img src="${escapeHtml(p.image)}" alt="" class="h-48 w-full object-cover">
+        <div class="p-4 flex-1 flex flex-col">
+          <h3 class="font-semibold">${escapeHtml(p.name)}</h3>
+          <p class="text-xs text-neutral-500 mt-1">${escapeHtml(t("styleTagsLabel"))}: ${escapeHtml(styles)} · ${escapeHtml(t("fitLabel"))}: ${escapeHtml(p.fit || "—")}</p>
+          <p class="text-xs text-neutral-500">${escapeHtml(t("sizesLabel"))}: ${escapeHtml((p.sizes || []).join(", "))}</p>
+          <p class="text-lg font-bold mt-1">$${p.price.toFixed(2)}</p>
+          <div class="mt-auto pt-3 space-y-2">
+            <button type="button" onclick="event.stopPropagation(); openTryOnForProduct('${p.id}')" class="w-full border border-neutral-300 text-neutral-900 py-2 rounded-full text-sm">${escapeHtml(t("tryOnProduct"))}</button>
+            <a href="${escapeHtml(partner)}" onclick="event.stopPropagation()" target="_blank" rel="noopener noreferrer sponsored" class="block w-full text-center bg-neutral-100 text-neutral-900 py-2 rounded-full text-sm font-medium">${escapeHtml(t("buyPartner"))}</a>
+            <button type="button" onclick="event.stopPropagation(); addToCart('${p.id}')" class="w-full bg-neutral-900 text-white py-2 rounded-full text-sm">${escapeHtml(t("addToCart"))}</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById("productGrid");
+    if (!grid) return;
+    const items = [...getMarketplaceCatalog()].sort((a, b) => scoreMatchForProduct(b) - scoreMatchForProduct(a));
+    grid.innerHTML = items.map((p) => productCardHtml(p)).join("");
+  }
+
+  function renderMatches() {
+    const grid = document.getElementById("matchGrid");
+    if (!grid) return;
+    const items = [...getMarketplaceCatalog()].sort((a, b) => scoreMatchForProduct(b) - scoreMatchForProduct(a)).slice(0, 3);
+    grid.innerHTML = items.map((p) => productCardHtml(p)).join("");
+  }
+  function renderCart() {
+    const container = document.getElementById("cartList");
+    if (!container) return;
+    if (cart.length === 0) { container.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-neutral-500">${t("cartEmpty")}</div>`; return; }
+    let total = 0;
+    container.innerHTML = cart.map(p => { total += p.price; return `<div class="bg-white rounded-2xl border p-4 flex justify-between items-center"><div><h3 class="font-semibold">${escapeHtml(p.name)}</h3><p class="text-sm">$${p.price}</p></div><button type="button" onclick="removeFromCart('${p.id}')" class="text-red-500 text-sm">${t("remove")}</button></div>`; }).join("") + `<div class="bg-white rounded-2xl p-4 font-bold text-right">${t("totalLabel")}: $${total.toFixed(2)}</div>`;
+  }
+  function renderOutfitResults() {
+    if (currentView !== "generate" || !lastGeneratedOutfits.length) return;
+    const container = document.getElementById("outfitResults");
+    if (!container) return;
+    container.innerHTML = lastGeneratedOutfits.map((look, i) => `
+      <div class="bg-white rounded-2xl border p-6">
+        <div class="flex justify-between items-start gap-2"><span class="text-xs font-semibold text-neutral-400 uppercase">${t("lookLabel")} ${i+1}</span><button type="button" onclick="saveLookByIndex(${i})">📌 ${t("saveLookBtn")}</button></div>
+        <h3 class="text-xl font-bold mt-1">${escapeHtml(look.title || "")}</h3>
+        <ul class="mt-3 space-y-1">${(look.pieces || []).map(p => `<li>• ${escapeHtml(p.name || "")} — ${escapeHtml(p.note || "")}</li>`).join("")}</ul>
+        <div class="mt-3 flex gap-2">${(look.colors || []).map(c => `<span class="text-xs bg-neutral-100 px-2 py-1 rounded-full">${escapeHtml(c)}</span>`).join("")}</div>
+        <div class="mt-3 text-sm text-neutral-500"><span class="font-medium">${t("tipsPrefix")}:</span> ${(look.tips || []).map(escapeHtml).join(" • ")}</div>
+        <div class="mt-4 pt-3 border-t"><a href="${getAmazonLink(look.title || '')}" target="_blank" rel="noopener noreferrer sponsored" class="text-blue-600 text-sm">🛒 ${t("shopAmazon")}</a></div>
+      </div>
+    `).join("");
+  }
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderRecentPanel() {
+    const genEl = document.getElementById("recentGenerationsList");
+    const pvEl = document.getElementById("recentProductViewsList");
+    if (!genEl || !pvEl) return;
+    const data = loadRecentBucket();
+    const localeTag =
+      currentLang === "uz" ? "uz-UZ" : currentLang === "ru" ? "ru-RU" : currentLang === "de" ? "de-DE" : "en-GB";
+
+    if (!data.generations.length) {
+      genEl.innerHTML = `<p class="text-sm text-neutral-500">${escapeHtml(t("recentEmptyGen"))}</p>`;
+    } else {
+      genEl.innerHTML = data.generations
+        .map((block) => {
+          const timeStr = new Date(block.at).toLocaleString(localeTag, { dateStyle: "short", timeStyle: "short" });
+          const looks = block.looks || [];
+          return `
+      <div class="bg-white rounded-2xl border p-4 mb-4">
+        <p class="text-xs text-neutral-400 mb-2">${escapeHtml(t("recentGeneratedAt"))} ${escapeHtml(timeStr)}</p>
+        <p class="text-sm text-neutral-600 mb-3 line-clamp-3">${escapeHtml(block.prompt || "")}</p>
+        ${looks
+          .map(
+            (look) => `
+        <div class="border-t border-neutral-100 pt-3 mt-3 first:border-0 first:pt-0 first:mt-0">
+          <h4 class="font-semibold">${escapeHtml(look.title || "")}</h4>
+          <ul class="text-sm mt-1 space-y-0.5">${(look.pieces || []).map((pc) => `<li>• ${escapeHtml(pc.name || "")}</li>`).join("")}</ul>
+        </div>`
+          )
+          .join("")}
+      </div>`;
+        })
+        .join("");
+    }
+
+    if (!data.productViews.length) {
+      pvEl.innerHTML = `<p class="text-sm text-neutral-500">${escapeHtml(t("recentEmptyViews"))}</p>`;
+    } else {
+      pvEl.innerHTML = `
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        ${data.productViews
+          .map((v) => {
+            const ts = new Date(v.at).toLocaleString(localeTag, { dateStyle: "short", timeStyle: "short" });
+            return `
+        <div class="bg-white rounded-xl border overflow-hidden flex gap-3 p-3">
+          <img src="${escapeHtml(v.image)}" alt="" class="w-20 h-24 object-cover rounded-lg shrink-0 bg-neutral-100">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium line-clamp-2">${escapeHtml(v.name || "")}</p>
+            <p class="text-xs text-neutral-400 mt-1">${escapeHtml(ts)}</p>
+            <button type="button" onclick="switchView('shop')" class="text-xs text-blue-600 mt-2 font-medium">${escapeHtml(t("recentBackToShop"))}</button>
+          </div>
+        </div>`;
+          })
+          .join("")}
+      </div>`;
+    }
+  }
+
+  function renderWardrobe() {
+    const container = document.getElementById("wardrobeList");
+    if (!container) return;
+    if (!savedOutfits.length) {
+      container.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-neutral-500">${t("noSaved")}</div>`;
+      return;
+    }
+    container.innerHTML = savedOutfits.map(o => `<div class="bg-white rounded-2xl border p-4"><h3 class="font-semibold">${escapeHtml(o.title || "")}</h3><button type="button" onclick="deleteOutfit(${o.id})" class="text-red-500 text-sm mt-2">${t("deleteBtn")}</button></div>`).join("");
+  }
+
+  window.signInWithGoogle = async () => {
+    const btn = document.getElementById("btn-google-signin");
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("opacity-60", "cursor-wait");
+    }
+    try {
+      if (!isSupabaseConfigured()) {
+        toast(t("googleConfigRequired"), "error");
+        return;
+      }
+      const sb = await ensureSupabase();
+      if (!sb) {
+        toast(t("googleConfigRequired"), "error");
+        return;
+      }
+      toast(t("googleRedirecting"), "info");
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}${window.location.pathname}`,
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (error) throw error;
+    } catch (e) {
+      toast(e?.message || t("googleSignInError"), "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove("opacity-60", "cursor-wait");
+      }
+    }
+  };
+
+  window.signInWithEmail = async () => {
+    const email = document.getElementById("loginEmail")?.value?.trim();
+    const password = document.getElementById("loginPassword")?.value;
+    if (!email) return toast(t("errEnterEmail"), "error");
+    if (isSupabaseConfigured()) {
+      if (!password) return toast(t("passwordRequired"), "error");
+      const sb = await ensureSupabase();
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) return toast(error.message, "error");
+      if (data.user) {
+        applyAuthUser(data.user);
+        render();
+      }
+      return;
+    }
+    currentUser = { id: "mock-" + btoa(unescape(encodeURIComponent(email))).slice(0, 16), email, name: "" };
+    loadUserData();
+    render();
+  };
+
+  window.handleEmailSignup = async () => {
+    if (!isSupabaseConfigured()) {
+      toast(t("toastSignupDemo"), "info");
+      return;
+    }
+    const email = document.getElementById("loginEmail")?.value?.trim();
+    const password = document.getElementById("loginPassword")?.value;
+    if (!email) return toast(t("errEnterEmail"), "error");
+    if (!password) return toast(t("passwordRequired"), "error");
+    const sb = await ensureSupabase();
+    const { error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
+    });
+    if (error) return toast(error.message, "error");
+    toast(t("signupEmailSent"), "success");
+  };
+
+  window.logout = async () => {
+    const sb = await ensureSupabase();
+    if (sb) await sb.auth.signOut();
+    currentUser = null;
+    userMeasurements = null;
+    cart = [];
+    savedOutfits = [];
+    render();
+  };
+  window.switchView = (view) => { currentView = view; render(); };
+  window.syncOutfitPicksFromUi = () => {
+    const ge = document.getElementById("gen-gender");
+    const st = document.getElementById("gen-style");
+    const fa = document.getElementById("gen-fason");
+    if (ge) userProfile.gender = ge.value;
+    if (st) userProfile.style = st.value;
+    if (fa) userProfile.fitPreference = fa.value;
+    saveUserData();
+  };
+  window.saveProfile = () => {
+    userProfile.gender = document.getElementById("profileGender")?.value || "";
+    userProfile.style = document.getElementById("profileStyle")?.value || "";
+    userProfile.fitPreference = document.getElementById("profileFit")?.value || "";
+    userProfile.budget = document.getElementById("profileBudget")?.value || "";
+    saveUserData();
+    toast(t("profileSaved"), "success");
+    render();
+  };
+  window.updateMeasSizePreview = () => {
+    const chest = document.getElementById("measChest")?.value;
+    const waist = document.getElementById("measWaist")?.value;
+    const el = document.getElementById("measSizePreviewValue");
+    if (!el) return;
+    const r = inferRecommendedSize({ chest, waist });
+    el.textContent = r || "—";
+  };
+
+  window.saveMeasurements = () => {
+    const chest = document.getElementById("measChest")?.value;
+    const waist = document.getElementById("measWaist")?.value;
+    userMeasurements = {
+      height: document.getElementById("measHeight")?.value,
+      weight: document.getElementById("measWeight")?.value,
+      chest,
+      waist,
+      recommendedSize: inferRecommendedSize({ chest, waist }),
+    };
+    saveUserData();
+    toast(t("measurementsSaved"), "success");
+    render();
+  };
+  window.handleGenerate = async () => {
+    window.syncOutfitPicksFromUi();
+    const prompt = document.getElementById("promptInput")?.value;
+    if (!prompt) return toast(t("errEnterPrompt"), "error");
+    toast(t("toastGenerating"), "info");
+    try {
+      const result = await generateOutfits(prompt);
+      lastGeneratedOutfits = result.looks || [];
+      appendRecentGeneration(lastGeneratedOutfits, prompt);
+      render();
+    } catch (e) {
+      toast(e.message || t("errGeneration"), "error");
+    }
+  };
+  window.saveLookByIndex = (i) => {
+    const look = lastGeneratedOutfits[i];
+    if (!look) return;
+    savedOutfits.push({ ...look, id: Date.now() });
+    toast(t("toastSavedWardrobe"), "success");
+    render();
+  };
+  window.deleteOutfit = (id) => { savedOutfits = savedOutfits.filter(o => o.id !== id); render(); };
+  window.openTryOnForProduct = (productId) => {
+    showTryOnModePicker(productId);
+  };
+  window.openVirtualTryOn = () => {
+    window.switchView("shop");
+    toast(t("tryOnOpenShopForVirtual"), "info");
+  };
+  window.addToCart = addToCart;
+  window.removeFromCart = removeFromCart;
+
+  window.toggleChat = () => { const panel = document.getElementById("chatPanel"); if (panel) panel.classList.toggle("hidden"); };
+  window.sendChat = () => { const input = document.getElementById("chatInput"); const msg = input?.value; if (!msg) return; const container = document.getElementById("chatMessages"); container.innerHTML += `<div class="flex justify-end"><div class="bg-neutral-900 text-white rounded-2xl px-3 py-2 max-w-[80%] text-sm">${escapeHtml(msg)}</div></div>`; input.value = ""; setTimeout(() => { container.innerHTML += `<div class="flex justify-start"><div class="bg-white border rounded-2xl px-3 py-2 max-w-[80%] text-sm">✨ ${escapeHtml(getChatResponse(msg))}</div></div>`; container.scrollTop = container.scrollHeight; }, 500); };
+  function getChatResponse(q) {
+    const s = String(q || "");
+    const isSummer = /summer|sommer|été|verano|estate|verão|yaz|лето|leto|yoz|صيف|یاز|жаз|l['’]été/i.test(s);
+    const isOffice = /office|bureau|oficina|ufficio|escritório|офис|ofis|büro|mekt|keñse|кәсеп|kontor|kanto/i.test(s);
+    if (isSummer) return t("chatSummer");
+    if (isOffice) return t("chatOffice");
+    return t("chatDefault");
+  }
+
+  (async () => {
+    await initAuth();
+    applyDocumentLang();
+    render();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+================================================================================
+Hetzner VPS — DressAI (GitHub: Abdumutalib/getdressai.com)
+================================================================================
+
+Men sizning Hetzner akkauntingizga kira olmayman. Quyidagilarni O‘ZINGIZ qilasiz:
+1) Hetzner Cloud’da server yarating
+2) SSH bilan ulaning
+3) Skriptlarni serverga yuklab yoki qo‘lda nusxalab ishga tushiring
+
+--------------------------------------------------------------------------------
+1) Hetzner’da server
+--------------------------------------------------------------------------------
+- Image: Ubuntu 22.04 LTS
+- Type: masalan CX22 (2 vCPU, 4 GB RAM) — loyiha uchun yetarli
+- Location: yaqin region (Nuremberg / Helsinki)
+- SSH key qo‘shing (parol o‘rniga)
+
+--------------------------------------------------------------------------------
+2) Birinchi marta (root sifatida)
+--------------------------------------------------------------------------------
+Butun papkani VPSga ko‘chiring (ichida dressai.service ham bo‘lsin), masalan:
+
+  scp -r deploy/hetzner root@SERVER_IP:/root/dressai-hetzner
+
+Keyin VPSda:
+
+  chmod +x /root/dressai-hetzner/scripts/*.sh
+  /root/dressai-hetzner/scripts/01-bootstrap-root.sh
+
+Bu: Node 20, git, ufw (22,80,443), Caddy, `dressai` foydalanuvchi, repo klon,
+    systemd unit o‘rnatadi.
+
+--------------------------------------------------------------------------------
+3) .env
+--------------------------------------------------------------------------------
+  nano /home/dressai/getdressai.com/.env
+
+GitHub’dagi .env.example bo‘yicha to‘ldiring (OPENAI, Supabase, Stripe, ...).
+Fayl huquqi:
+
+  chown dressai:dressai /home/dressai/getdressai.com/.env
+  chmod 600 /home/dressai/getdressai.com/.env
+
+--------------------------------------------------------------------------------
+4) Caddy (HTTPS + domen)
+--------------------------------------------------------------------------------
+  nano /etc/caddy/Caddyfile
+
+Bu papkadagi Caddyfile.example mazmunini qo‘ying — `getdressai.com` o‘rniga
+o‘z domeningiz.
+
+  systemctl reload caddy
+
+Cloudflare ishlatilsa: SSL mode "Full (strict)"; origin Hetzner IP.
+
+--------------------------------------------------------------------------------
+5) Yangilash (keyingi deploylar)
+--------------------------------------------------------------------------------
+  sudo bash /home/dressai/hetzner-deploy/03-deploy-update.sh
+
+yoki qo‘lda:
+
+  cd /home/dressai/getdressai.com && sudo -u dressai git pull && \
+  sudo -u dressai npm ci && sudo -u dressai npm run build && \
+  sudo systemctl restart dressai
+
+--------------------------------------------------------------------------------
+6) Tekshiruv
+--------------------------------------------------------------------------------
+  systemctl status dressai
+  curl -sS http://127.0.0.1:3000/health
+
+Tashqaridan: https://getdressai.com/health
+
+--------------------------------------------------------------------------------
+7) Stripe webhook
+--------------------------------------------------------------------------------
+Stripe Dashboard → webhook URL: https://getdressai.com/billing/webhook
+Kerakli o‘zgaruvchilar (STRIPE_WEBHOOK_SECRET va boshqalar): loyiha ildizidagi
+`dressai-api/.env.example` va `PROJECT.txt` bo‘yicha to‘ldiring — Render ishlatilmaydi,
+production Hetzner VPS (ushbu qo‘llanma) uchun mo‘ljallangan.
+
+================================================================================

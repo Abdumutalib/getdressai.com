@@ -1,0 +1,19 @@
+{
+  "name": "dressai-super",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DressAI + GetdressAI — web (static + cheap AI proxy), mobile (Expo), monetized API (Stripe + affiliate)",
+  "scripts": {
+    "dev:web": "npm run dev --prefix getdressai",
+    "dev:api": "npm run dev --prefix dressai-api",
+    "test:web": "npm test --prefix getdressai",
+    "verify": "npm run test:web && node --check dressai-api/server.js && node scripts/verify-services.mjs",
+    "verify:live": "npm run test:web && node --check dressai-api/server.js && node scripts/verify-services.mjs --live --web",
+    "verify:live:strict": "npm run test:web && node --check dressai-api/server.js && node scripts/verify-services.mjs --live --web --strict",
+    "publish:web": "node scripts/publish-web.mjs",
+    "publish:mobile": "node scripts/publish-mobile.mjs",
+    "install:web": "npm install --prefix getdressai",
+    "install:api": "npm install --prefix dressai-api",
+    "install:mobile": "npm install --prefix mobile"
+  }
+}

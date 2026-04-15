@@ -1,0 +1,18 @@
+[Unit]
+Description=DressAI Node (server.js)
+After=network.target
+
+[Service]
+Type=simple
+User=dressai
+Group=dressai
+WorkingDirectory=/home/dressai/getdressai.com
+Environment=NODE_ENV=production
+# Stripe webhook va boshqa maxfiy o'zgaruvchilar
+EnvironmentFile=/home/dressai/getdressai.com/.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

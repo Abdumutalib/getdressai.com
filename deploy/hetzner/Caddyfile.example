@@ -1,0 +1,7 @@
+# /etc/caddy/Caddyfile ga ko'chiring.
+# Domenlarni o'z domeningiz bilan almashtiring.
+
+getdressai.com, www.getdressai.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000
+}
