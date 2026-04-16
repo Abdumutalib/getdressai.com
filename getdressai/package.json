@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "main": "./index.cjs",
-
   "description": "GetdressAI — static UI + Supabase + OpenRouter/Groq proxy (no OpenAI)",
   "scripts": {
+    "build": "node scripts/build-static.mjs",
     "dev": "node scripts/dev-server.mjs",
     "test": "node --test tests/validate-chat.test.js"
   },

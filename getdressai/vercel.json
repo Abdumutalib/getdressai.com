@@ -3,7 +3,8 @@
   "framework": null,
   "fluid": false,
   "installCommand": "npm ci --omit=dev",
-  "buildCommand": "true",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "functions": {
     "api/outfit.js": {
       "maxDuration": 60
