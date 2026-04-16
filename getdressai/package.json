@@ -1,6 +1,7 @@
 {
   "name": "getdressai",
   "private": true,
+  "type": "module",
   "main": "./index.cjs",
 
   "description": "GetdressAI — static UI + Supabase + OpenRouter/Groq proxy (no OpenAI)",
