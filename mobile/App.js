@@ -13,6 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  LogBox,
 } from "react-native";
 import * as RNIap from "react-native-iap";
 import * as Sharing from "expo-sharing";
@@ -23,6 +24,19 @@ import * as WebBrowser from "expo-web-browser";
 import axios from "axios";
 
 WebBrowser.maybeCompleteAuthSession();
+
+LogBox.ignoreLogs(["props.pointerEvents is deprecated. Use style.pointerEvents"]);
+const originalConsoleWarn = console.warn;
+console.warn = (...args) => {
+  const firstArg = args?.[0];
+  if (
+    typeof firstArg === "string" &&
+    firstArg.includes("props.pointerEvents is deprecated")
+  ) {
+    return;
+  }
+  originalConsoleWarn(...args);
+};
 
 const productIds = ["dressai_pro"];
 const proMotivation = "Unlock better styles 🔒";

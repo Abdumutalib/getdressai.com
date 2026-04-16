@@ -29,6 +29,8 @@ const supabaseUrl = process.env.SUPABASE_URL?.trim();
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 const supabaseAdmin =
   supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+const redisRateLimitUrl =
+  process.env.RATE_LIMIT_REDIS_URL?.trim() || process.env.REDIS_URL?.trim() || "";
 
 function parseNumEnv(key, fallback) {
   const raw = process.env[key];
@@ -37,6 +39,35 @@ function parseNumEnv(key, fallback) {
   }
   const n = Number(raw);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function parseCsvEnv(key, fallback = []) {
+  const raw = process.env[key];
+  if (raw == null || String(raw).trim() === "") {
+    return fallback;
+  }
+  return String(raw)
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function getRateLimitKey(req) {
+  const authHeader = req.headers.authorization;
+  if (typeof authHeader === "string" && authHeader.toLowerCase().startsWith("bearer ")) {
+    const token = authHeader.slice(7).trim();
+    if (token) {
+      const digest = crypto.createHash("sha1").update(token).digest("hex").slice(0, 16);
+      return `bearer:${digest}`;
+    }
+  }
+
+  const xff = req.headers["x-forwarded-for"];
+  if (typeof xff === "string" && xff.trim()) {
+    return `ip:${xff.split(",")[0].trim()}`;
+  }
+
+  return `ip:${req.ip || req.socket?.remoteAddress || "unknown"}`;
 }
 
 /** Сайт/илова учун кўрсатиладиган тўлов сиёсати (Stripe checkout алоҳида). */
@@ -68,10 +99,39 @@ if (process.env.NODE_ENV === "production") {
   }
 }
 
-const globalLimiter = createRateLimiter({ windowMs: 60_000, max: 300 });
-const authRouteLimiter = createRateLimiter({ windowMs: 15 * 60_000, max: 40 });
-const marketplaceProxyLimiter = createRateLimiter({ windowMs: 60_000, max: 60 });
-const heavyProxyLimiter = createRateLimiter({ windowMs: 60_000, max: 20 });
+const globalLimiterSkipPaths = new Set(
+  parseCsvEnv("GLOBAL_RATE_LIMIT_SKIP_PATHS", ["/health", "/config"])
+);
+
+const globalLimiter = createRateLimiter({
+  windowMs: parseNumEnv("GLOBAL_RATE_LIMIT_WINDOW_MS", 60_000),
+  max: parseNumEnv("GLOBAL_RATE_LIMIT_MAX", 6000),
+  keyFn: getRateLimitKey,
+  skipFn: (req) => globalLimiterSkipPaths.has(req.path),
+  redisUrl: redisRateLimitUrl,
+  keyPrefix: "global",
+});
+const authRouteLimiter = createRateLimiter({
+  windowMs: parseNumEnv("AUTH_RATE_LIMIT_WINDOW_MS", 15 * 60_000),
+  max: parseNumEnv("AUTH_RATE_LIMIT_MAX", 40),
+  keyFn: getRateLimitKey,
+  redisUrl: redisRateLimitUrl,
+  keyPrefix: "auth",
+});
+const marketplaceProxyLimiter = createRateLimiter({
+  windowMs: parseNumEnv("MARKETPLACE_RATE_LIMIT_WINDOW_MS", 60_000),
+  max: parseNumEnv("MARKETPLACE_RATE_LIMIT_MAX", 60),
+  keyFn: getRateLimitKey,
+  redisUrl: redisRateLimitUrl,
+  keyPrefix: "marketplace",
+});
+const heavyProxyLimiter = createRateLimiter({
+  windowMs: parseNumEnv("HEAVY_RATE_LIMIT_WINDOW_MS", 60_000),
+  max: parseNumEnv("HEAVY_RATE_LIMIT_MAX", 20),
+  keyFn: getRateLimitKey,
+  redisUrl: redisRateLimitUrl,
+  keyPrefix: "heavy",
+});
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

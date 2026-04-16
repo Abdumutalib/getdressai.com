@@ -16,5 +16,11 @@
     "install:web": "npm install --prefix getdressai",
     "install:api": "npm install --prefix dressai-api",
     "install:mobile": "npm install --prefix mobile"
+  },
+  "dependencies": {
+    "@vercel/node": "^5.7.7",
+    "dotenv": "^17.4.2",
+    "node-fetch": "^3.3.2",
+    "openai": "^6.34.0"
   }
 }

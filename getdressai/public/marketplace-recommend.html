@@ -1,0 +1,95 @@
+<!-- Фойдаланувчи профили формаси -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DressAI — Кийим тавсияси</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<div class="user-profile-form">
+  <h2>Ўз профилингизни киритинг</h2>
+  
+  <label>Ёш:</label>
+  <input type="number" id="age" placeholder="25">
+  
+  <label>Жинс:</label>
+  <select id="gender">
+    <option value="female">Аёл</option>
+    <option value="male">Эркак</option>
+  </select>
+  
+  <label>Бўй (см):</label>
+  <input type="number" id="height" placeholder="165">
+  
+  <label>Вазн (кг):</label>
+  <input type="number" id="weight" placeholder="60">
+  
+  <label>Услуб:</label>
+  <select id="style">
+    <option value="casual">Casual</option>
+    <option value="elegant">Elegant</option>
+    <option value="sport">Sport</option>
+    <option value="business">Business</option>
+  </select>
+  
+  <label>Фасл:</label>
+  <select id="season">
+    <option value="summer">Ёз</option>
+    <option value="winter">Қиш</option>
+    <option value="spring">Баҳор</option>
+    <option value="autumn">Куз</option>
+  </select>
+  
+  <label>Нарх ($):</label>
+  <input type="number" id="minPrice" placeholder="10"> - 
+  <input type="number" id="maxPrice" placeholder="200">
+  
+  <label>Афзал ранглар:</label>
+  <input type="text" id="colors" placeholder="қора, оқ, кўк">
+  
+  <button onclick="getRecommendations()">Тавсия олиш</button>
+</div>
+
+<div id="recommendations"></div>
+
+<script>
+async function getRecommendations() {
+  const userData = {
+    age: document.getElementById('age').value,
+    gender: document.getElementById('gender').value,
+    height: document.getElementById('height').value,
+    weight: document.getElementById('weight').value,
+    style: document.getElementById('style').value,
+    season: document.getElementById('season').value,
+    minPrice: document.getElementById('minPrice').value,
+    maxPrice: document.getElementById('maxPrice').value,
+    preferredColors: document.getElementById('colors').value.split(','),
+    generateImage: true
+  };
+  
+  const response = await fetch('/api/recommend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userData, critical: false, marketplace: 'all' })
+  });
+  
+  const data = await response.json();
+  
+  document.getElementById('recommendations').innerHTML = `
+    <h3>Сизга tavsiya etiladigan ўлчам: ${data.userProfile.recommendedSize}</h3>
+    <p>${data.aiRecommendations}</p>
+    <h3>Маҳсулотлар:</h3>
+    <div class="products-grid">
+      ${data.products.map(p => `
+        <div class="product">
+          <img src="${p.image}" alt="${p.title}">
+          <h4>${p.title}</h4>
+          <p>$${p.price}</p>
+          <p>${p.source}</p>
+          <a href="${p.url}" target="_blank">Харид қилиш →</a>
+        </div>
+      `).join('')}
+    </div>
+    ${data.generatedImage ? `<img src="${data.generatedImage}" alt="AI generated outfit">` : ''}
+  `;
+}
+</script>
