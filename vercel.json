@@ -6,7 +6,7 @@
   "buildCommand": "npm run build --prefix getdressai",
   "outputDirectory": "getdressai/dist",
   "functions": {
-    "getdressai/api/outfit.js": {
+    "api/outfit.js": {
       "maxDuration": 60
     }
   },
