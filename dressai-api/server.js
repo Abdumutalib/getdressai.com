@@ -283,6 +283,29 @@ function signAuthToken(user) {
   return jwt.sign({ sub: user.id }, jwtSecret, { expiresIn: "30d" });
 }
 
+function buildLocalUserFromSupabaseAuthUser(authUser) {
+  const now = new Date().toISOString();
+  const meta = authUser?.user_metadata || {};
+  const displayName =
+    String(meta.name || meta.full_name || authUser?.email?.split("@")[0] || "GetDressAI user").trim() ||
+    "GetDressAI user";
+
+  return {
+    id: authUser.id,
+    name: displayName,
+    email: normalizeEmail(authUser.email),
+    passwordHash: null,
+    plan: "free",
+    imageGenerationCount: 0,
+    referral_source: null,
+    createdAt: authUser.created_at || now,
+    updatedAt: now,
+    stripeCustomerEmail: null,
+    lastCheckoutSessionId: null,
+    authProvider: "supabase",
+  };
+}
+
 function getUserById(userId) {
   return readUsers().find((user) => user.id === userId) || null;
 }
@@ -290,6 +313,38 @@ function getUserById(userId) {
 function getUserByEmail(email) {
   const normalizedEmail = normalizeEmail(email);
   return readUsers().find((user) => normalizeEmail(user.email) === normalizedEmail) || null;
+}
+
+function upsertSupabaseMirrorUser(authUser) {
+  if (!authUser?.id || !authUser?.email) {
+    return null;
+  }
+
+  const users = readUsers();
+  const existingIndex = users.findIndex((user) => user.id === authUser.id);
+  const baseUser = buildLocalUserFromSupabaseAuthUser(authUser);
+
+  if (existingIndex >= 0) {
+    const existingUser = users[existingIndex];
+    const mergedUser = {
+      ...existingUser,
+      ...baseUser,
+      plan: normalizePlan(existingUser.plan || baseUser.plan),
+      imageGenerationCount:
+        Number.isFinite(Number(existingUser.imageGenerationCount))
+          ? Number(existingUser.imageGenerationCount)
+          : baseUser.imageGenerationCount,
+      createdAt: existingUser.createdAt || baseUser.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    users[existingIndex] = mergedUser;
+    writeUsers(users);
+    return mergedUser;
+  }
+
+  users.push(baseUser);
+  writeUsers(users);
+  return baseUser;
 }
 
 function updateUser(userId, updater) {
@@ -335,6 +390,7 @@ function buildPublicUser(user) {
   return {
     id: user.id,
     name: user.name,
+    email: user.email,
     plan: normalizePlan(user.plan),
     imageGenerationCount: getUserUsageCount(user),
     remainingGenerations: getUserRemainingImageGenerations(user),
@@ -416,6 +472,77 @@ function requireAuth(req, res, next) {
   } catch {
     return res.status(401).json({ error: "Invalid or expired token." });
   }
+}
+
+async function resolveAuthenticatedUserFromToken(token) {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = jwt.verify(token, jwtSecret);
+    const user = getUserById(payload.sub);
+
+    if (user) {
+      return user;
+    }
+  } catch {
+    /* fall through to Supabase token verification */
+  }
+
+  if (!supabaseAdmin) {
+    return null;
+  }
+
+  try {
+    const {
+      data: { user: authUser },
+      error,
+    } = await supabaseAdmin.auth.getUser(token);
+
+    if (error || !authUser) {
+      return null;
+    }
+
+    return upsertSupabaseMirrorUser(authUser);
+  } catch {
+    return null;
+  }
+}
+
+async function attachUserIfPresent(req, res, next) {
+  const token = getBearerToken(req);
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  const user = await resolveAuthenticatedUserFromToken(token);
+
+  if (!user) {
+    return res.status(401).json({ error: "Invalid or expired token." });
+  }
+
+  req.user = user;
+  return next();
+}
+
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Missing or invalid authorization header." });
+  }
+
+  const token = authHeader.slice(7).trim();
+  const user = await resolveAuthenticatedUserFromToken(token);
+
+  if (!user) {
+    return res.status(401).json({ error: "Invalid or expired token." });
+  }
+
+  req.user = user;
+  return next();
 }
 
 function resolvePlan(req, requestedPlan) {

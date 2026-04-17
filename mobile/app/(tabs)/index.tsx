@@ -1,98 +1,172 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+
+const highlightCards = [
+  {
+    title: 'AI looks that feel wearable',
+    body: 'Start from your occasion, preferred fit, and vibe. GetDressAI turns that into look ideas you can actually use.',
+  },
+  {
+    title: 'Wardrobe-first guidance',
+    body: 'Save what you like, compare ideas, and keep one product story across the mobile app and the website.',
+  },
+  {
+    title: 'Premium when you need more',
+    body: 'Free users can explore the core flow. Premium unlocks more generations, deeper try-on sessions, and richer styling help.',
+  },
+];
+
+const quickSteps = [
+  'Open Try-On to test one look with your own photo.',
+  'Use Style Hub to review wardrobe, marketplace, and premium sections.',
+  'Sign in to keep the same identity and product story across devices.',
+];
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <View style={styles.hero}>
+        <ThemedText style={styles.kicker}>GetDressAI</ThemedText>
+        <ThemedText type="title" style={styles.title}>
+          One wardrobe story across web and mobile.
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+        <ThemedText style={styles.subtitle}>
+          Discover looks, preview try-on results, and move from inspiration to shopping without
+          switching to a different product mindset.
+        </ThemedText>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+        <View style={styles.metricRow}>
+          <View style={styles.metricCard}>
+            <ThemedText style={styles.metricValue}>Try-On</ThemedText>
+            <ThemedText style={styles.metricLabel}>Upload your photo and test an outfit.</ThemedText>
+          </View>
+          <View style={styles.metricCard}>
+            <ThemedText style={styles.metricValue}>Wardrobe</ThemedText>
+            <ThemedText style={styles.metricLabel}>Keep saved looks and repeatable style cues.</ThemedText>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          Core product promise
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        {highlightCards.map((card) => (
+          <View key={card.title} style={styles.card}>
+            <ThemedText type="defaultSemiBold" style={styles.cardTitle}>
+              {card.title}
+            </ThemedText>
+            <ThemedText style={styles.cardBody}>{card.body}</ThemedText>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          How to use this app
         </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {quickSteps.map((step) => (
+          <View key={step} style={styles.stepRow}>
+            <View style={styles.stepDot} />
+            <ThemedText style={styles.stepText}>{step}</ThemedText>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f3ed',
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 40,
+    gap: 20,
+  },
+  hero: {
+    borderRadius: 28,
+    padding: 24,
+    gap: 14,
+    backgroundColor: '#efe5da',
+  },
+  kicker: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: '#7a4b2f',
+  },
+  title: {
+    fontSize: 34,
+    lineHeight: 38,
+    color: '#1d140e',
+  },
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 25,
+    color: '#4b3c33',
+  },
+  metricRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  metricCard: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: 'rgba(255,255,255,0.72)',
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1d140e',
+  },
+  metricLabel: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#5b4b41',
+  },
+  section: {
+    gap: 12,
+  },
+  sectionTitle: {
+    color: '#20150f',
+  },
+  card: {
+    backgroundColor: '#fffdfa',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#eadfd2',
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  cardTitle: {
+    color: '#20150f',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  cardBody: {
+    color: '#5b4b41',
+  },
+  stepRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+    paddingVertical: 4,
+  },
+  stepDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#b86a3c',
+    marginTop: 8,
+  },
+  stepText: {
+    flex: 1,
+    color: '#4b3c33',
   },
 });

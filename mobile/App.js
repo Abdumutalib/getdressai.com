@@ -48,6 +48,16 @@ const API =
     process.env?.EXPO_PUBLIC_API_URL &&
     String(process.env.EXPO_PUBLIC_API_URL).trim()) ||
   "http://127.0.0.1:3000";
+const SUPABASE_URL =
+  (typeof process !== "undefined" &&
+    (process.env?.EXPO_PUBLIC_SUPABASE_URL || process.env?.SUPABASE_URL) &&
+    String(process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL).trim()) ||
+  "";
+const SUPABASE_ANON_KEY =
+  (typeof process !== "undefined" &&
+    (process.env?.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env?.SUPABASE_ANON_KEY) &&
+    String(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY).trim()) ||
+  "";
 const SESSION_STORAGE_KEY = "dressai-session-v1";
 const GUEST_USAGE_STORAGE_KEY = "dressai-guest-usage-v1";
 const GENDER_OPTIONS = ["male", "female"];
@@ -94,6 +104,10 @@ function getAuthHeaders(token) {
     : {};
 }
 
+function isSupabaseConfigured() {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
 export default function App() {
   const [selectedImageUri, setSelectedImageUri] = useState(null);
   const [generatedImageUri, setGeneratedImageUri] = useState(null);
@@ -104,6 +118,7 @@ export default function App() {
   const [occasion, setOccasion] = useState("work");
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState(null);
+  const [refreshToken, setRefreshToken] = useState(null);
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login");
   const [name, setName] = useState("");
@@ -157,19 +172,19 @@ export default function App() {
     ? user.email
     : paymentEnabled
       ? `${Math.max(0, 1 - guestUsage)} guest look left. Sign in to sync your plan.`
-      : "Sign in to save your account. Payments are not configured yet.";
+      : "Sign in to save your GetDressAI account. Payments are not configured yet.";
   const promptPreview = `${formatLabel(gender)} · ${formatLabel(style)} · ${formatLabel(occasion)}`;
 
   const referralCode = user?.id || user?.email || "GUEST";
-  const referralLink = `https://dressai.app/invite?ref=${encodeURIComponent(String(referralCode))}`;
+  const referralLink = `https://getdressai.com/?ref=${encodeURIComponent(String(referralCode))}`;
 
   const handleShareReferral = async () => {
     try {
       await Sharing.shareAsync(undefined, {
-        dialogTitle: "Invite your friend to DressAI",
+        dialogTitle: "Invite your friend to GetDressAI",
         mimeType: "text/plain",
         UTI: "public.plain-text",
-        message: `Try DressAI and unlock better styles! Use my invite: ${referralLink}`,
+        message: `Try GetDressAI and unlock better styles. Use my invite: ${referralLink}`,
       });
     } catch {
       /* share отмена */
@@ -197,8 +212,9 @@ export default function App() {
 
           if (parsedSession?.token) {
             setToken(parsedSession.token);
+            setRefreshToken(parsedSession.refreshToken || null);
             setUser(parsedSession.user || null);
-            await refreshProfile(parsedSession.token);
+            await refreshProfile(parsedSession.token, parsedSession.refreshToken || null);
           }
         }
       } catch {
@@ -221,7 +237,7 @@ export default function App() {
     loadConfig();
   }, []);
 
-  const persistSession = async (nextToken, nextUser) => {
+  const persistSession = async (nextToken, nextUser, refreshToken = null) => {
     if (!nextToken || !nextUser) {
       await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
       return;
@@ -231,6 +247,7 @@ export default function App() {
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: nextToken,
+        refreshToken,
         user: nextUser,
       })
     );
@@ -240,13 +257,38 @@ export default function App() {
     await AsyncStorage.setItem(GUEST_USAGE_STORAGE_KEY, String(nextUsage));
   };
 
-  const applyUserState = async (nextToken, nextUser) => {
+  const applyUserState = async (nextToken, nextUser, refreshToken = null) => {
     setToken(nextToken);
+    setRefreshToken(refreshToken);
     setUser(nextUser);
-    await persistSession(nextToken, nextUser);
+    await persistSession(nextToken, nextUser, refreshToken);
   };
 
-  const refreshProfile = async (activeToken = token) => {
+  const refreshSupabaseSession = async (refreshToken) => {
+    if (!isSupabaseConfigured() || !refreshToken) {
+      throw new Error("Supabase session refresh is not available.");
+    }
+
+    const response = await axios.post(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+      {
+        refresh_token: refreshToken,
+      },
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return {
+      accessToken: response.data?.access_token || null,
+      refreshToken: response.data?.refresh_token || refreshToken,
+    };
+  };
+
+  const refreshProfile = async (activeToken = token, activeRefreshToken = refreshToken) => {
     if (!activeToken) {
       return;
     }
@@ -260,10 +302,25 @@ export default function App() {
       setPaymentEnabled(Boolean(response.data?.paymentEnabled));
 
       if (nextUser) {
-        await applyUserState(activeToken, nextUser);
+        await applyUserState(activeToken, nextUser, activeRefreshToken);
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
+        if (activeRefreshToken) {
+          try {
+            const refreshedSession = await refreshSupabaseSession(activeRefreshToken);
+            if (refreshedSession.accessToken) {
+              await refreshProfile(
+                refreshedSession.accessToken,
+                refreshedSession.refreshToken || activeRefreshToken
+              );
+              return;
+            }
+          } catch {
+            /* fall through to logout */
+          }
+        }
+
         await handleLogout();
       }
     }
@@ -271,6 +328,7 @@ export default function App() {
 
   const handleLogout = async () => {
     setToken(null);
+    setRefreshToken(null);
     setUser(null);
     setPassword("");
     await persistSession(null, null);
@@ -282,28 +340,91 @@ export default function App() {
       return;
     }
 
+    if (!isSupabaseConfigured()) {
+      Alert.alert(
+        "Supabase missing",
+        "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY for the mobile app."
+      );
+      return;
+    }
+
     setIsAuthLoading(true);
 
     try {
-      const response = await axios.post(`${API}/auth/${mode}`, {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      const normalizedEmail = email.trim().toLowerCase();
+      let nextToken = null;
+      let nextRefreshToken = null;
 
-      const nextToken = response.data?.token || null;
-      const nextUser = response.data?.user || null;
+      if (mode === "register") {
+        const signUpResponse = await axios.post(
+          `${SUPABASE_URL}/auth/v1/signup`,
+          {
+            email: normalizedEmail,
+            password,
+            data: {
+              name: name.trim(),
+            },
+          },
+          {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      if (!nextToken || !nextUser) {
-        throw new Error("The server did not return a session.");
+        nextToken = signUpResponse.data?.session?.access_token || null;
+        nextRefreshToken = signUpResponse.data?.session?.refresh_token || null;
+
+        if (!nextToken) {
+          setAuthMode("login");
+          setPassword("");
+          Alert.alert(
+            "Check your email",
+            "Your account was created in Supabase. Confirm the email if required, then sign in."
+          );
+          return;
+        }
+      } else {
+        const signInResponse = await axios.post(
+          `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+          {
+            email: normalizedEmail,
+            password,
+          },
+          {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        nextToken = signInResponse.data?.access_token || null;
+        nextRefreshToken = signInResponse.data?.refresh_token || null;
       }
 
-      await applyUserState(nextToken, nextUser);
+      if (!nextToken) {
+        throw new Error("Supabase did not return an access token.");
+      }
+
+      const profileResponse = await axios.get(`${API}/auth/me`, {
+        headers: getAuthHeaders(nextToken),
+      });
+
+      const nextUser = profileResponse.data?.user || null;
+
+      if (!nextUser) {
+        throw new Error("The backend did not return a synced account profile.");
+      }
+
+      setPaymentEnabled(Boolean(profileResponse.data?.paymentEnabled));
+      await applyUserState(nextToken, nextUser, nextRefreshToken);
       setPassword("");
       Alert.alert(mode === "register" ? "Account created" : "Welcome back", `${nextUser.name} is signed in.`);
     } catch (error) {
       const message = axios.isAxiosError(error)
-        ? error.response?.data?.error || error.message
+        ? error.response?.data?.msg || error.response?.data?.error_description || error.response?.data?.error || error.message
         : error instanceof Error
           ? error.message
           : "Authentication failed.";
@@ -373,7 +494,7 @@ export default function App() {
       }
       setGeneratedImageUri(nextImageUri);
       if (response.data?.user) {
-        await applyUserState(token, response.data.user);
+        await applyUserState(token, response.data.user, refreshToken);
       } else {
         const nextGuestUsage = guestUsage + 1;
         setGuestUsage(nextGuestUsage);
@@ -405,7 +526,7 @@ export default function App() {
     const nextUser = response.data?.user;
 
     if (nextUser) {
-      await applyUserState(token, nextUser);
+      await applyUserState(token, nextUser, refreshToken);
       Alert.alert("PRO activated", "Your account is now upgraded to PRO.");
     }
   };
@@ -475,7 +596,7 @@ export default function App() {
         <StatusBar style="light" />
         <View style={styles.screenLoader}>
           <ActivityIndicator size="large" color="#c94f3d" />
-          <Text style={styles.screenLoaderText}>Restoring your DressAI session...</Text>
+          <Text style={styles.screenLoaderText}>Restoring your GetDressAI session...</Text>
         </View>
       </SafeAreaView>
     );
@@ -498,7 +619,7 @@ export default function App() {
             <View style={styles.heroTopRow}>
               <View>
                 <Text style={styles.eyebrow}>AI wardrobe studio</Text>
-                <Text style={styles.title}>DressAI</Text>
+                <Text style={styles.title}>GetDressAI</Text>
                 <Text style={styles.heroUserText}>{user ? `Hi, ${user.name}` : "Guest session"}</Text>
               </View>
               <View style={[styles.planBadge, plan === "pro" && styles.planBadgePro]}>
@@ -540,7 +661,7 @@ export default function App() {
             <View>
               <Text style={styles.panelTitle}>Account</Text>
               <Text style={styles.authSubtitle}>
-                {user ? "Your plan and usage are synced to this account." : "Sign in to save your PRO status."}
+                {user ? "Your plan and usage are synced to this account." : "Sign in to save your GetDressAI progress."}
               </Text>
             </View>
             {user ? (
@@ -744,10 +865,10 @@ export default function App() {
                 onPress={async () => {
                   try {
                     await Sharing.shareAsync(generatedImageUri, {
-                      dialogTitle: 'Share your DressAI look',
+                      dialogTitle: 'Share your GetDressAI look',
                       mimeType: 'image/png',
                       UTI: 'public.png',
-                      message: `Check out my AI outfit from DressAI! Try it yourself: ${referralLink}`,
+                      message: `Check out my AI outfit from GetDressAI. Try it yourself: ${referralLink}`,
                     });
                   } catch {}
                 }}

@@ -74,10 +74,11 @@ export default function TryOnScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <ThemedView style={styles.header}>
+        <ThemedText style={styles.kicker}>GetDressAI Try-On</ThemedText>
         <ThemedText type="title">Virtual try-on</ThemedText>
         <ThemedText style={styles.hint}>
-          Uses DressAI API POST /v1/hybrid-vton (set HYBRID_VTON_SERVICE_URL on the server to your GPU
-          GetdressAI URL, e.g. http://IP:8787).
+          Upload your photo, choose the garment type, and preview a wearable look that fits the same
+          try-on story shown on the website.
         </ThemedText>
       </ThemedView>
 
@@ -89,7 +90,7 @@ export default function TryOnScreen() {
         <Image source={{ uri: personUri }} style={styles.preview} contentFit="contain" />
       ) : null}
 
-      <ThemedText style={styles.label}>2. Garment type (FASHN)</ThemedText>
+      <ThemedText style={styles.label}>2. Garment type</ThemedText>
       <View style={styles.row}>
         {(['upper', 'lower', 'dress'] as const).map((t) => (
           <Pressable
@@ -108,7 +109,7 @@ export default function TryOnScreen() {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <ThemedText style={styles.btnPrimaryText}>3. Run hybrid try-on</ThemedText>
+          <ThemedText style={styles.btnPrimaryText}>3. Generate try-on preview</ThemedText>
         )}
       </Pressable>
 
@@ -119,6 +120,9 @@ export default function TryOnScreen() {
       {resultB64 ? (
         <ThemedView style={styles.resultBox}>
           <ThemedText type="subtitle">Result</ThemedText>
+          <ThemedText style={styles.resultHint}>
+            Use this preview to decide what belongs in your wardrobe, premium session, or next shopping step.
+          </ThemedText>
           <Image
             source={{ uri: `data:image/png;base64,${resultB64}` }}
             style={styles.resultImg}
@@ -134,7 +138,14 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 48 },
   header: { marginBottom: 16, gap: 8 },
-  hint: { opacity: 0.75, fontSize: 13 },
+  kicker: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#7a4b2f',
+  },
+  hint: { opacity: 0.75, fontSize: 13, lineHeight: 19 },
   btn: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -160,5 +171,6 @@ const styles = StyleSheet.create({
   chipTextOn: { color: '#fff' },
   err: { color: '#b91c1c', marginTop: 8 },
   resultBox: { marginTop: 16, gap: 8 },
+  resultHint: { opacity: 0.75, fontSize: 13, lineHeight: 19 },
   resultImg: { width: '100%', height: 360, borderRadius: 12, backgroundColor: '#f5f5f5' },
 });

@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "DressAI",
-    "slug": "dressai",
-      "description": "AI-based modern outfit assistant",
+    "name": "GetDressAI",
+    "slug": "getdressai",
+      "description": "AI outfit ideas, wardrobe guidance, virtual try-on, and premium styling in one product.",
       "category": "lifestyle",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "dressaiapp",
+    "scheme": "getdressai",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -22,7 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.dressaiapp"
+      "package": "com.anonymous.getdressai"
     },
     "web": {
       "output": "static",
