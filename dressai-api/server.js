@@ -153,6 +153,56 @@ app.use(
   })
 );
 
+async function applyProStripeCheckoutToSupabase(userId, session) {
+  const cust = session.customer;
+  const stripeCustomerId =
+    typeof cust === "string"
+      ? cust
+      : cust && typeof cust === "object" && cust.id
+        ? cust.id
+        : null;
+  const now = new Date().toISOString();
+  await ensureUserQuotaRow(userId);
+  const { error: e1 } = await supabaseAdmin.from("subscriptions").upsert(
+    {
+      user_id: userId,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id:
+        typeof session.subscription === "string" ? session.subscription : null,
+      status: "active",
+      plan_type: "stripe_checkout",
+      current_period_start: now,
+      current_period_end: null,
+      updated_at: now,
+    },
+    { onConflict: "user_id" }
+  );
+  if (e1) {
+    throw e1;
+  }
+  const { error: e2 } = await supabaseAdmin.from("user_quotas").upsert(
+    {
+      user_id: userId,
+      is_premium: true,
+      is_trial: false,
+      trial_days_left: 0,
+      ai_generations_used: 0,
+      ai_generations_limit: -1,
+      tryon_limit: -1,
+      saved_outfits_limit: -1,
+      updated_at: now,
+    },
+    { onConflict: "user_id" }
+  );
+  if (e2) {
+    throw e2;
+  }
+}
+
+/**
+ * Stripe checkout.session.completed — dressai `users.json` ёки Supabase `user_id`.
+ * @returns {{ kind: "dressai", user: object } | { kind: "supabase", userId: string } | null}
+ */
 async function processSuccessfulCheckoutSession(session) {
   const userId = session.metadata?.userId || session.client_reference_id;
 
@@ -160,12 +210,19 @@ async function processSuccessfulCheckoutSession(session) {
     return null;
   }
 
-  return updateUser(userId, (currentUser) => ({
+  if (String(session.metadata?.auth_provider || "") === "supabase" && supabaseAdmin) {
+    await applyProStripeCheckoutToSupabase(userId, session);
+    return { kind: "supabase", userId };
+  }
+
+  const user = updateUser(userId, (currentUser) => ({
     plan: "pro",
     stripeCustomerEmail: session.customer_details?.email || currentUser.email,
     lastCheckoutSessionId: session.id,
     lastPaymentStatus: session.payment_status || "paid",
   }));
+
+  return user ? { kind: "dressai", user } : null;
 }
 
 app.post("/billing/webhook", express.raw({ type: "application/json" }), async (req, res) => {
@@ -196,7 +253,9 @@ app.post("/billing/webhook", express.raw({ type: "application/json" }), async (r
 
   try {
     if (event.type === "checkout.session.completed") {
-      await processSuccessfulCheckoutSession(event.data.object);
+      await processSuccessfulCheckoutSession(event.data.object).catch((err) => {
+        console.error("checkout.session.completed handler:", err);
+      });
     }
 
     return res.json({ received: true });
@@ -389,6 +448,7 @@ function buildPublicUser(user) {
   // Фақат хавфсиз майдонлар, ҳеч қачон email, stripe маълумотлари, парол, referral_source чиқарилмайди
   return {
     id: user.id,
+    email: user.email || "",
     name: user.name,
     email: user.email,
     plan: normalizePlan(user.plan),
@@ -397,6 +457,107 @@ function buildPublicUser(user) {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
+}
+
+function derivePlanFromQuota(quota) {
+  if (!quota) return "free";
+  if (quota.is_premium === true && Number(quota.ai_generations_limit) === -1) return "pro";
+  if (quota.is_premium === true) return "pro";
+  return "free";
+}
+
+async function ensureUserQuotaRow(userId) {
+  if (!supabaseAdmin || !userId) return;
+  const { data: ex } = await supabaseAdmin.from("user_quotas").select("user_id").eq("user_id", userId).maybeSingle();
+  if (ex?.user_id) return;
+  const day = new Date().toISOString().slice(0, 10);
+  await supabaseAdmin.from("user_quotas").insert({
+    user_id: userId,
+    is_premium: false,
+    is_trial: false,
+    trial_days_left: 0,
+    ai_generations_used: 0,
+    ai_generations_limit: 5,
+    tryon_used: 0,
+    tryon_limit: 3,
+    saved_outfits_limit: 10,
+    last_reset_date: day,
+  });
+}
+
+/**
+ * Supabase access token (anon JWT) ёки dressai-api JWT.
+ * req.authSource: "dressai" | "supabase"
+ */
+async function tryPopulateUserFromToken(req, token) {
+  req.user = null;
+  req.authSource = null;
+  req.supabaseQuota = null;
+
+  try {
+    const payload = jwt.verify(token, jwtSecret);
+    const user = getUserById(payload.sub);
+    if (user) {
+      req.user = user;
+      req.authSource = "dressai";
+      return true;
+    }
+  } catch {
+    /* dressai JWT эмас ёки муддати ўтган */
+  }
+
+  if (!supabaseAdmin) {
+    return false;
+  }
+
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data?.user) {
+    return false;
+  }
+
+  const uid = data.user.id;
+  await ensureUserQuotaRow(uid);
+  const { data: quota } = await supabaseAdmin.from("user_quotas").select("*").eq("user_id", uid).maybeSingle();
+  const q = quota || {
+    user_id: uid,
+    ai_generations_used: 0,
+    ai_generations_limit: 5,
+    is_premium: false,
+    is_trial: false,
+  };
+  const plan = derivePlanFromQuota(q);
+  const meta = data.user.user_metadata || {};
+  req.user = {
+    id: uid,
+    email: data.user.email || "",
+    name: String(meta.full_name || meta.name || "").trim(),
+    plan,
+    imageGenerationCount: Number(q.ai_generations_used) || 0,
+    createdAt: data.user.created_at,
+    updatedAt: q.updated_at || data.user.updated_at,
+  };
+  req.authSource = "supabase";
+  req.supabaseQuota = q;
+  return true;
+}
+
+function buildPublicUserFromRequest(req) {
+  if (!req.user) return null;
+  if (req.authSource === "supabase" && req.supabaseQuota) {
+    const normalizedPlan = normalizePlan(req.user.plan);
+    const rem = getRemainingImageGenerations(req, normalizedPlan);
+    return {
+      id: req.user.id,
+      email: req.user.email || "",
+      name: req.user.name,
+      plan: normalizedPlan,
+      imageGenerationCount: Number(req.supabaseQuota.ai_generations_used) || 0,
+      remainingGenerations: rem == null ? 999999 : rem,
+      createdAt: req.user.createdAt,
+      updatedAt: req.user.updatedAt,
+    };
+  }
+  return buildPublicUser(req.user);
 }
 
 function isValidRedirectUrl(value) {
@@ -435,43 +596,38 @@ function attachUserIfPresent(req, res, next) {
 
   if (!token) {
     req.user = null;
+    req.authSource = null;
+    req.supabaseQuota = null;
     return next();
   }
 
-  try {
-    const payload = jwt.verify(token, jwtSecret);
-    const user = getUserById(payload.sub);
-
-    if (!user) {
-      return res.status(401).json({ error: "Authentication required." });
-    }
-
-    req.user = user;
-    return next();
-  } catch {
-    return res.status(401).json({ error: "Invalid or expired token." });
-  }
+  tryPopulateUserFromToken(req, token)
+    .then((ok) => {
+      if (!ok) {
+        return res.status(401).json({ error: "Invalid or expired token." });
+      }
+      return next();
+    })
+    .catch((err) => {
+      console.error("attachUserIfPresent:", err);
+      return res.status(401).json({ error: "Invalid or expired token." });
+    });
 }
 
 function requireAuth(req, res, next) {
-  // JWT орқали аниқлаш, user’ни req.user’га қўйиш
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing or invalid authorization header." });
   }
   const token = authHeader.slice(7);
-  try {
-    const payload = jwt.verify(token, jwtSecret);
-    const user = getUserById(payload.sub);
-    if (!user) {
-      return res.status(401).json({ error: "User not found." });
-    }
-    req.user = user;
-    // Permission: фақат ўз user маълумотини кўришга рухсат
-    return next();
-  } catch {
-    return res.status(401).json({ error: "Invalid or expired token." });
-  }
+  tryPopulateUserFromToken(req, token)
+    .then((ok) => {
+      if (!ok) {
+        return res.status(401).json({ error: "Invalid or expired token." });
+      }
+      return next();
+    })
+    .catch(() => res.status(401).json({ error: "Invalid or expired token." }));
 }
 
 async function resolveAuthenticatedUserFromToken(token) {
@@ -576,7 +732,17 @@ function getImageUsageKey(req, plan) {
 }
 
 function getRemainingImageGenerations(req, plan) {
-  if (req.user) {
+  if (req.user && req.authSource === "supabase" && req.supabaseQuota) {
+    const q = req.supabaseQuota;
+    if (q.is_premium === true && Number(q.ai_generations_limit) === -1) {
+      return null;
+    }
+    const limit = Number(q.ai_generations_limit) || 5;
+    const used = Number(q.ai_generations_used) || 0;
+    return Math.max(0, limit - used);
+  }
+
+  if (req.user && req.authSource === "dressai") {
     return getUserRemainingImageGenerations(req.user);
   }
 
@@ -592,8 +758,28 @@ function getRemainingImageGenerations(req, plan) {
   return Math.max(limit - usedCount, 0);
 }
 
-function consumeImageGeneration(req, plan) {
-  if (req.user) {
+async function consumeImageGeneration(req, plan) {
+  if (req.user && req.authSource === "supabase" && req.supabaseQuota && supabaseAdmin) {
+    if (normalizePlan(plan) === "pro" && Number(req.supabaseQuota.ai_generations_limit) === -1) {
+      return req.user;
+    }
+    const nextUsed = (Number(req.supabaseQuota.ai_generations_used) || 0) + 1;
+    const { error } = await supabaseAdmin
+      .from("user_quotas")
+      .update({
+        ai_generations_used: nextUsed,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", req.user.id);
+    if (error) {
+      console.error("consumeImageGeneration supabase:", error.message);
+    }
+    req.supabaseQuota = { ...req.supabaseQuota, ai_generations_used: nextUsed };
+    req.user = { ...req.user, imageGenerationCount: nextUsed };
+    return req.user;
+  }
+
+  if (req.user && req.authSource === "dressai") {
     if (normalizePlan(plan) === "pro") {
       return req.user;
     }
@@ -1037,8 +1223,9 @@ app.post("/auth/login", authRouteLimiter, async (req, res) => {
 
 app.get("/auth/me", requireAuth, (req, res) => {
   return res.json({
-    user: buildPublicUser(req.user),
+    user: buildPublicUserFromRequest(req),
     paymentEnabled: Boolean(stripe && stripePriceId),
+    authSource: req.authSource || "dressai",
   });
 });
 
@@ -1168,15 +1355,19 @@ app.post("/billing/create-checkout-session", requireAuth, async (req, res) => {
       metadata: {
         userId: req.user.id,
         plan: "pro",
+        auth_provider: req.authSource === "supabase" ? "supabase" : "dressai",
       },
     });
 
-    const updatedUser = updateUser(req.user.id, () => ({
-      stripeCustomerEmail: req.user.email,
-      lastCheckoutSessionId: session.id,
-    }));
-
-    req.user = updatedUser;
+    if (req.authSource === "dressai") {
+      const updatedUser = updateUser(req.user.id, () => ({
+        stripeCustomerEmail: req.user.email,
+        lastCheckoutSessionId: session.id,
+      }));
+      if (updatedUser) {
+        req.user = updatedUser;
+      }
+    }
 
     return res.json({
       checkoutUrl: session.url,
@@ -1224,12 +1415,29 @@ app.get("/billing/confirm", requireAuth, async (req, res) => {
       });
     }
 
-    const updatedUser = await processSuccessfulCheckoutSession(session);
+    const checkoutResult = await processSuccessfulCheckoutSession(session);
 
-    req.user = updatedUser;
+    if (!checkoutResult) {
+      return res.status(500).json({
+        error: "Could not apply checkout to user.",
+      });
+    }
+
+    if (checkoutResult.kind === "dressai") {
+      req.user = checkoutResult.user;
+      return res.json({
+        user: buildPublicUser(checkoutResult.user),
+        paymentStatus: session.payment_status,
+      });
+    }
+
+    const bearer = getBearerToken(req);
+    if (bearer) {
+      await tryPopulateUserFromToken(req, bearer);
+    }
 
     return res.json({
-      user: buildPublicUser(updatedUser),
+      user: buildPublicUserFromRequest(req),
       paymentStatus: session.payment_status,
     });
   } catch (error) {
@@ -1290,7 +1498,7 @@ app.post("/analyze", async (req, res) => {
     return res.json({
       plan: normalizedPlan,
       model: planConfig.chatModel,
-      user: buildPublicUser(req.user),
+      user: buildPublicUserFromRequest(req),
       recommendations: {
         ...parsed,
         products: enrichedProducts,
@@ -1346,7 +1554,7 @@ app.post("/image", async (req, res) => {
       });
     }
 
-    consumeImageGeneration(req, normalizedPlan);
+    await consumeImageGeneration(req, normalizedPlan);
 
     return res.json({
       plan: normalizedPlan,
@@ -1354,7 +1562,7 @@ app.post("/image", async (req, res) => {
       size: planConfig.imageSize,
       quality: planConfig.imageQuality,
       remainingGenerations: getRemainingImageGenerations(req, normalizedPlan),
-      user: buildPublicUser(req.user),
+      user: buildPublicUserFromRequest(req),
       image,
     });
   } catch (error) {

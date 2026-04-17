@@ -22,6 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import * as WebBrowser from "expo-web-browser";
 import axios from "axios";
+import { createClient } from "@supabase/supabase-js";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,6 +59,24 @@ const SUPABASE_ANON_KEY =
     (process.env?.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env?.SUPABASE_ANON_KEY) &&
     String(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY).trim()) ||
   "";
+
+let supabaseSingleton = null;
+function getSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return null;
+  }
+  if (!supabaseSingleton) {
+    supabaseSingleton = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    });
+  }
+  return supabaseSingleton;
+}
 const SESSION_STORAGE_KEY = "dressai-session-v1";
 const GUEST_USAGE_STORAGE_KEY = "dressai-guest-usage-v1";
 const GENDER_OPTIONS = ["male", "female"];
@@ -157,6 +176,85 @@ export default function App() {
     }
   }, [purchases]);
 
+  useEffect(() => {
+    async function restoreSession() {
+      try {
+        const storedGuestUsage = await AsyncStorage.getItem(GUEST_USAGE_STORAGE_KEY);
+        if (storedGuestUsage) {
+          const parsedGuestUsage = Number.parseInt(storedGuestUsage, 10);
+          if (!Number.isNaN(parsedGuestUsage)) {
+            setGuestUsage(parsedGuestUsage);
+          }
+        }
+
+        const sb = getSupabase();
+        if (sb) {
+          const {
+            data: { session },
+          } = await sb.auth.getSession();
+          if (session?.access_token) {
+            setToken(session.access_token);
+            setRefreshToken(session.refresh_token || null);
+            await refreshProfile(session.access_token, session.refresh_token || null);
+          }
+        } else {
+          const raw = await AsyncStorage.getItem(SESSION_STORAGE_KEY);
+          if (raw) {
+            const parsedSession = JSON.parse(raw);
+            if (parsedSession?.token) {
+              setToken(parsedSession.token);
+              setRefreshToken(parsedSession.refreshToken || null);
+              setUser(parsedSession.user || null);
+              await refreshProfile(parsedSession.token, parsedSession.refreshToken || null);
+            }
+          }
+        }
+      } catch {
+        await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
+      } finally {
+        setIsRestoringSession(false);
+      }
+    }
+
+    async function loadConfig() {
+      try {
+        const response = await axios.get(`${API}/config`);
+        setPaymentEnabled(Boolean(response.data?.paymentEnabled));
+      } catch {
+        setPaymentEnabled(false);
+      }
+    }
+
+    restoreSession();
+    loadConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshProfile session token билан чақирилади
+  }, []);
+
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) {
+      return undefined;
+    }
+    const {
+      data: { subscription },
+    } = sb.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.access_token) {
+        setToken(session.access_token);
+        setRefreshToken(session.refresh_token || null);
+        await refreshProfile(session.access_token, session.refresh_token || null);
+      } else {
+        setToken(null);
+        setRefreshToken(null);
+        setUser(null);
+        await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const buyPro = async () => {
     try {
       await RNIap.requestSubscription(productIds[0]);
@@ -191,58 +289,14 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    async function restoreSession() {
-      try {
-        const [storedSession, storedGuestUsage] = await Promise.all([
-          AsyncStorage.getItem(SESSION_STORAGE_KEY),
-          AsyncStorage.getItem(GUEST_USAGE_STORAGE_KEY),
-        ]);
-
-        if (storedGuestUsage) {
-          const parsedGuestUsage = Number.parseInt(storedGuestUsage, 10);
-
-          if (!Number.isNaN(parsedGuestUsage)) {
-            setGuestUsage(parsedGuestUsage);
-          }
-        }
-
-        if (storedSession) {
-          const parsedSession = JSON.parse(storedSession);
-
-          if (parsedSession?.token) {
-            setToken(parsedSession.token);
-            setRefreshToken(parsedSession.refreshToken || null);
-            setUser(parsedSession.user || null);
-            await refreshProfile(parsedSession.token, parsedSession.refreshToken || null);
-          }
-        }
-      } catch {
-        await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
-      } finally {
-        setIsRestoringSession(false);
-      }
-    }
-
-    async function loadConfig() {
-      try {
-        const response = await axios.get(`${API}/config`);
-        setPaymentEnabled(Boolean(response.data?.paymentEnabled));
-      } catch {
-        setPaymentEnabled(false);
-      }
-    }
-
-    restoreSession();
-    loadConfig();
-  }, []);
-
   const persistSession = async (nextToken, nextUser, refreshToken = null) => {
     if (!nextToken || !nextUser) {
       await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
       return;
     }
-
+    if (getSupabase()) {
+      return;
+    }
     await AsyncStorage.setItem(
       SESSION_STORAGE_KEY,
       JSON.stringify({
@@ -300,6 +354,7 @@ export default function App() {
 
       const nextUser = response.data?.user || null;
       setPaymentEnabled(Boolean(response.data?.paymentEnabled));
+      setToken(activeToken);
 
       if (nextUser) {
         await applyUserState(activeToken, nextUser, activeRefreshToken);
@@ -327,11 +382,15 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    const sb = getSupabase();
+    if (sb) {
+      await sb.auth.signOut();
+    }
     setToken(null);
     setRefreshToken(null);
     setUser(null);
     setPassword("");
-    await persistSession(null, null);
+    await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
   const handleAuth = async (mode) => {

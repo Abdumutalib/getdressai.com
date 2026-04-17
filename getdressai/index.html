@@ -302,9 +302,10 @@
       box.innerHTML = `<p class="text-center py-8 text-neutral-600">${escapeHtml(t("mpSearching"))}</p>`;
     }
     try {
+      const authH = await supabaseAuthHeaders();
       const res = await fetch(base, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authH },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
@@ -397,6 +398,31 @@
 
   let supabaseClient = null;
   let authListenerBound = false;
+  /** Email havolasi orqali tiklash (Supabase PASSWORD_RECOVERY) */
+  let emailRecoveryFlow = false;
+  let forgotPanelOpen = false;
+  let forgotResetTab = "email";
+  let smsResetStep = 1;
+  let pendingPhoneE164 = "";
+
+  function recoveryRedirectUrl() {
+    return `${window.location.origin}${window.location.pathname}?recovery=1`;
+  }
+
+  /** Xalqaro format: +998..., +7...; 9 raqamli UZ raqamni +998 ga bog‘laydi */
+  function normalizePhoneE164(raw) {
+    const s = String(raw || "").trim().replace(/\s/g, "");
+    if (!s) return "";
+    const digits = s.replace(/\D/g, "");
+    if (s.startsWith("+")) {
+      if (digits.length >= 10 && digits.length <= 15) return `+${digits}`;
+      return "";
+    }
+    if (digits.length === 12 && digits.startsWith("998")) return `+${digits}`;
+    if (digits.length === 9 && digits[0] === "9") return `+998${digits}`;
+    if (digits.length >= 10 && digits.length <= 15) return `+${digits}`;
+    return "";
+  }
 
   function isSupabaseConfigured() {
     const u = (CONFIG.supabaseUrl || "").trim();
@@ -462,6 +488,15 @@
     return data;
   }
 
+  /** dressai-api / Supabase JWT — генерация ва прокси учун */
+  async function supabaseAuthHeaders() {
+    const sb = await ensureSupabase();
+    if (!sb) return {};
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) return {};
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+
   function applyAuthUser(user) {
     if (!user) return;
     currentUser = {
@@ -475,24 +510,48 @@
   async function initAuth() {
     const sb = await ensureSupabase();
     if (!sb) return;
+    if (!authListenerBound) {
+      authListenerBound = true;
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          emailRecoveryFlow = true;
+          if (session?.user) applyAuthUser(session.user);
+          render();
+          return;
+        }
+        if (event === "SIGNED_OUT") {
+          emailRecoveryFlow = false;
+          forgotPanelOpen = false;
+          smsResetStep = 1;
+          pendingPhoneE164 = "";
+          currentUser = null;
+          userMeasurements = null;
+          cart = [];
+          savedOutfits = [];
+          render();
+          return;
+        }
+        if (session?.user) {
+          applyAuthUser(session.user);
+          render();
+        }
+      });
+    }
     const { data: { session } } = await sb.auth.getSession();
-    if (session?.user) applyAuthUser(session.user);
-    if (authListenerBound) return;
-    authListenerBound = true;
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        currentUser = null;
-        userMeasurements = null;
-        cart = [];
-        savedOutfits = [];
-        render();
-        return;
+    const params = new URLSearchParams(window.location.search);
+    if (session?.user) {
+      applyAuthUser(session.user);
+      if (params.get("recovery") === "1") {
+        emailRecoveryFlow = true;
+        params.delete("recovery");
+        const qs = params.toString();
+        history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash || ""}`
+        );
       }
-      if (session?.user) {
-        applyAuthUser(session.user);
-        render();
-      }
-    });
+    }
   }
 
   async function initCamera() {
@@ -683,9 +742,10 @@
     try {
       const garmentB64 = await fetchImageAsBase64(product.image);
       const personB64 = stripDataUrlBase64(photoDataUrl);
+      const authH = await supabaseAuthHeaders();
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authH },
         body: JSON.stringify({
           personImageBase64: personB64,
           garments: [{ image: garmentB64, type: product.vtonGarmentType || "upper" }],
@@ -842,9 +902,10 @@
   }
 
   async function generateOutfits(prompt) {
+    const authH = await supabaseAuthHeaders();
     const response = await fetch(CONFIG.aiProxyUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authH },
       body: JSON.stringify({
         model: CONFIG.aiModel,
         messages: [
@@ -886,7 +947,7 @@
 
   function render() {
     const app = document.getElementById("app");
-    if (!currentUser) {
+    if (emailRecoveryFlow && isSupabaseConfigured()) {
       app.innerHTML = `
         <div class="min-h-screen flex flex-col bg-white">
           <header class="border-b px-6 py-4 flex justify-between items-center">
@@ -895,6 +956,61 @@
           </header>
           <div class="flex-1 flex items-center justify-center px-6 py-16">
             <div class="max-w-md w-full bg-neutral-50 rounded-2xl p-8 shadow-sm border">
+              <h2 class="text-2xl font-bold text-center">${t("recoveryTitle")}</h2>
+              <p class="mt-2 text-xs text-neutral-500 text-center leading-relaxed">${t("recoveryHint")}</p>
+              <input id="recoveryPw1" type="password" autocomplete="new-password" placeholder="${t("newPassword")}" class="w-full border rounded-xl px-4 py-3 mt-6 mb-3">
+              <input id="recoveryPw2" type="password" autocomplete="new-password" placeholder="${t("confirmPassword")}" class="w-full border rounded-xl px-4 py-3 mb-4">
+              <button type="button" onclick="submitEmailRecoveryPassword()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium">${t("recoverySubmit")}</button>
+              <p class="text-center mt-4"><button type="button" onclick="cancelEmailRecovery()" class="text-sm text-neutral-600 underline">${t("backToSignIn")}</button></p>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+    if (!currentUser) {
+      const showForgot = forgotPanelOpen && isSupabaseConfigured();
+      const tabEmailCls =
+        forgotResetTab === "email"
+          ? "bg-neutral-900 text-white"
+          : "bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-50";
+      const tabSmsCls =
+        forgotResetTab === "sms"
+          ? "bg-neutral-900 text-white"
+          : "bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-50";
+      const forgotPanelHtml = showForgot
+        ? `
+              <button type="button" onclick="closeForgotPassword()" class="text-sm text-neutral-600 underline mb-2">${t("backToSignIn")}</button>
+              <h2 class="text-2xl font-bold text-center mb-4">${t("forgotPassword")}</h2>
+              <div class="flex rounded-xl border border-neutral-200 p-1 gap-1 mb-4">
+                <button type="button" onclick="switchForgotTab('email')" class="flex-1 py-2 rounded-lg text-sm font-medium ${tabEmailCls}">${t("resetViaEmailTab")}</button>
+                <button type="button" onclick="switchForgotTab('sms')" class="flex-1 py-2 rounded-lg text-sm font-medium ${tabSmsCls}">${t("resetViaSmsTab")}</button>
+              </div>
+              ${
+                forgotResetTab === "email"
+                  ? `
+                <input id="forgotEmail" type="email" autocomplete="email" placeholder="${t("email")}" class="w-full border rounded-xl px-4 py-3 mb-4">
+                <button type="button" onclick="sendEmailPasswordReset()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium">${t("sendResetLink")}</button>
+              `
+                  : smsResetStep === 1
+                    ? `
+                <p class="text-xs text-neutral-500 mb-2">${t("phoneHint")}</p>
+                <input id="forgotPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998901234567" class="w-full border rounded-xl px-4 py-3 mb-4" value="${escapeHtml(pendingPhoneE164 || "")}">
+                <button type="button" onclick="sendSmsResetOtp()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium">${t("sendSmsCode")}</button>
+              `
+                    : `
+                <p class="text-sm text-neutral-600 mb-3">${t("smsResetStep2Hint")}</p>
+                <input id="forgotSmsOtp" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="${t("smsCode")}" class="w-full border rounded-xl px-4 py-3 mb-3">
+                <input id="forgotNewPw" type="password" autocomplete="new-password" placeholder="${t("newPassword")}" class="w-full border rounded-xl px-4 py-3 mb-3">
+                <input id="forgotNewPw2" type="password" autocomplete="new-password" placeholder="${t("confirmPassword")}" class="w-full border rounded-xl px-4 py-3 mb-4">
+                <button type="button" onclick="completeSmsPasswordReset()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium">${t("setNewPasswordBtn")}</button>
+                <button type="button" onclick="smsResetGoBack()" class="w-full mt-2 border border-neutral-200 py-2 rounded-xl text-sm">${t("backToSignIn")}</button>
+              `
+              }
+            `
+        : "";
+      const signInBlock = showForgot
+        ? forgotPanelHtml
+        : `
               <h2 class="text-2xl font-bold text-center">${t("signin")}</h2>
               <button type="button" id="btn-google-signin" onclick="signInWithGoogle()" class="mt-6 w-full flex items-center justify-center gap-3 border border-neutral-200 rounded-xl py-3 bg-white hover:bg-neutral-50 shadow-sm font-medium text-neutral-800">
                 <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -908,11 +1024,27 @@
               <p class="mt-2 text-xs text-neutral-500 text-center leading-relaxed">${t("googleOAuthHint")}</p>
               <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t"></div></div><div class="relative flex justify-center text-xs"><span class="bg-neutral-50 px-3">${t("loginOr")}</span></div></div>
               <input id="loginEmail" type="email" autocomplete="email" placeholder="${t("email")}" class="w-full border rounded-xl px-4 py-3 mb-3">
-              <input id="loginPassword" type="password" autocomplete="current-password" placeholder="${t("password")}" class="w-full border rounded-xl px-4 py-3 mb-4">
+              <input id="loginPassword" type="password" autocomplete="current-password" placeholder="${t("password")}" class="w-full border rounded-xl px-4 py-3 mb-3">
               <button type="button" onclick="signInWithEmail()" class="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium">${t("signin")}</button>
-              <p class="text-center text-sm mt-4"><button type="button" onclick="handleEmailSignup()" class="text-neutral-600 underline">${t("signup")}</button></p>
+              <p class="text-center text-sm mt-3"><button type="button" onclick="openForgotPassword()" class="text-neutral-600 underline">${t("forgotPassword")}</button></p>
+              <p class="text-center text-sm mt-2"><button type="button" onclick="handleEmailSignup()" class="text-neutral-600 underline">${t("signup")}</button></p>
+            `;
+      const premiumFooter = showForgot
+        ? ""
+        : `
               <p class="text-center text-xs text-neutral-500 mt-6 max-w-sm mx-auto leading-relaxed">${escapeHtml(t("premiumSubtitle"))}</p>
               <p class="text-center mt-2"><a href="public/premium.html" class="text-purple-600 font-semibold hover:underline">${t("premiumOpenFull")}</a></p>
+            `;
+      app.innerHTML = `
+        <div class="min-h-screen flex flex-col bg-white">
+          <header class="border-b px-6 py-4 flex justify-between items-center">
+            <span class="text-xl font-bold">${t("appName")}</span>
+            ${langSelectHtml("")}
+          </header>
+          <div class="flex-1 flex items-center justify-center px-6 py-16">
+            <div class="max-w-md w-full bg-neutral-50 rounded-2xl p-8 shadow-sm border">
+              ${signInBlock}
+              ${premiumFooter}
             </div>
           </div>
         </div>
@@ -1361,6 +1493,114 @@
     } catch (e) {
       return toast(e?.message || "Signup failed", "error");
     }
+  };
+
+  window.openForgotPassword = () => {
+    if (!isSupabaseConfigured()) {
+      toast(t("forgotPasswordSupabaseOnly"), "error");
+      return;
+    }
+    forgotPanelOpen = true;
+    forgotResetTab = "email";
+    smsResetStep = 1;
+    pendingPhoneE164 = "";
+    render();
+  };
+
+  window.closeForgotPassword = () => {
+    forgotPanelOpen = false;
+    smsResetStep = 1;
+    pendingPhoneE164 = "";
+    render();
+  };
+
+  window.switchForgotTab = (tab) => {
+    forgotResetTab = tab === "sms" ? "sms" : "email";
+    smsResetStep = 1;
+    pendingPhoneE164 = "";
+    render();
+  };
+
+  window.smsResetGoBack = () => {
+    smsResetStep = 1;
+    render();
+  };
+
+  window.sendEmailPasswordReset = async () => {
+    const email = document.getElementById("forgotEmail")?.value?.trim();
+    if (!email) return toast(t("errEnterEmail"), "error");
+    const sb = await ensureSupabase();
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: recoveryRedirectUrl(),
+    });
+    if (error) return toast(error.message, "error");
+    toast(t("resetEmailSent"), "success");
+  };
+
+  window.sendSmsResetOtp = async () => {
+    const raw = document.getElementById("forgotPhone")?.value;
+    const phone = normalizePhoneE164(raw);
+    if (!phone) return toast(t("invalidPhone"), "error");
+    pendingPhoneE164 = phone;
+    const sb = await ensureSupabase();
+    const { error } = await sb.auth.signInWithOtp({
+      phone,
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      const msg = String(error.message || "");
+      if (/not found|signups not allowed|user/i.test(msg)) toast(t("smsUserMissing"), "error");
+      else toast(msg, "error");
+      return;
+    }
+    smsResetStep = 2;
+    toast(t("resetSmsSent"), "success");
+    render();
+  };
+
+  window.completeSmsPasswordReset = async () => {
+    const otp = String(document.getElementById("forgotSmsOtp")?.value || "").trim();
+    const p1 = document.getElementById("forgotNewPw")?.value || "";
+    const p2 = document.getElementById("forgotNewPw2")?.value || "";
+    if (!otp) return toast(t("otpRequired"), "error");
+    if (p1.length < 6) return toast(t("passwordTooShort"), "error");
+    if (p1 !== p2) return toast(t("passwordMismatch"), "error");
+    if (!pendingPhoneE164) return toast(t("invalidPhone"), "error");
+    const sb = await ensureSupabase();
+    const { data, error } = await sb.auth.verifyOtp({
+      phone: pendingPhoneE164,
+      token: otp,
+      type: "sms",
+    });
+    if (error) return toast(error.message, "error");
+    const { error: uerr } = await sb.auth.updateUser({ password: p1 });
+    if (uerr) return toast(uerr.message, "error");
+    forgotPanelOpen = false;
+    smsResetStep = 1;
+    pendingPhoneE164 = "";
+    if (data.user) applyAuthUser(data.user);
+    toast(t("passwordUpdated"), "success");
+    render();
+  };
+
+  window.submitEmailRecoveryPassword = async () => {
+    const p1 = document.getElementById("recoveryPw1")?.value || "";
+    const p2 = document.getElementById("recoveryPw2")?.value || "";
+    if (p1.length < 6) return toast(t("passwordTooShort"), "error");
+    if (p1 !== p2) return toast(t("passwordMismatch"), "error");
+    const sb = await ensureSupabase();
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) return toast(error.message, "error");
+    emailRecoveryFlow = false;
+    toast(t("passwordUpdated"), "success");
+    render();
+  };
+
+  window.cancelEmailRecovery = async () => {
+    const sb = await ensureSupabase();
+    if (sb) await sb.auth.signOut();
+    emailRecoveryFlow = false;
+    render();
   };
 
   window.logout = async () => {
