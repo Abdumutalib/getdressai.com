@@ -1,13 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_PATHS = ["/dashboard", "/referrals", "/admin"];
+const CANONICAL_HOST = "getdressai.com";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") || "";
   const needsAuth = PROTECTED_PATHS.some((path) => pathname.startsWith(path));
+  const isPreviewHost = host.endsWith(".vercel.app") && host !== CANONICAL_HOST;
+
+  const applyIndexingHeaders = (response: NextResponse) => {
+    if (isPreviewHost) {
+      response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+      response.headers.set("Link", `<https://${CANONICAL_HOST}${pathname}>; rel="canonical"`);
+    }
+
+    return response;
+  };
 
   if (!needsAuth) {
-    return NextResponse.next();
+    return applyIndexingHeaders(NextResponse.next());
   }
 
   const hasSession =
@@ -16,14 +28,14 @@ export function middleware(request: NextRequest) {
     request.cookies.has("getdressai_session");
 
   if (hasSession) {
-    return NextResponse.next();
+    return applyIndexingHeaders(NextResponse.next());
   }
 
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("next", pathname);
-  return NextResponse.redirect(loginUrl);
+  return applyIndexingHeaders(NextResponse.redirect(loginUrl));
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/referrals/:path*", "/admin/:path*"]
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|gif|ico|woff2?)$).*)"]
 };
