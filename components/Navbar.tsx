@@ -22,18 +22,26 @@ export function Navbar() {
   ];
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("getdressai-theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const nextDark = stored ? stored === "dark" : prefersDark;
-    setDark(nextDark);
-    document.documentElement.classList.toggle("dark", nextDark);
+    try {
+      const stored = window.localStorage.getItem("getdressai-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const nextDark = stored ? stored === "dark" : prefersDark;
+      setDark(nextDark);
+      document.documentElement.classList.toggle("dark", nextDark);
+    } catch {
+      setDark(false);
+    }
   }, []);
 
   const toggleTheme = () => {
-    const nextDark = !dark;
-    setDark(nextDark);
-    document.documentElement.classList.toggle("dark", nextDark);
-    window.localStorage.setItem("getdressai-theme", nextDark ? "dark" : "light");
+    try {
+      const nextDark = !dark;
+      setDark(nextDark);
+      document.documentElement.classList.toggle("dark", nextDark);
+      window.localStorage.setItem("getdressai-theme", nextDark ? "dark" : "light");
+    } catch {
+      return;
+    }
   };
 
   return (

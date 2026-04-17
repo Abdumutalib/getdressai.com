@@ -25,23 +25,31 @@ export function LanguageProvider({
   const [language, setLanguageState] = useState<SupportedLanguage>(initialLanguage);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY) as SupportedLanguage | null;
-    if (stored && supportedLanguages.includes(stored)) {
-      setLanguageState(stored);
-      document.documentElement.lang = stored;
-      document.documentElement.dir = RTL_LANGUAGES.has(stored) ? "rtl" : "ltr";
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY) as SupportedLanguage | null;
+      if (stored && supportedLanguages.includes(stored)) {
+        setLanguageState(stored);
+        document.documentElement.lang = stored;
+        document.documentElement.dir = RTL_LANGUAGES.has(stored) ? "rtl" : "ltr";
+        return;
+      }
+      document.documentElement.lang = initialLanguage;
+      document.documentElement.dir = RTL_LANGUAGES.has(initialLanguage) ? "rtl" : "ltr";
+    } catch {
       return;
     }
-    document.documentElement.lang = initialLanguage;
-    document.documentElement.dir = RTL_LANGUAGES.has(initialLanguage) ? "rtl" : "ltr";
   }, [initialLanguage]);
 
   const setLanguage = (nextLanguage: SupportedLanguage) => {
     setLanguageState(nextLanguage);
-    window.localStorage.setItem(STORAGE_KEY, nextLanguage);
-    document.cookie = `${STORAGE_KEY}=${nextLanguage}; path=/; max-age=31536000; SameSite=Lax`;
-    document.documentElement.lang = nextLanguage;
-    document.documentElement.dir = RTL_LANGUAGES.has(nextLanguage) ? "rtl" : "ltr";
+    try {
+      window.localStorage.setItem(STORAGE_KEY, nextLanguage);
+      document.cookie = `${STORAGE_KEY}=${nextLanguage}; path=/; max-age=31536000; SameSite=Lax`;
+      document.documentElement.lang = nextLanguage;
+      document.documentElement.dir = RTL_LANGUAGES.has(nextLanguage) ? "rtl" : "ltr";
+    } catch {
+      return;
+    }
   };
 
   const value = useMemo<LanguageContextValue>(

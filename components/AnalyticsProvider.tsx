@@ -5,20 +5,36 @@ import { initAnalytics, trackEvent } from "@/lib/analytics";
 
 export function AnalyticsProvider() {
   useEffect(() => {
-    initAnalytics();
+    try {
+      initAnalytics();
+    } catch {
+      return;
+    }
 
     const handleVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        trackEvent("dropoff_detected", {
-          path: window.location.pathname
-        });
+      try {
+        if (document.visibilityState === "hidden") {
+          trackEvent("dropoff_detected", {
+            path: window.location.pathname
+          });
+        }
+      } catch {
+        return;
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibility);
+    try {
+      document.addEventListener("visibilitychange", handleVisibility);
+    } catch {
+      return;
+    }
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibility);
+      try {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      } catch {
+        return;
+      }
     };
   }, []);
 
