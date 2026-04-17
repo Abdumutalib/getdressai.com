@@ -8,6 +8,7 @@ const icons = [Camera, Layers3, Sparkles];
 export function HowItWorks() {
   const { t, tm } = useLanguage();
   const steps = tm<{ title: string; copy: string }[]>("howItWorks.steps");
+  const safeSteps = Array.isArray(steps) ? steps : [];
 
   return (
     <section className="section-shell py-24" id="how-it-works">
@@ -16,7 +17,7 @@ export function HowItWorks() {
         <h2 className="section-title">{t("howItWorks.title")}</h2>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
-        {steps.map((step, index) => {
+        {safeSteps.map((step, index) => {
           const Icon = icons[index];
           return (
             <div key={step.title} className="glass-panel rounded-[2rem] p-8">

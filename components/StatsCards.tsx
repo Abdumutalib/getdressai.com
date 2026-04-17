@@ -7,10 +7,11 @@ const values = ["28", "142", "$380", "19.2%"];
 export function StatsCards() {
   const { tm } = useLanguage();
   const stats = tm<{ label: string; note: string }[]>("dashboard.stats");
+  const safeStats = Array.isArray(stats) ? stats : [];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {stats.map((stat, index) => (
+      {safeStats.map((stat, index) => (
         <div key={stat.label} className="glass-panel rounded-[2rem] p-6">
           <p className="text-sm text-slate-500 dark:text-slate-300">{stat.label}</p>
           <div className="mt-3 flex items-end justify-between gap-3">

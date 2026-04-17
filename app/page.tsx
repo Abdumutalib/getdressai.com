@@ -16,6 +16,7 @@ const CTA = dynamic(() => import("@/components/CTA").then((module) => module.CTA
 function WhyUs() {
   const { t, tm } = useLanguage();
   const rows = tm<string[][]>("whyUs.rows");
+  const safeRows = Array.isArray(rows) ? rows : [];
 
   return (
     <section className="section-shell py-24">
@@ -33,7 +34,7 @@ function WhyUs() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {safeRows.map((row) => (
               <tr key={row[0]} className="border-b border-slate-100 last:border-none dark:border-white/5">
                 {row.map((cell) => (
                   <td key={cell} className="px-6 py-5 text-slate-600 dark:text-slate-300">
@@ -52,6 +53,7 @@ function WhyUs() {
 function ReferralLoop() {
   const { t, tm } = useLanguage();
   const bullets = tm<string[]>("referralLoop.bullets");
+  const safeBullets = Array.isArray(bullets) ? bullets : [];
 
   return (
     <section className="section-shell py-24">
@@ -62,7 +64,7 @@ function ReferralLoop() {
           <p className="section-copy">{t("referralLoop.copy")}</p>
         </div>
         <div className="grid gap-4">
-          {bullets.map((item) => (
+          {safeBullets.map((item) => (
             <div key={item} className="rounded-[1.5rem] bg-white p-5 shadow-soft dark:bg-white/5">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{item}</p>
             </div>

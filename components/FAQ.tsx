@@ -5,6 +5,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 export function FAQ() {
   const { t, tm } = useLanguage();
   const faqs = tm<{ q: string; a: string }[]>("faq.items");
+  const safeFaqs = Array.isArray(faqs) ? faqs : [];
 
   return (
     <section className="section-shell py-24">
@@ -13,7 +14,7 @@ export function FAQ() {
         <h2 className="section-title">{t("faq.title")}</h2>
       </div>
       <div className="grid gap-4">
-        {faqs.map((faq) => (
+        {safeFaqs.map((faq) => (
           <details key={faq.q} className="glass-panel rounded-[2rem] px-6 py-5">
             <summary className="cursor-pointer list-none text-lg font-semibold text-slate-950 dark:text-white">
               {faq.q}

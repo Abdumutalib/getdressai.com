@@ -15,6 +15,7 @@ const metrics = [
 export default function AdminPage() {
   const { t, tm } = useLanguage();
   const labels = tm<string[]>("admin.labels");
+  const safeLabels = Array.isArray(labels) ? labels : metrics.map(([label]) => label);
 
   return (
     <main className="section-shell py-20">
@@ -25,8 +26,8 @@ export default function AdminPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {metrics.map(([, value], index) => (
-            <div key={labels[index]} className="glass-panel rounded-[2rem] p-6">
-              <p className="text-sm text-slate-500 dark:text-slate-300">{labels[index]}</p>
+            <div key={safeLabels[index]} className="glass-panel rounded-[2rem] p-6">
+              <p className="text-sm text-slate-500 dark:text-slate-300">{safeLabels[index]}</p>
               <p className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{value}</p>
             </div>
           ))}

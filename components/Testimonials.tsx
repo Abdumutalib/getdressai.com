@@ -6,6 +6,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 export function Testimonials() {
   const { t, tm } = useLanguage();
   const testimonials = tm<{ name: string; role: string; quote: string }[]>("testimonials.items");
+  const safeTestimonials = Array.isArray(testimonials) ? testimonials : [];
 
   return (
     <section className="section-shell py-24">
@@ -14,7 +15,7 @@ export function Testimonials() {
         <h2 className="section-title">{t("testimonials.title")}</h2>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
-        {testimonials.map((item, index) => (
+        {safeTestimonials.map((item, index) => (
           <motion.div
             key={item.name}
             initial={{ opacity: 0, y: 24 }}

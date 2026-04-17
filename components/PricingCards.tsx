@@ -15,7 +15,8 @@ export function PricingCards() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
   const localizedPlans = tm<{ name: string; subtitle: string; features: string[]; cta: string }[]>("pricing.plans");
-  const plans = localizedPlans.map((plan, index) => ({
+  const safeLocalizedPlans = Array.isArray(localizedPlans) ? localizedPlans : [];
+  const plans = safeLocalizedPlans.map((plan, index) => ({
     ...plan,
     price: [0, 9, 19, 49][index],
     plan: ["free", "starter", "popular", "pro"][index],

@@ -18,6 +18,7 @@ export function DashboardSidebar() {
   const { tm } = useLanguage();
   const pathname = usePathname();
   const labels = tm<string[]>("dashboard.sidebar");
+  const safeLabels = Array.isArray(labels) ? labels : ["Generate", "History", "Billing", "Referrals", "Settings"];
 
   return (
     <aside className="glass-panel rounded-[2rem] p-4">
@@ -40,7 +41,7 @@ export function DashboardSidebar() {
               )}
             >
               <Icon className="size-4" />
-              {labels[index]}
+              {safeLabels[index] ?? item.href}
             </Link>
           );
         })}

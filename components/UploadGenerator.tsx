@@ -38,8 +38,9 @@ const defaultMeasurements: Measurements = {
 export function UploadGenerator() {
   const { t, tm, language } = useLanguage();
   const presets = tm<string[]>("upload.presets");
+  const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
-  const [selected, setSelected] = useState(presets[0] ?? "Luxury");
+  const [selected, setSelected] = useState(safePresets[0] ?? "Luxury");
   const [prompt, setPrompt] = useState(t("upload.defaultPrompt"));
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -48,9 +49,9 @@ export function UploadGenerator() {
   const [measurements, setMeasurements] = useState<Measurements>(defaultMeasurements);
 
   useEffect(() => {
-    setSelected(presets[0] ?? "Luxury");
+    setSelected(safePresets[0] ?? "Luxury");
     setPrompt(t("upload.defaultPrompt"));
-  }, [language, presets, t]);
+  }, [language, safePresets, t]);
 
   const measurementFields = useMemo(
     () => [
@@ -226,7 +227,7 @@ export function UploadGenerator() {
         )}
 
         <div className="flex flex-wrap gap-2">
-          {presets.map((preset) => (
+          {safePresets.map((preset) => (
             <button
               key={preset}
               type="button"

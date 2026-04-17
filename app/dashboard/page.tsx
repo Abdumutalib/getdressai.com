@@ -20,10 +20,11 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
   const { t, tm } = useLanguage();
   const historyText = tm<{ title: string; date: string }[]>("dashboard.history");
+  const safeHistoryText = Array.isArray(historyText) ? historyText : [];
   const history = [
-    { ...historyText[0], src: "/examples/wedding.svg" },
-    { ...historyText[1], src: "/examples/celebrity.svg" },
-    { ...historyText[2], src: "/examples/office.svg" }
+    { ...(safeHistoryText[0] ?? { title: "Wedding couture", date: "2 minutes ago" }), src: "/examples/wedding.svg" },
+    { ...(safeHistoryText[1] ?? { title: "Celebrity leather set", date: "12 minutes ago" }), src: "/examples/celebrity.svg" },
+    { ...(safeHistoryText[2] ?? { title: "Office capsule", date: "Yesterday" }), src: "/examples/office.svg" }
   ];
 
   return (
