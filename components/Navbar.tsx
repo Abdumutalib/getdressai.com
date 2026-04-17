@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, MoonStar, Sparkles, SunMedium } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const links = [
   { href: "/pricing", label: "Pricing" },
@@ -59,6 +60,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitcher className="hidden md:inline-flex" />
           <button
             type="button"
             onClick={toggleTheme}
@@ -86,6 +88,7 @@ export function Navbar() {
 
       {open ? (
         <div className="section-shell flex flex-col gap-2 border-t border-slate-200/70 py-4 md:hidden dark:border-white/10">
+          <LanguageSwitcher className="mb-2 w-full justify-between rounded-2xl px-4 py-3" />
           {links.map((link) => (
             <Link
               key={link.href}

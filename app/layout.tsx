@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
+import { cookies } from "next/headers";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import "@/app/globals.css";
@@ -69,9 +70,12 @@ const jsonLd = {
   }
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("getdressai-language")?.value || "en";
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning>
       <body className={inter.className}>
         <Navbar />
         {children}
