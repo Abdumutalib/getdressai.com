@@ -24,6 +24,9 @@ import * as WebBrowser from "expo-web-browser";
 import axios from "axios";
 import { createClient } from "@supabase/supabase-js";
 
+import { LanguageBar } from "@/components/language-bar";
+import { useLocale } from "@/contexts/locale";
+
 WebBrowser.maybeCompleteAuthSession();
 
 LogBox.ignoreLogs(["props.pointerEvents is deprecated. Use style.pointerEvents"]);
@@ -40,8 +43,6 @@ console.warn = (...args) => {
 };
 
 const productIds = ["dressai_pro"];
-const proMotivation = "Unlock better styles 🔒";
-const proActive = "Premium AI active 🔥";
 
 /** Телефонда Expo Go: компьютер LAN IP. Эмулятор: 127.0.0.1. .env: EXPO_PUBLIC_API_URL=http://192.168.x.x:3000 */
 const API =
@@ -127,7 +128,11 @@ function isSupabaseConfigured() {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 }
 
-export default function App() {
+function DressAiLegacyApp() {
+  const { t } = useLocale();
+  const proMotivation = t("legacyProMotivation");
+  const proActive = t("legacyProActive");
+
   const [selectedImageUri, setSelectedImageUri] = useState(null);
   const [generatedImageUri, setGeneratedImageUri] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
@@ -259,18 +264,19 @@ export default function App() {
     try {
       await RNIap.requestSubscription(productIds[0]);
     } catch (err) {
-      Alert.alert("Purchase failed", err?.message || "Unknown error");
+      Alert.alert(t("legacyAlertPurchaseFailed"), err?.message || t("legacyAlertUnknownError"));
     }
   };
 
   const plan = user?.plan === "pro" ? "pro" : "free";
   const remainingLooks = plan === "pro" ? "∞" : String(user?.remainingGenerations ?? Math.max(0, 1 - guestUsage));
-  const planLabel = plan === "pro" ? "PRO access" : user ? "Member free" : "Guest free";
+  const planLabel =
+    plan === "pro" ? t("legacyPlanPro") : user ? t("legacyPlanMember") : t("legacyPlanGuest");
   const planCaption = user
     ? user.email
     : paymentEnabled
-      ? `${Math.max(0, 1 - guestUsage)} guest look left. Sign in to sync your plan.`
-      : "Sign in to save your GetDressAI account. Payments are not configured yet.";
+      ? t("legacyPlanCaptionGuestPay").replace("{{n}}", String(Math.max(0, 1 - guestUsage)))
+      : t("legacyPlanCaptionGuestNoPay");
   const promptPreview = `${formatLabel(gender)} · ${formatLabel(style)} · ${formatLabel(occasion)}`;
 
   const referralCode = user?.id || user?.email || "GUEST";
@@ -279,10 +285,10 @@ export default function App() {
   const handleShareReferral = async () => {
     try {
       await Sharing.shareAsync(undefined, {
-        dialogTitle: "Invite your friend to GetDressAI",
+        dialogTitle: t("legacyInviteDialogTitle"),
         mimeType: "text/plain",
         UTI: "public.plain-text",
-        message: `Try GetDressAI and unlock better styles. Use my invite: ${referralLink}`,
+        message: t("legacyInviteShareMessage").replace("{{link}}", referralLink),
       });
     } catch {
       /* share отмена */
@@ -395,15 +401,12 @@ export default function App() {
 
   const handleAuth = async (mode) => {
     if (!email.trim() || !password.trim() || (mode === "register" && !name.trim())) {
-      Alert.alert("Missing details", "Please complete all required auth fields.");
+      Alert.alert(t("legacyAlertMissingDetails"), t("legacyAlertMissingDetailsBody"));
       return;
     }
 
     if (!isSupabaseConfigured()) {
-      Alert.alert(
-        "Supabase missing",
-        "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY for the mobile app."
-      );
+      Alert.alert(t("legacyAlertSupabaseTitle"), t("legacyAlertSupabaseBody"));
       return;
     }
 
@@ -438,10 +441,7 @@ export default function App() {
         if (!nextToken) {
           setAuthMode("login");
           setPassword("");
-          Alert.alert(
-            "Check your email",
-            "Your account was created in Supabase. Confirm the email if required, then sign in."
-          );
+          Alert.alert(t("legacyAlertCheckEmailTitle"), t("legacyAlertCheckEmailBody"));
           return;
         }
       } else {
@@ -480,7 +480,10 @@ export default function App() {
       setPaymentEnabled(Boolean(profileResponse.data?.paymentEnabled));
       await applyUserState(nextToken, nextUser, nextRefreshToken);
       setPassword("");
-      Alert.alert(mode === "register" ? "Account created" : "Welcome back", `${nextUser.name} is signed in.`);
+      Alert.alert(
+        mode === "register" ? t("legacyAlertAccountCreated") : t("legacyAlertWelcomeBack"),
+        t("legacyAlertSignedInBody").replace("{{name}}", nextUser.name || "")
+      );
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? error.response?.data?.msg || error.response?.data?.error_description || error.response?.data?.error || error.message
@@ -488,7 +491,7 @@ export default function App() {
           ? error.message
           : "Authentication failed.";
 
-      Alert.alert("Auth failed", message);
+      Alert.alert(t("legacyAlertAuthFailed"), message);
     } finally {
       setIsAuthLoading(false);
     }
@@ -498,7 +501,7 @@ export default function App() {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert("Permission required", "Please allow photo access to continue.");
+      Alert.alert(t("alertPermTitle"), t("alertPermBody"));
       return;
     }
 
@@ -519,7 +522,7 @@ export default function App() {
 
   const generateOutfit = async () => {
     if (!selectedImageUri) {
-      Alert.alert("Upload photo", "Please select a photo first.");
+      Alert.alert(t("legacyAlertUploadPhotoTitle"), t("legacyAlertUploadPhotoBody"));
       return;
     }
 
@@ -570,7 +573,7 @@ export default function App() {
         await handleLogout();
       }
 
-      Alert.alert("Generation failed", message);
+      Alert.alert(t("legacyAlertGenerationFailed"), message);
     } finally {
       setIsLoading(false);
     }
@@ -586,23 +589,23 @@ export default function App() {
 
     if (nextUser) {
       await applyUserState(token, nextUser, refreshToken);
-      Alert.alert("PRO activated", "Your account is now upgraded to PRO.");
+      Alert.alert(t("legacyAlertProActivatedTitle"), t("legacyAlertProActivatedBody"));
     }
   };
 
   const handleUpgrade = async () => {
     if (!paymentEnabled) {
-      Alert.alert("Payments unavailable", "Configure Stripe keys on the backend to enable PRO checkout.");
+      Alert.alert(t("legacyAlertPaymentsUnavailableTitle"), t("legacyAlertPaymentsUnavailableBody"));
       return;
     }
 
     if (!token || !user) {
-      Alert.alert("Sign in required", "Create or log in to an account before upgrading.");
+      Alert.alert(t("legacyAlertSignInRequiredTitle"), t("legacyAlertSignInRequiredBody"));
       return;
     }
 
     if (plan === "pro") {
-      Alert.alert("Already PRO", "This account already has PRO access.");
+      Alert.alert(t("legacyAlertAlreadyProTitle"), t("legacyAlertAlreadyProBody"));
       return;
     }
 
@@ -643,7 +646,7 @@ export default function App() {
           ? error.message
           : "Upgrade failed.";
 
-      Alert.alert("Upgrade failed", message);
+      Alert.alert(t("legacyAlertUpgradeFailed"), message);
     } finally {
       setIsPaymentLoading(false);
     }
@@ -655,7 +658,7 @@ export default function App() {
         <StatusBar style="light" />
         <View style={styles.screenLoader}>
           <ActivityIndicator size="large" color="#c94f3d" />
-          <Text style={styles.screenLoaderText}>Restoring your GetDressAI session...</Text>
+          <Text style={styles.screenLoaderText}>{t("legacyRestoringSession")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -665,6 +668,7 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.container}>
+        <LanguageBar />
         <View style={styles.heroBackground}>
           <View style={styles.heroOrbLarge} />
           <View style={styles.heroOrbSmall} />
@@ -677,9 +681,11 @@ export default function App() {
             )}
             <View style={styles.heroTopRow}>
               <View>
-                <Text style={styles.eyebrow}>AI wardrobe studio</Text>
+                <Text style={styles.eyebrow}>{t("legacyEyebrow")}</Text>
                 <Text style={styles.title}>GetDressAI</Text>
-                <Text style={styles.heroUserText}>{user ? `Hi, ${user.name}` : "Guest session"}</Text>
+                <Text style={styles.heroUserText}>
+                  {user ? `${t("legacyHiPrefix")}${user.name}` : t("legacyGuestSession")}
+                </Text>
               </View>
               <View style={[styles.planBadge, plan === "pro" && styles.planBadgePro]}>
                 <Text style={[styles.planBadgeText, plan === "pro" && styles.planBadgeTextPro]}>
@@ -688,23 +694,21 @@ export default function App() {
               </View>
             </View>
 
-            <Text style={styles.subtitle}>
-              Photo yuklang, образ танланг ва бир неча сонияда outfit preview олинг.
-            </Text>
+            <Text style={styles.subtitle}>{t("legacyHeroSubtitle")}</Text>
 
             <View style={styles.statsRow}>
               <View style={styles.statCard}>
                 <Text style={styles.statValue}>{remainingLooks}</Text>
-                <Text style={styles.statLabel}>Remaining</Text>
+                <Text style={styles.statLabel}>{t("legacyStatRemaining")}</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statValue}>{formatLabel(style)}</Text>
-                <Text style={styles.statLabel}>Current style</Text>
+                <Text style={styles.statLabel}>{t("legacyStatCurrentStyle")}</Text>
               </View>
             </View>
 
             <View style={styles.promptPreviewCard}>
-              <Text style={styles.promptPreviewLabel}>Current prompt</Text>
+              <Text style={styles.promptPreviewLabel}>{t("legacyCurrentPrompt")}</Text>
               <Text style={styles.promptPreviewValue}>{promptPreview}</Text>
               <Text style={styles.promptPreviewCaption}>{planCaption}</Text>
               {/* Free режада motivational call-to-action */}
@@ -718,14 +722,14 @@ export default function App() {
         <View style={styles.authCard}>
           <View style={styles.authHeader}>
             <View>
-              <Text style={styles.panelTitle}>Account</Text>
+              <Text style={styles.panelTitle}>{t("legacyPanelAccount")}</Text>
               <Text style={styles.authSubtitle}>
-                {user ? "Your plan and usage are synced to this account." : "Sign in to save your GetDressAI progress."}
+                {user ? t("legacyAuthSubtitleSynced") : t("legacyAuthSubtitleSignin")}
               </Text>
             </View>
             {user ? (
               <TouchableOpacity style={styles.secondaryButton} onPress={handleLogout} activeOpacity={0.88}>
-                <Text style={styles.secondaryButtonText}>Log out</Text>
+                <Text style={styles.secondaryButtonText}>{t("legacyLogOut")}</Text>
               </TouchableOpacity>
             ) : null}
           </View>
@@ -733,15 +737,15 @@ export default function App() {
           {user ? (
             <View style={styles.accountSummary}>
               <View style={styles.accountSummaryRow}>
-                <Text style={styles.accountSummaryLabel}>Name</Text>
+                <Text style={styles.accountSummaryLabel}>{t("legacyAccountNameLabel")}</Text>
                 <Text style={styles.accountSummaryValue}>{user.name}</Text>
               </View>
               <View style={styles.accountSummaryRow}>
-                <Text style={styles.accountSummaryLabel}>Email</Text>
+                <Text style={styles.accountSummaryLabel}>{t("legacyAccountEmailLabel")}</Text>
                 <Text style={styles.accountSummaryValue}>{user.email}</Text>
               </View>
               <View style={styles.accountSummaryRow}>
-                <Text style={styles.accountSummaryLabel}>Plan</Text>
+                <Text style={styles.accountSummaryLabel}>{t("legacyAccountPlanLabel")}</Text>
                 <Text style={styles.accountSummaryValue}>{plan.toUpperCase()}</Text>
               </View>
             </View>
@@ -749,12 +753,12 @@ export default function App() {
             <>
               <View style={styles.authModeRow}>
                 <OptionChip
-                  label="Login"
+                  label={t("legacyLogin")}
                   active={authMode === "login"}
                   onPress={() => setAuthMode("login")}
                 />
                 <OptionChip
-                  label="Register"
+                  label={t("legacyRegister")}
                   active={authMode === "register"}
                   onPress={() => setAuthMode("register")}
                 />
@@ -765,7 +769,7 @@ export default function App() {
                   style={styles.input}
                   value={name}
                   onChangeText={setName}
-                  placeholder="Full name"
+                  placeholder={t("legacyPlaceholderFullName")}
                   placeholderTextColor="#8d8378"
                 />
               ) : null}
@@ -773,7 +777,7 @@ export default function App() {
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Email"
+                placeholder={t("legacyPlaceholderEmail")}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 placeholderTextColor="#8d8378"
@@ -782,7 +786,7 @@ export default function App() {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Password"
+                placeholder={t("legacyPlaceholderPassword")}
                 secureTextEntry
                 placeholderTextColor="#8d8378"
               />
@@ -794,7 +798,11 @@ export default function App() {
                 disabled={isAuthLoading}
               >
                 <Text style={styles.primaryButtonText}>
-                  {isAuthLoading ? "Please wait..." : authMode === "login" ? "Log In" : "Create Account"}
+                  {isAuthLoading
+                    ? t("legacyAuthPleaseWait")
+                    : authMode === "login"
+                      ? t("legacyAuthLogIn")
+                      : t("legacyAuthCreateAccount")}
                 </Text>
               </TouchableOpacity>
             </>
@@ -802,10 +810,10 @@ export default function App() {
         </View>
 
         <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Build your look</Text>
+          <Text style={styles.panelTitle}>{t("legacyBuildYourLook")}</Text>
 
           <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Gender</Text>
+            <Text style={styles.filterLabel}>{t("legacyGender")}</Text>
             <View style={styles.optionRow}>
               {GENDER_OPTIONS.map((option) => (
                 <OptionChip
@@ -819,7 +827,7 @@ export default function App() {
           </View>
 
           <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Style</Text>
+            <Text style={styles.filterLabel}>{t("legacyStyle")}</Text>
             <View style={styles.optionRow}>
               {STYLE_OPTIONS.map((option) => (
                 <OptionChip
@@ -833,7 +841,7 @@ export default function App() {
           </View>
 
           <View style={styles.filterGroupLast}>
-            <Text style={styles.filterLabel}>Occasion</Text>
+            <Text style={styles.filterLabel}>{t("legacyOccasion")}</Text>
             <View style={styles.optionRow}>
               {OCCASION_OPTIONS.map((option) => (
                 <OptionChip
@@ -850,19 +858,19 @@ export default function App() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View>
-              <Text style={styles.cardTitle}>Source Photo</Text>
-              <Text style={styles.cardSubtitle}>Portrait shot gives the best result</Text>
+              <Text style={styles.cardTitle}>{t("legacySourcePhotoTitle")}</Text>
+              <Text style={styles.cardSubtitle}>{t("legacySourcePhotoSubtitle")}</Text>
             </View>
             <TouchableOpacity style={styles.secondaryButton} onPress={pickImage} activeOpacity={0.88}>
-              <Text style={styles.secondaryButtonText}>Upload</Text>
+              <Text style={styles.secondaryButtonText}>{t("legacyUpload")}</Text>
             </TouchableOpacity>
           </View>
           {selectedImageUri ? (
             <Image source={{ uri: selectedImageUri }} style={styles.image} resizeMode="cover" />
           ) : (
             <View style={styles.placeholder}>
-              <Text style={styles.placeholderTitle}>No photo selected</Text>
-              <Text style={styles.placeholderText}>Choose a clean full-body or upper-body image to start.</Text>
+              <Text style={styles.placeholderTitle}>{t("legacyNoPhotoTitle")}</Text>
+              <Text style={styles.placeholderText}>{t("legacyNoPhotoHint")}</Text>
             </View>
           )}
         </View>
@@ -873,17 +881,17 @@ export default function App() {
           activeOpacity={0.85}
           disabled={!selectedImageUri || isLoading}
         >
-          <Text style={styles.primaryButtonText}>{isLoading ? "Generating..." : "Generate Outfit"}</Text>
+          <Text style={styles.primaryButtonText}>
+            {isLoading ? t("legacyGenerating") : t("legacyGenerateOutfit")}
+          </Text>
         </TouchableOpacity>
 
         {plan === "free" && (
           <View style={styles.upgradeCard}>
             <View>
-              <Text style={styles.upgradeTitle}>Unlock PRO</Text>
+              <Text style={styles.upgradeTitle}>{t("legacyUnlockProTitle")}</Text>
               <Text style={styles.upgradeText}>
-                {paymentEnabled
-                  ? "Unlimited looks, synced to your account via Stripe checkout."
-                  : "Stripe keys are missing on the backend, so checkout is disabled right now."}
+                {paymentEnabled ? t("legacyUnlockProStripe") : t("legacyUnlockProNoStripe")}
               </Text>
             </View>
             {/* Stripe орқали PRO ёки IAP орқали PRO */}
@@ -893,7 +901,9 @@ export default function App() {
               activeOpacity={0.88}
               disabled={isPaymentLoading}
             >
-              <Text style={styles.upgradeButtonText}>{isPaymentLoading ? "Opening..." : "Buy PRO 🔥"}</Text>
+              <Text style={styles.upgradeButtonText}>
+                {isPaymentLoading ? t("legacyUpgradeOpening") : t("legacyBuyPro")}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -901,15 +911,15 @@ export default function App() {
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#c94f3d" />
-            <Text style={styles.loadingText}>Generating outfit...</Text>
+            <Text style={styles.loadingText}>{t("legacyGeneratingOutfit")}</Text>
           </View>
         ) : null}
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View>
-              <Text style={styles.cardTitle}>AI Result</Text>
-              <Text style={styles.cardSubtitle}>Styled with your current selections</Text>
+              <Text style={styles.cardTitle}>{t("legacyAiResultTitle")}</Text>
+              <Text style={styles.cardSubtitle}>{t("legacyAiResultSubtitle")}</Text>
             </View>
             <View style={styles.resultTag}>
               <Text style={styles.resultTagText}>{formatLabel(occasion)}</Text>
@@ -924,28 +934,28 @@ export default function App() {
                 onPress={async () => {
                   try {
                     await Sharing.shareAsync(generatedImageUri, {
-                      dialogTitle: 'Share your GetDressAI look',
+                      dialogTitle: t("legacyShareDialogTitle"),
                       mimeType: 'image/png',
                       UTI: 'public.png',
-                      message: `Check out my AI outfit from GetDressAI. Try it yourself: ${referralLink}`,
+                      message: t("legacyShareDialogMessage").replace("{{link}}", referralLink),
                     });
                   } catch {}
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Share Look 📈</Text>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{t("legacyShareLookButton")}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={styles.placeholder}>
-              <Text style={styles.placeholderTitle}>Result will appear here</Text>
-              <Text style={styles.placeholderText}>Your AI outfit preview shows up after generation completes.</Text>
+              <Text style={styles.placeholderTitle}>{t("legacyResultPlaceholderTitle")}</Text>
+              <Text style={styles.placeholderText}>{t("legacyResultPlaceholderHint")}</Text>
             </View>
           )}
         </View>
 
         {recommendations.length > 0 ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Shop the Look</Text>
+            <Text style={styles.cardTitle}>{t("legacyShopTheLook")}</Text>
             <FlatList
               scrollEnabled={false}
               data={recommendations}
@@ -962,7 +972,7 @@ export default function App() {
                   }}
                 >
                   <Text style={{ fontWeight: "bold", fontSize: 15 }}>
-                    {item.name || item.title || "Product"}
+                    {item.name || item.title || t("legacyProductFallbackName")}
                   </Text>
                   {item.image ? (
                     <Image
@@ -981,7 +991,7 @@ export default function App() {
                     }}
                     onPress={() => Linking.openURL(item.affiliateUrl || item.url)}
                   >
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>Buy</Text>
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("legacyBuy")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -990,33 +1000,33 @@ export default function App() {
         ) : null}
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Invite & Earn</Text>
-          <Text style={{ color: "#6c6157", marginBottom: 8 }}>
-            Invite friends with your code and get bonus looks!
-          </Text>
+          <Text style={styles.cardTitle}>{t("legacyInviteTitle")}</Text>
+          <Text style={{ color: "#6c6157", marginBottom: 8 }}>{t("legacyInviteBody")}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
             <Text style={{ fontWeight: "bold", fontSize: 15, marginRight: 8 }}>{referralCode}</Text>
             <TouchableOpacity
               onPress={() => {
                 Clipboard.setString(String(referralCode));
-                Alert.alert("Copied!");
+                Alert.alert(t("legacyCopied"));
               }}
               style={{ backgroundColor: "#f1e7d9", borderRadius: 8, padding: 6 }}
             >
-              <Text style={{ color: "#c94f3d", fontWeight: "bold" }}>Copy</Text>
+              <Text style={{ color: "#c94f3d", fontWeight: "bold" }}>{t("legacyCopy")}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
             onPress={handleShareReferral}
             style={{ backgroundColor: "#c94f3d", borderRadius: 8, padding: 10, alignItems: "center" }}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>Share Invite 🔥</Text>
+            <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("legacyInviteShare")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+export default DressAiLegacyApp;
 
 const styles = StyleSheet.create({
   safeArea: {

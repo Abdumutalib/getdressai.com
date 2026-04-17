@@ -2,9 +2,10 @@
  * dressai-api POST /v1/hybrid-vton → HYBRID_VTON_SERVICE_URL (GPU getdressai).
  */
 
+/** Upper-body garment on a real model (Unsplash) — used as default try-on sample. */
 const SAMPLE_GARMENT = {
-  url: "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?w=400",
-  type: "upper" as const,
+  url: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=640&q=88&auto=format&fit=crop',
+  type: 'upper' as const,
 };
 
 function getApiBase(): string {

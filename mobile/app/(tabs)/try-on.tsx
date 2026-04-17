@@ -11,13 +11,24 @@ import {
   View,
 } from 'react-native';
 
+import { LanguageBar } from '@/components/language-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useLocale } from '@/contexts/locale';
 import { fetchGarmentBase64, getSampleGarment, postHybridVton } from '@/lib/hybrid-vton';
 
 type GarmentType = 'upper' | 'lower' | 'dress';
 
+const GARMENT_ORDER: GarmentType[] = ['upper', 'lower', 'dress'];
+
+function garmentLabel(t: (k: string) => string, type: GarmentType) {
+  if (type === 'upper') return t('tryonGarmentUpper');
+  if (type === 'lower') return t('tryonGarmentLower');
+  return t('tryonGarmentDress');
+}
+
 export default function TryOnScreen() {
+  const { t } = useLocale();
   const [personUri, setPersonUri] = useState<string | null>(null);
   const [garmentType, setGarmentType] = useState<GarmentType>('upper');
   const [loading, setLoading] = useState(false);
@@ -27,7 +38,7 @@ export default function TryOnScreen() {
   const pickPerson = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission', 'Photo library access is required.');
+      Alert.alert(t('alertPermTitle'), t('alertPermBody'));
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -38,11 +49,11 @@ export default function TryOnScreen() {
     setPersonUri(res.assets[0].uri);
     setResultB64(null);
     setError(null);
-  }, []);
+  }, [t]);
 
   const runTryOn = useCallback(async () => {
     if (!personUri) {
-      Alert.alert('Try-on', 'Choose a photo of yourself first.');
+      Alert.alert(t('alertTryonTitle'), t('alertTryonNeedPhoto'));
       return;
     }
     setLoading(true);
@@ -53,7 +64,7 @@ export default function TryOnScreen() {
         encoding: EncodingType.Base64,
       });
       const sample = getSampleGarment();
-      const garmentB64 = await fetchGarmentBase64(sample.url);
+      const garmentBase64 = await fetchGarmentBase64(sample.url);
       const type = garmentType;
       const out = await postHybridVton({
         personBase64: personB64,
@@ -65,39 +76,40 @@ export default function TryOnScreen() {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
-      Alert.alert('VTON', msg);
+      Alert.alert(t('alertVtonTitle'), msg);
     } finally {
       setLoading(false);
     }
-  }, [personUri, garmentType]);
+  }, [personUri, garmentType, t]);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <LanguageBar />
+
       <ThemedView style={styles.header}>
-        <ThemedText style={styles.kicker}>GetDressAI Try-On</ThemedText>
-        <ThemedText type="title">Virtual try-on</ThemedText>
-        <ThemedText style={styles.hint}>
-          Upload your photo, choose the garment type, and preview a wearable look that fits the same
-          try-on story shown on the website.
-        </ThemedText>
+        <ThemedText style={styles.kicker}>{t('tryonKicker')}</ThemedText>
+        <ThemedText type="title">{t('tryonTitle')}</ThemedText>
+        <ThemedText style={styles.hint}>{t('tryonHint')}</ThemedText>
       </ThemedView>
 
       <Pressable style={styles.btn} onPress={pickPerson}>
-        <ThemedText type="defaultSemiBold">1. Choose your photo</ThemedText>
+        <ThemedText type="defaultSemiBold">{t('tryonStep1')}</ThemedText>
       </Pressable>
 
       {personUri ? (
         <Image source={{ uri: personUri }} style={styles.preview} contentFit="contain" />
       ) : null}
 
-      <ThemedText style={styles.label}>2. Garment type</ThemedText>
+      <ThemedText style={styles.label}>{t('tryonStep2')}</ThemedText>
       <View style={styles.row}>
-        {(['upper', 'lower', 'dress'] as const).map((t) => (
+        {GARMENT_ORDER.map((gt) => (
           <Pressable
-            key={t}
-            onPress={() => setGarmentType(t)}
-            style={[styles.chip, garmentType === t && styles.chipOn]}>
-            <ThemedText style={garmentType === t ? styles.chipTextOn : undefined}>{t}</ThemedText>
+            key={gt}
+            onPress={() => setGarmentType(gt)}
+            style={[styles.chip, garmentType === gt && styles.chipOn]}>
+            <ThemedText style={garmentType === gt ? styles.chipTextOn : undefined}>
+              {garmentLabel(t, gt)}
+            </ThemedText>
           </Pressable>
         ))}
       </View>
@@ -109,20 +121,16 @@ export default function TryOnScreen() {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <ThemedText style={styles.btnPrimaryText}>3. Generate try-on preview</ThemedText>
+          <ThemedText style={styles.btnPrimaryText}>{t('tryonStep3')}</ThemedText>
         )}
       </Pressable>
 
-      {error ? (
-        <ThemedText style={styles.err}>{error}</ThemedText>
-      ) : null}
+      {error ? <ThemedText style={styles.err}>{error}</ThemedText> : null}
 
       {resultB64 ? (
         <ThemedView style={styles.resultBox}>
-          <ThemedText type="subtitle">Result</ThemedText>
-          <ThemedText style={styles.resultHint}>
-            Use this preview to decide what belongs in your wardrobe, premium session, or next shopping step.
-          </ThemedText>
+          <ThemedText type="subtitle">{t('tryonResultTitle')}</ThemedText>
+          <ThemedText style={styles.resultHint}>{t('tryonResultHint')}</ThemedText>
           <Image
             source={{ uri: `data:image/png;base64,${resultB64}` }}
             style={styles.resultImg}

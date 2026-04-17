@@ -1,38 +1,29 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { LanguageBar } from '@/components/language-bar';
 import { ThemedText } from '@/components/themed-text';
-
-const sections = [
-  {
-    title: 'Wardrobe',
-    body: 'Save strong looks, remember fit notes, and keep your personal style history in one place.',
-  },
-  {
-    title: 'Marketplace',
-    body: 'Move from inspiration to product discovery with a shopping-oriented flow similar to the website.',
-  },
-  {
-    title: 'Premium',
-    body: 'Use premium when you want more generations, longer sessions, and deeper styling support.',
-  },
-  {
-    title: 'Profile',
-    body: 'Keep one identity, one plan, and one product promise across mobile and web.',
-  },
-];
+import { useLocale } from '@/contexts/locale';
 
 export default function StyleHubScreen() {
+  const { t } = useLocale();
+
+  const sections = [
+    { title: t('exploreWardrobeTitle'), body: t('exploreWardrobeBody') },
+    { title: t('exploreMarketplaceTitle'), body: t('exploreMarketplaceBody') },
+    { title: t('explorePremiumTitle'), body: t('explorePremiumBody') },
+    { title: t('exploreProfileTitle'), body: t('exploreProfileBody') },
+  ];
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <LanguageBar />
+
       <View style={styles.hero}>
-        <ThemedText style={styles.kicker}>Style Hub</ThemedText>
+        <ThemedText style={styles.kicker}>{t('exploreKicker')}</ThemedText>
         <ThemedText type="title" style={styles.title}>
-          The same product language as the website.
+          {t('exploreTitle')}
         </ThemedText>
-        <ThemedText style={styles.subtitle}>
-          This tab mirrors the web experience: wardrobe, marketplace, premium, and profile all live
-          inside one clear fashion workflow.
-        </ThemedText>
+        <ThemedText style={styles.subtitle}>{t('exploreSubtitle')}</ThemedText>
       </View>
 
       {sections.map((section) => (
@@ -46,13 +37,9 @@ export default function StyleHubScreen() {
 
       <View style={styles.noteBox}>
         <ThemedText type="defaultSemiBold" style={styles.noteTitle}>
-          Alignment note
+          {t('exploreNoteTitle')}
         </ThemedText>
-        <ThemedText style={styles.noteBody}>
-          The biggest remaining gap is technical, not visual: the website signs in with Supabase,
-          while the older mobile flow still talks to the API auth endpoints. The product story is now
-          much closer, but auth should be unified next.
-        </ThemedText>
+        <ThemedText style={styles.noteBody}>{t('exploreNoteBody')}</ThemedText>
       </View>
     </ScrollView>
   );

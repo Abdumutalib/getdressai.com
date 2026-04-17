@@ -32,6 +32,9 @@
       billingOveragePolicy: "After 20 generations in a month: US$0.20 per additional generation.",
       billingDepositPolicy: "Prepaid balance: we recommend topping up from US$10.",
       billingStripeNote: "Card payments are processed by Stripe; these rules apply once you are subscribed.",
+      premiumTrialHead: "3-day free trial",
+      premiumTrialSub:
+        "Try premium — yearly is offered first at checkout; you can still choose monthly if you prefer.",
       promptPlaceholder: "Describe the outfit you have in mind…",
       generateBtn: "Generate looks",
       tryOn: "👕 Virtual try-on",
@@ -136,12 +139,14 @@
       tryOnChooseTitle: "Try this item on",
       tryOnUseMyPhoto: "Upload my photo",
       tryOnUseVirtual: "Virtual model (your measurements)",
-      tryOnVirtualExplain: "Uses height, chest and waist from your profile to draw a size-matched mannequin. Add measurements in Profile if they are empty.",
+      tryOnVirtualExplain:
+        "Uses a neutral full-body fashion photo (by the gender in your profile) instead of your camera. Your height, chest and waist are overlaid for size context — add measurements in Profile if they are empty.",
       virtualModelLabel: "Virtual model",
       yourPhotoLabel: "Your photo",
       toastVirtualDefaults: "No measurements saved — using typical defaults. Add them in Profile for a closer match.",
       tryOnOpenShopForVirtual: "Open Shop, tap “Try on” on an item, then choose “Virtual model”.",
-      tryOnVirtualBanner: "Schematic mannequin from your measurements — illustrative preview, not a real photo.",
+      tryOnVirtualBanner:
+        "Stock model photo + your measurements — realistic stand-in for try-on preview; it is not your likeness.",
       partnerDisclosure: "GetdressAI lists products from partner marketplaces. Purchases via partner links may earn us a commission at no extra cost to you.",
       tryOnSimulated: "Preview is simulated for demo. Connect an image API for production try-on.",
       sizesLabel: "Sizes",
@@ -225,6 +230,9 @@
       billingOveragePolicy: "После 20 генераций в месяц: US$0.20 за каждую следующую.",
       billingDepositPolicy: "Предоплата: рекомендуем пополнение от US$10.",
       billingStripeNote: "Оплата картой через Stripe; правила действуют после оформления подписки.",
+      premiumTrialHead: "3 дня бесплатно",
+      premiumTrialSub:
+        "Попробуйте Premium — на оплате сначала предлагается год; при желании можно выбрать месяц.",
       promptPlaceholder: "Опишите задуманный образ…",
       generateBtn: "Создать образы",
       tryOn: "👕 Виртуальная примерка",
@@ -322,12 +330,14 @@
       tryOnChooseTitle: "Как примерить",
       tryOnUseMyPhoto: "Загрузить моё фото",
       tryOnUseVirtual: "Виртуальная модель (ваши мерки)",
-      tryOnVirtualExplain: "Силуэт строится по росту, груди и талии из профиля. Заполните мерки в разделе «Профиль», если их нет.",
+      tryOnVirtualExplain:
+        "Вместо камеры — нейтральное полноформатное фото модели (пол как в профиле). Поверх накладываются ваши рост, грудь и талия. При пустых полях заполните мерки в «Профиль».",
       virtualModelLabel: "Виртуальная модель",
       yourPhotoLabel: "Ваше фото",
       toastVirtualDefaults: "Мерки не сохранены — показаны типичные значения. Добавьте мерки в профиль.",
       tryOnOpenShopForVirtual: "Откройте «Магазин», нажмите «Примерить» у товара и выберите виртуальную модель.",
-      tryOnVirtualBanner: "Схематичный манекен по меркам — иллюстрация, не реальное фото.",
+      tryOnVirtualBanner:
+        "Стоковое фото модели и ваши мерки — реалистичная заглушка для примерки; это не ваш портрет.",
       partnerDisclosure: "GetdressAI показывает товары партнёрских маркетплейсов. Покупки по партнёрским ссылкам могут приносить нам комиссию без доплаты для вас.",
       tryOnSimulated: "Демо: превью упрощено. Для продакшена подключите API изображений.",
       sizesLabel: "Размеры",
@@ -415,6 +425,9 @@
       billingOveragePolicy: "Oyda 20 tadan keyin har bir qo‘shimcha generatsiya: US$0.20.",
       billingDepositPolicy: "Oldindan balans: kamida US$10 depozit tavsiya etiladi.",
       billingStripeNote: "To‘lov Stripe orqali; qoidalar obunadan keyin qo‘llanadi.",
+      premiumTrialHead: "3 kun bepul sinov",
+      premiumTrialSub:
+        "Premiumni sinab ko‘ring — to‘lovda avval yillik taklif qilinadi; xohlasangiz oylikni ham tanlash mumkin.",
       promptPlaceholder: "O‘zingiz xohlagan libosni qisqacha tasvirlang…",
       generateBtn: "Liboslar yaratish",
       tryOn: "👕 Virtual kiyib ko‘rish",
@@ -512,12 +525,14 @@
       tryOnChooseTitle: "Qanday kiyib ko‘rasiz",
       tryOnUseMyPhoto: "O‘z suratimni yuklash",
       tryOnUseVirtual: "Virtual model (o‘lchamlaringiz bo‘yicha)",
-      tryOnVirtualExplain: "Profildan bo‘y, ko‘krak va bel bo‘yicha siluet chiziladi. Bo‘sh bo‘lsa, Profilda o‘lchamlarni kiriting.",
+      tryOnVirtualExplain:
+        "Kamera o‘rniga profildagi jins bo‘yicha neytral to‘liq tanli moda surati ishlatiladi. Bo‘y, ko‘krak va bel ustiga yoziladi — bo‘sh bo‘lsa Profilda o‘lchamlarni kiriting.",
       virtualModelLabel: "Virtual model",
       yourPhotoLabel: "Sizning suratingiz",
       toastVirtualDefaults: "O‘lchamlar saqlanmagan — odatdagi qiymatlar ishlatiladi. Aniqroq uchun Profilga kiriting.",
       tryOnOpenShopForVirtual: "«Do‘kon»ni oching, mahsulotda «Kiyib ko‘rish»ni bosing va «Virtual model»ni tanlang.",
-      tryOnVirtualBanner: "O‘lchamlaringiz bo‘yicha sxematik maneken — namoyish, haqiqiy surat emas.",
+      tryOnVirtualBanner:
+        "Stok model surati + sizning o‘lchamlaringiz — kiyib ko‘rish uchun realistik o‘rinbosar; bu sizning shaxsiy suratingiz emas.",
       partnerDisclosure: "GetdressAI hamkor marketpleys mahsulotlarini ko‘rsatadi. Hamkor havolalari orqali xaridlar bizga qo‘shimcha to‘lovsiz komissiya berishi mumkin.",
       tryOnSimulated: "Demo: ko‘rinish soddalashtirilgan. Ishlab chiqarish uchun rasm API ulang.",
       sizesLabel: "O‘lchamlar",
@@ -1111,6 +1126,13 @@
       tryOnDemoFallback: "خادم VTON غير متاح — عرض تجريبي.",
     },
   });
+
+  // Every locale must expose the same keys as English so UI (nav, selects, modals) updates on switch.
+  const EN_BASE = { ...T.en };
+  for (const lid of Object.keys(T)) {
+    if (lid === "en") continue;
+    T[lid] = { ...EN_BASE, ...T[lid] };
+  }
 
   const CLOSE_BTN = {
     en: "Close",

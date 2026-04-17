@@ -7,4 +7,11 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    files: ['components/dressai-legacy-app.js'],
+    rules: {
+      'import/no-unresolved': 'off',
+      'import/no-named-as-default-member': 'off',
+    },
+  },
 ]);

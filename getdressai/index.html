@@ -251,6 +251,7 @@
     applyDocumentLang();
     render();
   }
+  window.setLang = setLang;
 
   function toast(msg, type = "info") {
     const toastDiv = document.createElement("div");
@@ -631,12 +632,12 @@
 
   function getMarketplaceCatalog() {
     return [
-      { id: "p1", name: t("productP1"), price: 49.99, image: "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?w=300", category: "shirts", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["office", "minimal", "classic"], fit: "slim", partnerQuery: "mens white dress shirt slim fit" },
-      { id: "p2", name: t("productP2"), price: 79.99, image: "https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?w=300", category: "pants", vtonGarmentType: "lower", sizes: ["28", "30", "32", "34"], styles: ["casual", "street", "weekend"], fit: "slim", partnerQuery: "mens slim fit jeans dark wash" },
-      { id: "p3", name: t("productP3"), price: 199.99, image: "https://images.pexels.com/photos/1464629/pexels-photo-1464629.jpeg?w=300", category: "outerwear", vtonGarmentType: "upper", sizes: ["S", "M", "L"], styles: ["street", "casual", "layered"], fit: "regular", partnerQuery: "mens black leather jacket" },
-      { id: "p4", name: t("productP4"), price: 89.99, image: "https://images.pexels.com/photos/985265/pexels-photo-985265.jpeg?w=300", category: "dresses", vtonGarmentType: "dress", sizes: ["XS", "S", "M", "L"], styles: ["summer", "minimal", "casual"], fit: "regular", partnerQuery: "womens linen midi dress summer" },
-      { id: "p5", name: t("productP5"), price: 249.99, image: "https://images.pexels.com/photos/7671165/pexels-photo-7671165.jpeg?w=300", category: "outerwear", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["office", "minimal", "warm"], fit: "tailored", partnerQuery: "womens tailored wool coat camel" },
-      { id: "p6", name: t("productP6"), price: 69.99, image: "https://images.pexels.com/photos/45982/pexels-photo-45982.jpeg?w=300", category: "knitwear", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["casual", "cozy", "weekend"], fit: "relaxed", partnerQuery: "unisex cable knit sweater cream" },
+      { id: "p1", name: t("productP1"), price: 49.99, image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=640&q=85&auto=format&fit=crop", category: "shirts", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["office", "minimal", "classic"], fit: "slim", partnerQuery: "mens white dress shirt slim fit" },
+      { id: "p2", name: t("productP2"), price: 79.99, image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=640&q=85&auto=format&fit=crop", category: "pants", vtonGarmentType: "lower", sizes: ["28", "30", "32", "34"], styles: ["casual", "street", "weekend"], fit: "slim", partnerQuery: "mens slim fit jeans dark wash" },
+      { id: "p3", name: t("productP3"), price: 199.99, image: "https://images.unsplash.com/photo-1551028719-00167b16eac9?w=640&q=85&auto=format&fit=crop", category: "outerwear", vtonGarmentType: "upper", sizes: ["S", "M", "L"], styles: ["street", "casual", "layered"], fit: "regular", partnerQuery: "mens black leather jacket" },
+      { id: "p4", name: t("productP4"), price: 89.99, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=640&q=85&auto=format&fit=crop", category: "dresses", vtonGarmentType: "dress", sizes: ["XS", "S", "M", "L"], styles: ["summer", "minimal", "casual"], fit: "regular", partnerQuery: "womens linen midi dress summer" },
+      { id: "p5", name: t("productP5"), price: 249.99, image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=640&q=85&auto=format&fit=crop", category: "outerwear", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["office", "minimal", "warm"], fit: "tailored", partnerQuery: "womens tailored wool coat camel" },
+      { id: "p6", name: t("productP6"), price: 69.99, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=640&q=85&auto=format&fit=crop", category: "knitwear", vtonGarmentType: "upper", sizes: ["S", "M", "L", "XL"], styles: ["casual", "cozy", "weekend"], fit: "relaxed", partnerQuery: "unisex cable knit sweater cream" },
     ];
   }
 
@@ -646,11 +647,13 @@
     return m ? m[1] : t.replace(/^data:/, "");
   }
 
-  /**
-   * Renders a simple full-body schematic “virtual mannequin” from profile measurements (canvas → PNG data URL).
-   * Used when the user prefers not to upload a real photo.
-   */
-  function buildVirtualMannequinDataUrl() {
+  const VIRTUAL_TRYON_STOCK_MODEL = {
+    male: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=720&h=1040&fit=crop&q=88&auto=format",
+    female: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=720&h=1040&fit=crop&q=88&auto=format",
+  };
+
+  /** Fallback if stock photo cannot be loaded (offline / CORS). */
+  function buildVirtualMannequinSchematicDataUrl() {
     const m = userMeasurements || {};
     let heightCm = parseFloat(m.height);
     let chestCm = parseFloat(m.chest);
@@ -716,6 +719,57 @@
     if (rs) ctx.fillText(`${t("recommendedSize")}: ${rs}`, 12, H - 20);
 
     return canvas.toDataURL("image/png");
+  }
+
+  /**
+   * Full-body stock photo (by profile gender) + measurement overlay — used when the user skips a camera photo.
+   */
+  async function buildVirtualMannequinDataUrl() {
+    const m = userMeasurements || {};
+    let heightCm = parseFloat(m.height);
+    let chestCm = parseFloat(m.chest);
+    let waistCm = parseFloat(m.waist);
+    if (!Number.isFinite(heightCm)) heightCm = 170;
+    if (!Number.isFinite(chestCm)) chestCm = 96;
+    if (!Number.isFinite(waistCm)) waistCm = 78;
+
+    const male = coerceGender(userProfile.gender || "female") === "male";
+    const W = 360;
+    const H = 520;
+    const url = male ? VIRTUAL_TRYON_STOCK_MODEL.male : VIRTUAL_TRYON_STOCK_MODEL.female;
+
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error("photo http " + res.status);
+      const blob = await res.blob();
+      const bmp = await createImageBitmap(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("no ctx");
+      const scale = Math.max(W / bmp.width, H / bmp.height);
+      const dw = bmp.width * scale;
+      const dh = bmp.height * scale;
+      const dx = (W - dw) / 2;
+      const dy = (H - dh) / 2;
+      ctx.drawImage(bmp, dx, dy, dw, dh);
+      const grad = ctx.createLinearGradient(0, H - 96, 0, H);
+      grad.addColorStop(0, "rgba(15,23,42,0)");
+      grad.addColorStop(1, "rgba(15,23,42,0.82)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, H - 96, W, 96);
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "600 12px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillText(`${Math.round(heightCm)} cm · ${male ? "M" : "F"}`, 12, H - 58);
+      ctx.fillText(`${t("chest")} ${Math.round(chestCm)} · ${t("waist")} ${Math.round(waistCm)}`, 12, H - 40);
+      const rs = inferRecommendedSize({ chest: String(chestCm), waist: String(waistCm) });
+      if (rs) ctx.fillText(`${t("recommendedSize")}: ${rs}`, 12, H - 22);
+      bmp.close?.();
+      return canvas.toDataURL("image/png");
+    } catch {
+      return buildVirtualMannequinSchematicDataUrl();
+    }
   }
 
   async function fetchImageAsBase64(url) {
@@ -896,7 +950,7 @@
       return v !== undefined && v !== "" && String(v).trim() !== "" && Number.isFinite(parseFloat(v));
     });
     if (!has) toast(t("toastVirtualDefaults"), "info");
-    const photoDataUrl = buildVirtualMannequinDataUrl();
+    const photoDataUrl = await buildVirtualMannequinDataUrl();
     toast(t("toastProcessingTryOn"), "info");
     await tryHybridVtonThenDemo(product, photoDataUrl, { isVirtual: true });
   }
@@ -1179,8 +1233,8 @@
                   </div>
                   <div class="mt-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-8 text-center max-w-2xl">
                     <span class="text-5xl">🎁</span>
-                    <h3 class="text-2xl font-bold mt-3">3 Days Free Trial</h3>
-                    <p class="text-white/85 mt-2">Try premium — then <strong>yearly first</strong> at checkout; monthly also available.</p>
+                    <h3 class="text-2xl font-bold mt-3">${escapeHtml(t("premiumTrialHead"))}</h3>
+                    <p class="text-white/85 mt-2">${escapeHtml(t("premiumTrialSub"))}</p>
                     <a href="public/premium.html" class="inline-block mt-6 bg-white text-purple-600 px-8 py-3 rounded-full font-semibold hover:shadow-lg transition">${t("premiumOpenFull")}</a>
                   </div>
                   <p class="text-xs text-neutral-500 mt-6 max-w-2xl">${t("partnerDisclosure")}</p>
@@ -1335,8 +1389,17 @@
     const pvEl = document.getElementById("recentProductViewsList");
     if (!genEl || !pvEl) return;
     const data = loadRecentBucket();
-    const localeTag =
-      currentLang === "uz" ? "uz-UZ" : currentLang === "ru" ? "ru-RU" : currentLang === "de" ? "de-DE" : "en-GB";
+    const localeTagMap = {
+      uz: "uz-UZ",
+      ru: "ru-RU",
+      de: "de-DE",
+      fr: "fr-FR",
+      es: "es-ES",
+      pt: "pt-BR",
+      ar: "ar-SA",
+      en: "en-GB",
+    };
+    const localeTag = localeTagMap[currentLang] || "en-GB";
 
     if (!data.generations.length) {
       genEl.innerHTML = `<p class="text-sm text-neutral-500">${escapeHtml(t("recentEmptyGen"))}</p>`;

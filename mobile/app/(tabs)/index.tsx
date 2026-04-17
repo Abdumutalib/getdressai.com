@@ -1,56 +1,46 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { LanguageBar } from '@/components/language-bar';
 import { ThemedText } from '@/components/themed-text';
-
-const highlightCards = [
-  {
-    title: 'AI looks that feel wearable',
-    body: 'Start from your occasion, preferred fit, and vibe. GetDressAI turns that into look ideas you can actually use.',
-  },
-  {
-    title: 'Wardrobe-first guidance',
-    body: 'Save what you like, compare ideas, and keep one product story across the mobile app and the website.',
-  },
-  {
-    title: 'Premium when you need more',
-    body: 'Free users can explore the core flow. Premium unlocks more generations, deeper try-on sessions, and richer styling help.',
-  },
-];
-
-const quickSteps = [
-  'Open Try-On to test one look with your own photo.',
-  'Use Style Hub to review wardrobe, marketplace, and premium sections.',
-  'Sign in to keep the same identity and product story across devices.',
-];
+import { useLocale } from '@/contexts/locale';
 
 export default function HomeScreen() {
+  const { t } = useLocale();
+
+  const highlightCards = [
+    { title: t('homeCard1Title'), body: t('homeCard1Body') },
+    { title: t('homeCard2Title'), body: t('homeCard2Body') },
+    { title: t('homeCard3Title'), body: t('homeCard3Body') },
+  ];
+
+  const quickSteps = [t('homeStep1'), t('homeStep2'), t('homeStep3')];
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <LanguageBar />
+
       <View style={styles.hero}>
-        <ThemedText style={styles.kicker}>GetDressAI</ThemedText>
+        <ThemedText style={styles.kicker}>{t('homeKicker')}</ThemedText>
         <ThemedText type="title" style={styles.title}>
-          One wardrobe story across web and mobile.
+          {t('homeTitle')}
         </ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Discover looks, preview try-on results, and move from inspiration to shopping without
-          switching to a different product mindset.
-        </ThemedText>
+        <ThemedText style={styles.subtitle}>{t('homeSubtitle')}</ThemedText>
 
         <View style={styles.metricRow}>
           <View style={styles.metricCard}>
-            <ThemedText style={styles.metricValue}>Try-On</ThemedText>
-            <ThemedText style={styles.metricLabel}>Upload your photo and test an outfit.</ThemedText>
+            <ThemedText style={styles.metricValue}>{t('homeMetricTryOnTitle')}</ThemedText>
+            <ThemedText style={styles.metricLabel}>{t('homeMetricTryOnBody')}</ThemedText>
           </View>
           <View style={styles.metricCard}>
-            <ThemedText style={styles.metricValue}>Wardrobe</ThemedText>
-            <ThemedText style={styles.metricLabel}>Keep saved looks and repeatable style cues.</ThemedText>
+            <ThemedText style={styles.metricValue}>{t('homeMetricWardrobeTitle')}</ThemedText>
+            <ThemedText style={styles.metricLabel}>{t('homeMetricWardrobeBody')}</ThemedText>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
         <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Core product promise
+          {t('homeSectionPromise')}
         </ThemedText>
         {highlightCards.map((card) => (
           <View key={card.title} style={styles.card}>
@@ -64,7 +54,7 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <ThemedText type="subtitle" style={styles.sectionTitle}>
-          How to use this app
+          {t('homeSectionHow')}
         </ThemedText>
         {quickSteps.map((step) => (
           <View key={step} style={styles.stepRow}>
