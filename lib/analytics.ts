@@ -1,4 +1,11 @@
-import posthog from "posthog-js";
+type PostHogClient = {
+  init: (key: string, options: Record<string, unknown>) => void;
+  capture?: (event: string, properties?: Record<string, unknown>) => void;
+  __loaded?: boolean;
+};
+
+let browserClient: PostHogClient | null = null;
+let initPromise: Promise<PostHogClient | null> | null = null;
 
 export type AnalyticsEvent =
   | "cta_clicked"
@@ -12,29 +19,66 @@ export type AnalyticsEvent =
   | "exit_discount_shown"
   | "dropoff_detected";
 
-export function initAnalytics() {
-  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
-  const client = posthog as typeof posthog & { __loaded?: boolean };
-
-  if (typeof window !== "undefined" && key && !client.__loaded) {
-    client.init(key, {
-      api_host: host,
-      capture_pageview: true,
-      capture_pageleave: true
-    });
+export async function initAnalytics() {
+  if (typeof window === "undefined") {
+    return null;
   }
 
-  return client;
+  if (browserClient?.__loaded) {
+    return browserClient;
+  }
+
+  if (initPromise) {
+    return initPromise;
+  }
+
+  initPromise = (async () => {
+    try {
+      const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+      const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
+
+      if (!key) {
+        return null;
+      }
+
+      const module = await import("posthog-js");
+      const client = module.default as PostHogClient;
+
+      if (!client.__loaded) {
+        client.init(key, {
+          api_host: host,
+          capture_pageview: true,
+          capture_pageleave: true
+        });
+        client.__loaded = true;
+      }
+
+      browserClient = client;
+      return client;
+    } catch {
+      browserClient = null;
+      return null;
+    }
+  })();
+
+  return initPromise;
 }
 
 export function trackEvent(event: AnalyticsEvent, properties?: Record<string, unknown>) {
-  if (typeof window === "undefined") {
-    return;
-  }
+  try {
+    if (typeof window === "undefined") {
+      return;
+    }
 
-  const client = initAnalytics();
-  if (client && typeof client.capture === "function") {
-    client.capture(event, properties);
+    if (browserClient?.capture) {
+      browserClient.capture(event, properties);
+      return;
+    }
+
+    void initAnalytics().then((client) => {
+      client?.capture?.(event, properties);
+    });
+  } catch {
+    return;
   }
 }

@@ -5,11 +5,7 @@ import { initAnalytics, trackEvent } from "@/lib/analytics";
 
 export function AnalyticsProvider() {
   useEffect(() => {
-    try {
-      initAnalytics();
-    } catch {
-      return;
-    }
+    void initAnalytics();
 
     const handleVisibility = () => {
       try {
