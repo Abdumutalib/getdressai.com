@@ -13,7 +13,12 @@ export function StatsCards() {
       {stats.map((stat, index) => (
         <div key={stat.label} className="glass-panel rounded-[2rem] p-6">
           <p className="text-sm text-slate-500 dark:text-slate-300">{stat.label}</p>
-          <p className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{values[index]}</p>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <p className="text-3xl font-semibold text-slate-950 dark:text-white">{values[index]}</p>
+            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+              +12%
+            </span>
+          </div>
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{stat.note}</p>
         </div>
       ))}

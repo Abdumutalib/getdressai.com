@@ -1,10 +1,21 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { StatsCards } from "@/components/StatsCards";
 import { UploadGenerator } from "@/components/UploadGenerator";
 import { useLanguage } from "@/components/LanguageProvider";
+
+function DashboardSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {[1, 2, 3, 4].map((item) => (
+        <div key={item} className="h-36 animate-pulse rounded-[2rem] bg-slate-100 dark:bg-white/5" />
+      ))}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { t, tm } = useLanguage();
@@ -25,7 +36,9 @@ export default function DashboardPage() {
             <h1 className="section-title">{t("dashboard.title")}</h1>
           </div>
 
-          <StatsCards />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <StatsCards />
+          </Suspense>
 
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <UploadGenerator />
@@ -39,7 +52,7 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-4">
                 {history.map((item) => (
-                  <div key={item.title} className="flex gap-4 rounded-[1.5rem] border border-slate-200 p-4 dark:border-white/10">
+                  <div key={item.title} className="flex gap-4 rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
                     <div className="relative size-24 overflow-hidden rounded-[1.2rem]">
                       <Image src={item.src} alt={item.title} fill className="object-cover" />
                     </div>
@@ -47,8 +60,11 @@ export default function DashboardPage() {
                       <div>
                         <p className="font-semibold text-slate-950 dark:text-white">{item.title}</p>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{item.date}</p>
+                        <div className="mt-3 inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+                          Ready for download
+                        </div>
                       </div>
-                      <button className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white">{t("dashboard.download")}</button>
+                      <button className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white shadow-glow">{t("dashboard.download")}</button>
                     </div>
                   </div>
                 ))}

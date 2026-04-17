@@ -1,5 +1,16 @@
 import posthog from "posthog-js";
-import { PostHog } from "posthog-node";
+
+export type AnalyticsEvent =
+  | "cta_clicked"
+  | "view_examples_clicked"
+  | "upload_started"
+  | "generation_started"
+  | "generation_completed"
+  | "checkout_opened"
+  | "purchase_completed"
+  | "referral_shared"
+  | "exit_discount_shown"
+  | "dropoff_detected";
 
 export function initAnalytics() {
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -17,13 +28,13 @@ export function initAnalytics() {
   return client;
 }
 
-export function getServerAnalytics() {
-  const key = process.env.POSTHOG_PERSONAL_API_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
-
-  if (!key) {
-    return null;
+export function trackEvent(event: AnalyticsEvent, properties?: Record<string, unknown>) {
+  if (typeof window === "undefined") {
+    return;
   }
 
-  return new PostHog(key, { host });
+  const client = initAnalytics();
+  if (client && typeof client.capture === "function") {
+    client.capture(event, properties);
+  }
 }

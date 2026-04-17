@@ -174,8 +174,24 @@ export const translations = {
       button: "Unlock Discount"
     },
     upload: {
+      modePhoto: "Use my photo",
+      modeMannequin: "Use virtual mannequin",
       dropPhoto: "Drop your photo",
       formats: "PNG, JPG, WEBP up to 10MB",
+      mannequinTitle: "No photo? Dress a virtual mannequin instead.",
+      mannequinCopy: "Enter your body measurements and we'll fit the outfit on a mannequin with proportions close to your sizing.",
+      measurementHeight: "Height",
+      measurementChest: "Chest",
+      measurementWaist: "Waist",
+      measurementHips: "Hips",
+      measurementInseam: "Inseam",
+      measurementUnit: "cm",
+      mannequinHint: "These measurements shape a mannequin preview when you don't want to upload a personal photo.",
+      resultTitle: "Latest generation",
+      resultModePhoto: "Photo mode",
+      resultModeMannequin: "Virtual mannequin mode",
+      resultSummaryPhoto: "Outfit placed on your uploaded photo with creator-grade styling.",
+      resultSummaryMannequin: "Outfit fitted on a virtual mannequin built from your measurements.",
       defaultPrompt: "Luxury editorial look with premium tailoring, strong silhouette, clean lighting",
       generating: "Generating...",
       generate: "Generate Result",
@@ -207,7 +223,25 @@ export const translations = {
       copy: "Supabase Auth powers secure email and magic-link access for dashboard, billing, and referrals.",
       email: "Email",
       password: "Password",
-      button: "Continue"
+      button: "Continue",
+      forgotPassword: "Forgot password?",
+      sending: "Sending...",
+      sendReset: "Send reset link",
+      resetSent: "Password reset link sent. Check your email inbox.",
+      resetHint: "We'll email you a secure link to choose a new password."
+    },
+    resetPassword: {
+      eyebrow: "Password recovery",
+      title: "Choose a new password",
+      copy: "Open the recovery email, then set a fresh password for your account here.",
+      password: "New password",
+      confirmPassword: "Confirm new password",
+      button: "Update password",
+      saving: "Updating...",
+      success: "Password updated. You can sign in now.",
+      missingSession: "Open this page from the email recovery link first.",
+      mismatch: "Passwords do not match.",
+      minLength: "Password must be at least 8 characters."
     },
     referralsPage: {
       eyebrow: "Referrals",
@@ -436,7 +470,25 @@ export const translations = {
       copy: "Supabase Auth обеспечивает безопасный email и magic-link доступ к панели, оплате и рефералам.",
       email: "Email",
       password: "Пароль",
-      button: "Продолжить"
+      button: "Продолжить",
+      forgotPassword: "Забыли пароль?",
+      sending: "Отправка...",
+      sendReset: "Отправить ссылку",
+      resetSent: "Ссылка для сброса пароля отправлена. Проверьте почту.",
+      resetHint: "Мы отправим безопасную ссылку, чтобы вы выбрали новый пароль."
+    },
+    resetPassword: {
+      eyebrow: "Восстановление пароля",
+      title: "Задайте новый пароль",
+      copy: "Откройте письмо для восстановления и задайте здесь новый пароль для аккаунта.",
+      password: "Новый пароль",
+      confirmPassword: "Подтвердите новый пароль",
+      button: "Обновить пароль",
+      saving: "Обновление...",
+      success: "Пароль обновлен. Теперь можно войти.",
+      missingSession: "Сначала откройте эту страницу из письма для восстановления.",
+      mismatch: "Пароли не совпадают.",
+      minLength: "Пароль должен содержать минимум 8 символов."
     },
     referralsPage: {
       eyebrow: "Рефералы",
@@ -665,7 +717,25 @@ export const translations = {
       copy: "Supabase Auth dashboard, billing va referallar uchun xavfsiz email va magic-link kirishni таъминлайди.",
       email: "Email",
       password: "Parol",
-      button: "Davom etish"
+      button: "Davom etish",
+      forgotPassword: "Parol esdan chiqdimi?",
+      sending: "Yuborilmoqda...",
+      sendReset: "Tiklash havolasini yuborish",
+      resetSent: "Parolni tiklash havolasi emailingizga yuborildi.",
+      resetHint: "Yangi parol tanlash учун xavfsiz havola yuboramiz."
+    },
+    resetPassword: {
+      eyebrow: "Parolni tiklash",
+      title: "Yangi parol qo'ying",
+      copy: "Recovery email'ni oching, keyin shu yerda аккаунт учун янги parol белгиланг.",
+      password: "Yangi parol",
+      confirmPassword: "Yangi parolni tasdiqlang",
+      button: "Parolni yangilash",
+      saving: "Yangilanmoqda...",
+      success: "Parol yangilandi. Endi kirishingiz mumkin.",
+      missingSession: "Avval email'dagi recovery havolasi orqali kiring.",
+      mismatch: "Parollar mos emas.",
+      minLength: "Parol камида 8 та belgidan iborat bo'lishi kerak."
     },
     referralsPage: {
       eyebrow: "Referallar",

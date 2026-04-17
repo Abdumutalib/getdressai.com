@@ -1,15 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Hero } from "@/components/Hero";
 import { TrustBadges } from "@/components/TrustBadges";
 import { HowItWorks } from "@/components/HowItWorks";
-import { ExamplesGrid } from "@/components/ExamplesGrid";
-import { Testimonials } from "@/components/Testimonials";
-import { PricingCards } from "@/components/PricingCards";
-import { FAQ } from "@/components/FAQ";
-import { CTA } from "@/components/CTA";
+import { StickyMobileCTA } from "@/components/StickyMobileCTA";
+import { ExitIntentOffer } from "@/components/ExitIntentOffer";
 import { useLanguage } from "@/components/LanguageProvider";
+
+const ExamplesGrid = dynamic(() => import("@/components/ExamplesGrid").then((module) => module.ExamplesGrid));
+const Testimonials = dynamic(() => import("@/components/Testimonials").then((module) => module.Testimonials));
+const PricingCards = dynamic(() => import("@/components/PricingCards").then((module) => module.PricingCards));
+const FAQ = dynamic(() => import("@/components/FAQ").then((module) => module.FAQ));
+const CTA = dynamic(() => import("@/components/CTA").then((module) => module.CTA));
 
 function WhyUs() {
   const { t, tm } = useLanguage();
@@ -76,6 +80,7 @@ export default function HomePage() {
 
   return (
     <main>
+      <ExitIntentOffer />
       <Hero />
       <TrustBadges />
       <HowItWorks />
@@ -102,6 +107,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <StickyMobileCTA />
     </main>
   );
 }

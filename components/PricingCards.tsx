@@ -3,6 +3,7 @@
 import { Check, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/components/LanguageProvider";
+import { trackEvent } from "@/lib/analytics";
 
 export function PricingCards() {
   const { t, tm } = useLanguage();
@@ -28,6 +29,11 @@ export function PricingCards() {
               plan.highlight ? "border-accent bg-ink text-white" : "glass-panel text-slate-950 dark:text-white"
             }`}
           >
+            {plan.highlight ? (
+              <div className="mb-4 inline-flex rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
+                Best value for creators
+              </div>
+            ) : null}
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xl font-semibold">{plan.name}</p>
@@ -62,12 +68,16 @@ export function PricingCards() {
             <button
               type="button"
               data-plan={plan.plan}
+              onClick={() => trackEvent("checkout_opened", { plan: plan.plan, source: "pricing_cards" })}
               className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition ${
                 plan.highlight ? "bg-white text-slate-950 hover:bg-white/90" : "bg-ink text-white hover:opacity-90"
               }`}
             >
               {plan.cta}
             </button>
+            <p className={`mt-3 text-xs ${plan.highlight ? "text-white/60" : "text-slate-500 dark:text-slate-300"}`}>
+              {plan.highlight ? "Most creators upgrade here after the first free try." : "Instant activation. Cancel or upgrade anytime."}
+            </p>
           </div>
         ))}
       </div>

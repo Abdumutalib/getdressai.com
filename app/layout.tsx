@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { cookies } from "next/headers";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -51,6 +52,9 @@ export const metadata: Metadata = {
     title: "GetDressAI",
     description: "Try Any Outfit on Your Photo in Seconds",
     images: [absoluteUrl("/hero-demo.webp")]
+  },
+  alternates: {
+    canonical: absoluteUrl("/")
   }
 };
 
@@ -81,6 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={lang} suppressHydrationWarning>
       <body className={inter.className}>
         <LanguageProvider initialLanguage={lang}>
+          <AnalyticsProvider />
           <Navbar />
           {children}
           <Footer />
