@@ -1,11 +1,16 @@
-const badges = [
-  { label: "100,000+", note: "AI generations delivered" },
-  { label: "4.9/5", note: "Average creator rating" },
-  { label: "190+", note: "Countries with active users" },
-  { label: "12 sec", note: "Median generation time" }
-];
+"use client";
+
+import { useLanguage } from "@/components/LanguageProvider";
 
 export function TrustBadges() {
+  const { t } = useLanguage();
+  const badges = [
+    { label: "100,000+", note: t("trust.generations") },
+    { label: "4.9/5", note: t("trust.rating") },
+    { label: "190+", note: t("trust.countries") },
+    { label: "12 sec", note: t("trust.speed") }
+  ];
+
   return (
     <section className="section-shell py-12">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { cookies } from "next/headers";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import "@/app/globals.css";
 import { absoluteUrl } from "@/lib/utils";
+import { supportedLanguages, type SupportedLanguage } from "@/lib/translations";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -72,14 +74,17 @@ const jsonLd = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const lang = cookieStore.get("getdressai-language")?.value || "en";
+  const cookieLanguage = cookieStore.get("getdressai-language")?.value as SupportedLanguage | undefined;
+  const lang = cookieLanguage && supportedLanguages.includes(cookieLanguage) ? cookieLanguage : "en";
 
   return (
     <html lang={lang} suppressHydrationWarning>
       <body className={inter.className}>
-        <Navbar />
-        {children}
-        <Footer />
+        <LanguageProvider initialLanguage={lang}>
+          <Navbar />
+          {children}
+          <Footer />
+        </LanguageProvider>
         <Script
           id="schema-jsonld"
           type="application/ld+json"

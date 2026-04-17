@@ -1,31 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="border-t border-slate-200 bg-white py-14 dark:border-white/10 dark:bg-slate-950">
       <div className="section-shell grid gap-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div className="space-y-4">
           <p className="text-lg font-semibold text-slate-950 dark:text-white">GetDressAI</p>
-          <p className="max-w-md text-sm leading-7 text-slate-600 dark:text-slate-300">
-            Premium AI virtual try-on for fast-moving creators, shoppers, and fashion-first teams.
-          </p>
+          <p className="max-w-md text-sm leading-7 text-slate-600 dark:text-slate-300">{t("footer.description")}</p>
           <LanguageSwitcher />
         </div>
         <div className="space-y-3 text-sm">
-          <p className="font-medium text-slate-950 dark:text-white">Product</p>
+          <p className="font-medium text-slate-950 dark:text-white">{t("footer.product")}</p>
           <Link href="/pricing" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Pricing
+            {t("navbar.pricing")}
           </Link>
           <Link href="/examples" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Examples
+            {t("navbar.examples")}
           </Link>
           <Link href="/dashboard" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Dashboard
+            {t("footer.dashboard")}
           </Link>
         </div>
         <div className="space-y-3 text-sm">
-          <p className="font-medium text-slate-950 dark:text-white">Company</p>
+          <p className="font-medium text-slate-950 dark:text-white">{t("footer.company")}</p>
           <Link href="/privacy" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
             Privacy
           </Link>
@@ -37,12 +40,12 @@ export function Footer() {
           </Link>
         </div>
         <div className="space-y-3 text-sm">
-          <p className="font-medium text-slate-950 dark:text-white">Growth</p>
+          <p className="font-medium text-slate-950 dark:text-white">{t("footer.growth")}</p>
           <Link href="/referrals" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Referral program
+            {t("footer.referralProgram")}
           </Link>
           <p className="text-slate-600 dark:text-slate-300">support@getdressai.com</p>
-          <p className="text-slate-600 dark:text-slate-300">© 2026 GetDressAI</p>
+          <p className="text-slate-600 dark:text-slate-300">{t("footer.copyright")}</p>
         </div>
       </div>
     </footer>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useLanguage } from "@/components/LanguageProvider";
+
 const metrics = [
   ["Users", "18,492"],
   ["Revenue", "$92,410"],
@@ -9,17 +13,20 @@ const metrics = [
 ];
 
 export default function AdminPage() {
+  const { t, tm } = useLanguage();
+  const labels = tm<string[]>("admin.labels");
+
   return (
     <main className="section-shell py-20">
       <div className="space-y-8">
         <div className="space-y-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Admin</p>
-          <h1 className="section-title">Revenue, conversion, and retention control center.</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("admin.eyebrow")}</p>
+          <h1 className="section-title">{t("admin.title")}</h1>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {metrics.map(([label, value]) => (
-            <div key={label} className="glass-panel rounded-[2rem] p-6">
-              <p className="text-sm text-slate-500 dark:text-slate-300">{label}</p>
+          {metrics.map(([, value], index) => (
+            <div key={labels[index]} className="glass-panel rounded-[2rem] p-6">
+              <p className="text-sm text-slate-500 dark:text-slate-300">{labels[index]}</p>
               <p className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{value}</p>
             </div>
           ))}

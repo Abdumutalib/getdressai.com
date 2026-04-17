@@ -1,23 +1,26 @@
+"use client";
+
 import Link from "next/link";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { UploadGenerator } from "@/components/UploadGenerator";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export function Hero() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative overflow-hidden bg-hero-radial py-16 sm:py-24">
       <div className="grid-overlay absolute inset-0 opacity-60" />
       <div className="section-shell relative grid gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
         <div className="space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/15 bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Viral AI try-on for premium conversion
+            {t("hero.badge")}
           </div>
           <div className="space-y-6">
             <h1 className="max-w-4xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
-              Try Any Outfit on Your Photo in Seconds
+              {t("hero.title")}
             </h1>
-            <p className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
-              Upload your photo, choose any style, and get realistic AI transformations instantly.
-            </p>
+            <p className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">{t("hero.copy")}</p>
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row">
@@ -25,28 +28,28 @@ export function Hero() {
               href="/login"
               className="inline-flex items-center justify-center rounded-full bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow"
             >
-              Try Free Now
+              {t("navbar.tryFree")}
             </Link>
             <Link
               href="/examples"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-4 text-sm font-semibold text-slate-900 dark:border-white/15 dark:text-white"
             >
-              Watch Demo
+              {t("hero.watchDemo")}
             </Link>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="glass-panel rounded-[1.75rem] px-5 py-4">
               <p className="text-2xl font-semibold text-slate-950 dark:text-white">100K+</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Generated looks</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t("hero.generatedLooks")}</p>
             </div>
             <div className="glass-panel rounded-[1.75rem] px-5 py-4">
-              <p className="text-2xl font-semibold text-slate-950 dark:text-white">Private</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Secure signed uploads</p>
+              <p className="text-2xl font-semibold text-slate-950 dark:text-white">{t("hero.private")}</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t("hero.secureUploads")}</p>
             </div>
             <div className="glass-panel rounded-[1.75rem] px-5 py-4">
               <p className="text-2xl font-semibold text-slate-950 dark:text-white">12 sec</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Fast output pipeline</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t("hero.fastOutput")}</p>
             </div>
           </div>
         </div>

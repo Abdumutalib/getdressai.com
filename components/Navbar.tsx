@@ -6,18 +6,20 @@ import { Menu, MoonStar, Sparkles, SunMedium } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-
-const links = [
-  { href: "/pricing", label: "Pricing" },
-  { href: "/examples", label: "Examples" },
-  { href: "/referrals", label: "Referrals" },
-  { href: "/login", label: "Login" }
-];
+import { useLanguage } from "@/components/LanguageProvider";
 
 export function Navbar() {
   const pathname = usePathname();
   const [dark, setDark] = useState(false);
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const links = [
+    { href: "/pricing", label: t("navbar.pricing") },
+    { href: "/examples", label: t("navbar.examples") },
+    { href: "/referrals", label: t("navbar.referrals") },
+    { href: "/login", label: t("navbar.login") }
+  ];
 
   useEffect(() => {
     const stored = window.localStorage.getItem("getdressai-theme");
@@ -73,7 +75,7 @@ export function Navbar() {
             href="/dashboard"
             className="hidden rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:opacity-90 md:inline-flex"
           >
-            Try Free Now
+            {t("navbar.tryFree")}
           </Link>
           <button
             type="button"
@@ -88,7 +90,7 @@ export function Navbar() {
 
       {open ? (
         <div className="section-shell flex flex-col gap-2 border-t border-slate-200/70 py-4 md:hidden dark:border-white/10">
-          <LanguageSwitcher className="mb-2 w-full justify-between rounded-2xl px-4 py-3" />
+          <LanguageSwitcher className="mb-2 w-full" compact />
           {links.map((link) => (
             <Link
               key={link.href}
@@ -104,7 +106,7 @@ export function Navbar() {
             className="rounded-2xl bg-ink px-4 py-3 text-center text-sm font-semibold text-white"
             onClick={() => setOpen(false)}
           >
-            Try Free Now
+            {t("navbar.tryFree")}
           </Link>
         </div>
       ) : null}
