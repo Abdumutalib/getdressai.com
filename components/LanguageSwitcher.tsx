@@ -8,7 +8,12 @@ import { supportedLanguages } from "@/lib/translations";
 const languages = [
   { value: "en", label: "English" },
   { value: "ru", label: "Русский" },
-  { value: "uz", label: "O'zbek" }
+  { value: "uz", label: "O'zbek" },
+  { value: "tr", label: "Türkçe" },
+  { value: "es", label: "Español" },
+  { value: "fr", label: "Français" },
+  { value: "de", label: "Deutsch" },
+  { value: "ar", label: "العربية" }
 ];
 
 type LanguageSwitcherProps = {
@@ -28,7 +33,7 @@ export function LanguageSwitcher({ compact = false, className }: LanguageSwitche
       )}
     >
       <Languages className="size-4 shrink-0" />
-      <div className={cn("flex items-center gap-1", compact && "flex-1 justify-end")}>
+      <div className={cn("flex flex-wrap items-center gap-1", compact && "flex-1 justify-end")}>
         {languages
           .filter((item) => supportedLanguages.includes(item.value as (typeof supportedLanguages)[number]))
           .map((item) => (

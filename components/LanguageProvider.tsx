@@ -11,6 +11,7 @@ type LanguageContextValue = {
 };
 
 const STORAGE_KEY = "getdressai-language";
+const RTL_LANGUAGES = new Set<SupportedLanguage>(["ar"]);
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
@@ -28,9 +29,11 @@ export function LanguageProvider({
     if (stored && supportedLanguages.includes(stored)) {
       setLanguageState(stored);
       document.documentElement.lang = stored;
+      document.documentElement.dir = RTL_LANGUAGES.has(stored) ? "rtl" : "ltr";
       return;
     }
     document.documentElement.lang = initialLanguage;
+    document.documentElement.dir = RTL_LANGUAGES.has(initialLanguage) ? "rtl" : "ltr";
   }, [initialLanguage]);
 
   const setLanguage = (nextLanguage: SupportedLanguage) => {
@@ -38,6 +41,7 @@ export function LanguageProvider({
     window.localStorage.setItem(STORAGE_KEY, nextLanguage);
     document.cookie = `${STORAGE_KEY}=${nextLanguage}; path=/; max-age=31536000; SameSite=Lax`;
     document.documentElement.lang = nextLanguage;
+    document.documentElement.dir = RTL_LANGUAGES.has(nextLanguage) ? "rtl" : "ltr";
   };
 
   const value = useMemo<LanguageContextValue>(

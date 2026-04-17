@@ -1,4 +1,4 @@
-export const supportedLanguages = ["en", "ru", "uz"] as const;
+export const supportedLanguages = ["en", "ru", "uz", "tr", "es", "fr", "de", "ar"] as const;
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
@@ -689,16 +689,28 @@ export const translations = {
       title: "Revenue, conversion ва retention бошқарув маркази.",
       labels: ["Foydalanuvchilar", "Revenue", "MRR", "Konversiyalar", "Kredit ishlatilishi", "Muvaffaqiyatsiz to'lovlar", "Top referallar"]
     }
-  }
+  },
+  tr: {} as Record<string, unknown>,
+  es: {} as Record<string, unknown>,
+  fr: {} as Record<string, unknown>,
+  de: {} as Record<string, unknown>,
+  ar: {} as Record<string, unknown>
 } satisfies Record<SupportedLanguage, Record<string, unknown>>;
 
 export function getTranslationValue(language: SupportedLanguage, key: string) {
   const parts = key.split(".");
-  let current: unknown = translations[language];
+  let current: unknown = translations[language] ?? translations.en;
 
   for (const part of parts) {
     if (typeof current !== "object" || current === null || !(part in current)) {
-      return key;
+      current = translations.en;
+      for (const fallbackPart of parts) {
+        if (typeof current !== "object" || current === null || !(fallbackPart in current)) {
+          return key;
+        }
+        current = (current as Record<string, unknown>)[fallbackPart];
+      }
+      return current;
     }
     current = (current as Record<string, unknown>)[part];
   }
