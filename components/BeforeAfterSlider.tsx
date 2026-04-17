@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { useState } from "react";
 
 type Props = {
@@ -13,18 +12,30 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc }: Props) {
   const [position, setPosition] = useState(58);
 
   return (
-    <div className="glass-panel relative overflow-hidden rounded-[2rem] border">
-      <div className="relative aspect-[4/3]">
-        <Image src={beforeSrc} alt="Before outfit transformation" fill className="object-cover" priority />
-        <motion.div
-          className="absolute inset-y-0 right-0 overflow-hidden"
-          animate={{ width: `${100 - position}%` }}
-          transition={{ type: "spring", stiffness: 180, damping: 25 }}
-        >
+    <div className="glass-panel premium-ring relative overflow-hidden rounded-[2rem] border">
+      <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-900">
+        <Image src={beforeSrc} alt="19 y.o. model before" fill className="object-cover" priority />
+
+        <div className="absolute inset-y-0 right-0 overflow-hidden" style={{ width: `${100 - position}%` }}>
           <div className="relative h-full w-[calc(100vw)] max-w-none">
-            <Image src={afterSrc} alt="After outfit transformation" fill className="object-cover" priority />
+            <Image
+              src={afterSrc}
+              alt="19 y.o. model after AI transformation"
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
-        </motion.div>
+        </div>
+
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
+          <div className="rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+            Before
+          </div>
+          <div className="rounded-full bg-white/85 px-3 py-1.5 text-xs font-semibold text-slate-950 backdrop-blur">
+            After
+          </div>
+        </div>
 
         <div className="absolute inset-y-0 z-10" style={{ left: `${position}%` }}>
           <div className="h-full w-px bg-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.35)]" />
