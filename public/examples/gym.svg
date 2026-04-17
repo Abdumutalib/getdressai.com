@@ -1,0 +1,10 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" rx="48" fill="#020617"/>
+  <rect x="90" y="90" width="1020" height="1320" rx="42" fill="#0F172A"/>
+  <circle cx="602" cy="332" r="112" fill="#F0CDB6"/>
+  <path d="M394 470C394 396 454 336 528 336H676C750 336 810 396 810 470V722C810 796 750 856 676 856H528C454 856 394 796 394 722V470Z" fill="#10B981"/>
+  <path d="M370 760C370 676 438 608 522 608H678C762 608 830 676 830 760V1178C830 1252 770 1312 696 1312H504C430 1312 370 1252 370 1178V760Z" fill="#111827"/>
+  <text x="600" y="1272" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" fill="#A7F3D0">
+    Gym
+  </text>
+</svg>

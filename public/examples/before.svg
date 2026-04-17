@@ -1,0 +1,10 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" rx="48" fill="#ECEFF5"/>
+  <rect x="140" y="120" width="920" height="1260" rx="40" fill="#F8FAFC"/>
+  <circle cx="600" cy="360" r="124" fill="#D8DEE9"/>
+  <rect x="430" y="494" width="340" height="414" rx="170" fill="#CBD5E1"/>
+  <rect x="380" y="898" width="440" height="340" rx="160" fill="#B8C2D3"/>
+  <text x="600" y="1348" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#334155">
+    Original Photo
+  </text>
+</svg>

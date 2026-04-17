@@ -1,26 +1,39 @@
 {
-  "name": "dressai-super",
-  "version": "1.0.0",
+  "name": "getdressai-next",
+  "version": "2.0.0",
   "private": true,
-  "main": "index.cjs",
-  "description": "DressAI + GetdressAI — web (static + cheap AI proxy), mobile (Expo), monetized API (Stripe + affiliate)",
   "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "dev:web": "npm run dev --prefix getdressai",
     "dev:api": "npm run dev --prefix dressai-api",
-    "test:web": "npm test --prefix getdressai",
-    "verify": "npm run test:web && node --check dressai-api/server.js && node scripts/verify-services.mjs",
-    "verify:live": "npm run test:web && node --check dressai-api/server.js && node scripts/verify-services.mjs --live --web",
-    "verify:live:strict": "npm run test:web && node --check dressai-api/server.js && node scripts/verify-services.mjs --live --web --strict",
-    "publish:web": "node scripts/publish-web.mjs",
-    "publish:mobile": "node scripts/publish-mobile.mjs",
-    "install:web": "npm install --prefix getdressai",
-    "install:api": "npm install --prefix dressai-api",
-    "install:mobile": "npm install --prefix mobile"
+    "verify:legacy": "npm run test:web --prefix getdressai && node --check dressai-api/server.js"
   },
   "dependencies": {
-    "@vercel/node": "^5.7.7",
-    "dotenv": "^17.4.2",
-    "node-fetch": "^3.3.2",
-    "openai": "^6.34.0"
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.49.8",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.10.5",
+    "lucide-react": "^0.511.0",
+    "next": "15.5.9",
+    "posthog-js": "^1.233.1",
+    "posthog-node": "^4.12.1",
+    "react": "19.1.2",
+    "react-dom": "19.1.2",
+    "resend": "^4.4.1",
+    "tailwind-merge": "^3.3.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3"
   }
 }

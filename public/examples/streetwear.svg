@@ -1,0 +1,10 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1200" rx="48" fill="#111827"/>
+  <rect x="90" y="90" width="1020" height="1020" rx="44" fill="#1F2937"/>
+  <circle cx="606" cy="286" r="110" fill="#F5D7C5"/>
+  <path d="M378 430C378 352 442 288 520 288H692C770 288 834 352 834 430V758C834 836 770 900 692 900H520C442 900 378 836 378 758V430Z" fill="#4F46E5"/>
+  <path d="M348 770C348 694 410 632 486 632H726C802 632 864 694 864 770V1000C864 1056 818 1102 762 1102H450C394 1102 348 1056 348 1000V770Z" fill="#0F172A"/>
+  <text x="600" y="1062" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" fill="#E5E7EB">
+    Streetwear
+  </text>
+</svg>

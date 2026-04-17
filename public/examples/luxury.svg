@@ -1,0 +1,16 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" rx="48" fill="#0F172A"/>
+  <rect x="82" y="82" width="1036" height="1336" rx="40" fill="url(#paint0_linear)"/>
+  <circle cx="610" cy="352" r="120" fill="#F1D8C8"/>
+  <path d="M400 520C400 450 456 394 526 394H692C762 394 818 450 818 520V886C818 956 762 1012 692 1012H526C456 1012 400 956 400 886V520Z" fill="#FFF7ED"/>
+  <path d="M372 930C372 844 442 774 528 774H690C776 774 846 844 846 930V1224C846 1290 792 1344 726 1344H492C426 1344 372 1290 372 1224V930Z" fill="#D97706"/>
+  <text x="600" y="1336" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#FFF7ED">
+    Luxury
+  </text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="190" y1="132" x2="1038" y2="1390" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -19,3 +19,5 @@ coverage/
 # Katta / тест видеолар (GitHub лимити ва clone тезлиги)
 auto-caption-video/*.mp4
 .vercel
+.next/
+out/

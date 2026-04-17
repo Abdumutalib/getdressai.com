@@ -1,0 +1,10 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" rx="48" fill="#FFF7ED"/>
+  <rect x="88" y="88" width="1024" height="1324" rx="40" fill="#FFFBF5"/>
+  <circle cx="600" cy="332" r="112" fill="#F1D8C8"/>
+  <path d="M418 488C418 418 474 362 544 362H656C726 362 782 418 782 488V798C782 868 726 924 656 924H544C474 924 418 868 418 798V488Z" fill="#F8FAFC"/>
+  <path d="M306 870C306 760 396 670 506 670H694C804 670 894 760 894 870V1198C894 1272 834 1332 760 1332H440C366 1332 306 1272 306 1198V870Z" fill="#FFFFFF"/>
+  <text x="600" y="1302" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#C084FC">
+    Wedding
+  </text>
+</svg>
