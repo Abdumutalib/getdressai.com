@@ -4,7 +4,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DressAI — Кийим тавсияси</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/locales.js"></script>
 </head>
+<div style="display:flex;justify-content:flex-end;padding:16px 16px 0;">
+  <div id="recommend-lang-select"></div>
+</div>
 <div class="user-profile-form">
   <h2>Ўз профилингизни киритинг</h2>
   
@@ -52,6 +56,35 @@
 <div id="recommendations"></div>
 
 <script>
+const RECOMMEND_TRANSLATIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.TRANSLATIONS) || {};
+const RECOMMEND_LANG_OPTIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.LANG_OPTIONS) || [{ id: "en", label: "English" }];
+let recommendLang = localStorage.getItem("getdressai_lang") || "uz";
+if (!RECOMMEND_TRANSLATIONS[recommendLang]) recommendLang = "en";
+
+function recommendT(key, fallback) {
+  const pack = RECOMMEND_TRANSLATIONS[recommendLang] || RECOMMEND_TRANSLATIONS.en || {};
+  const fb = RECOMMEND_TRANSLATIONS.en || {};
+  return pack[key] || fb[key] || fallback || key;
+}
+
+function renderRecommendLanguageSelector() {
+  const el = document.getElementById("recommend-lang-select");
+  if (!el) return;
+  const options = RECOMMEND_LANG_OPTIONS.map(
+    (o) => `<option value="${o.id}" ${recommendLang === o.id ? "selected" : ""}>${o.label}</option>`
+  ).join("");
+  el.innerHTML = `<label style="display:flex;align-items:center;gap:8px;font-size:14px;"><span style="color:#666;">${recommendT("langLabel", "Language")}</span><select id="recommend-lang" style="padding:6px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;">${options}</select></label>`;
+  el.querySelector("select")?.addEventListener("change", (e) => {
+    recommendLang = e.target.value;
+    localStorage.setItem("getdressai_lang", recommendLang);
+    document.documentElement.lang = recommendLang;
+    renderRecommendLanguageSelector();
+  });
+}
+
+document.documentElement.lang = recommendLang;
+renderRecommendLanguageSelector();
+
 async function getRecommendations() {
   const userData = {
     age: document.getElementById('age').value,

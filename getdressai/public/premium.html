@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>body { font-family: Inter, system-ui, sans-serif; }</style>
+  <script src="/locales.js"></script>
   <script>
     window.GETDRESSAI_PREMIUM = {
       dressaiApiUrl: "DRESSAI_API_URL_PLACEHOLDER",
@@ -22,9 +23,12 @@
 <body class="bg-neutral-50 min-h-screen">
   <div class="premium-page py-16 px-6 bg-gradient-to-br from-neutral-50 to-neutral-100">
     <div class="max-w-6xl mx-auto">
-      <p class="text-center text-sm text-neutral-500 mb-6">
-        <a href="/" class="text-purple-600 hover:underline">← Back to app</a>
-      </p>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <p class="text-center sm:text-left text-sm text-neutral-500">
+          <a href="/" id="back-to-app-link" class="text-purple-600 hover:underline">← Back to app</a>
+        </p>
+        <div id="premium-lang-select" class="flex justify-center sm:justify-end"></div>
+      </div>
 
       <!-- DressAI API login (JWT for /v1/*) -->
       <div id="api-login-panel" class="max-w-md mx-auto mb-10 bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
@@ -152,8 +156,50 @@
     const PREMIUM = window.GETDRESSAI_PREMIUM || {};
     const DRESSAI_JWT_KEY = "dressai_api_jwt";
     const DRESSAI_EMAIL_KEY = "dressai_api_email";
+    const PREMIUM_TRANSLATIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.TRANSLATIONS) || {};
+    const PREMIUM_LANG_OPTIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.LANG_OPTIONS) || [{ id: "en", label: "English" }];
+    let premiumLang = localStorage.getItem("getdressai_lang") || "uz";
+    if (!PREMIUM_TRANSLATIONS[premiumLang]) premiumLang = "en";
 
     let stripe = null;
+
+    function t(key, fallback) {
+      const pack = PREMIUM_TRANSLATIONS[premiumLang] || PREMIUM_TRANSLATIONS.en || {};
+      const fb = PREMIUM_TRANSLATIONS.en || {};
+      return pack[key] || fb[key] || fallback || key;
+    }
+
+    function premiumBackText() {
+      if (premiumLang === "ru") return "← Назад в приложение";
+      if (premiumLang === "uz") return "← Ilovaga qaytish";
+      if (premiumLang === "de") return "← Zur App zurück";
+      if (premiumLang === "fr") return "← Retour à l'application";
+      if (premiumLang === "es") return "← Volver a la app";
+      if (premiumLang === "pt") return "← Voltar ao app";
+      if (premiumLang === "ar") return "← العودة إلى التطبيق";
+      return "← Back to app";
+    }
+
+    function renderLanguageSelector() {
+      const el = document.getElementById("premium-lang-select");
+      if (!el) return;
+      const options = PREMIUM_LANG_OPTIONS.map(
+        (o) => `<option value="${o.id}" ${premiumLang === o.id ? "selected" : ""}>${o.label}</option>`
+      ).join("");
+      el.innerHTML = `<label class="flex items-center gap-2 text-sm"><span class="text-neutral-500 whitespace-nowrap">${t("langLabel", "Language")}</span><select id="premium-lang" class="border rounded-lg px-2 py-1.5 bg-white">${options}</select></label>`;
+      el.querySelector("select")?.addEventListener("change", (e) => {
+        premiumLang = e.target.value;
+        localStorage.setItem("getdressai_lang", premiumLang);
+        applyLanguageChrome();
+      });
+    }
+
+    function applyLanguageChrome() {
+      document.documentElement.lang = premiumLang;
+      const backLink = document.getElementById("back-to-app-link");
+      if (backLink) backLink.textContent = premiumBackText();
+      renderLanguageSelector();
+    }
 
     function apiBase() {
       const u = String(PREMIUM.dressaiApiUrl || "").trim().replace(/\/$/, "");
@@ -543,6 +589,7 @@
     document.getElementById("start-trial-btn")?.addEventListener("click", startTrial);
 
     (async function init() {
+      applyLanguageChrome();
       await applyBillingFromConfig();
       updateLoginUi();
       await ensureStripe();

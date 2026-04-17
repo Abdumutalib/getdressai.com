@@ -7,12 +7,16 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>body { font-family: Inter, system-ui, sans-serif; background: #fafafa; }</style>
+  <script src="/locales.js"></script>
 </head>
 <body class="min-h-screen p-4 md:p-8">
   <div class="max-w-3xl mx-auto">
-    <p class="text-sm text-neutral-500 mb-4">
-      <a href="/" class="text-blue-600 hover:underline">← Back to GetdressAI</a>
-    </p>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+      <p class="text-sm text-neutral-500">
+        <a href="/" id="marketplace-back-link" class="text-blue-600 hover:underline">← Back to GetdressAI</a>
+      </p>
+      <div id="marketplace-lang-select" class="flex justify-start sm:justify-end"></div>
+    </div>
 
     <div class="marketplace-search bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
       <h3 class="text-lg font-semibold mb-4">🛍️ Find Clothes That Fit You Perfectly</h3>
@@ -66,6 +70,49 @@
   </div>
 
   <script>
+    const MARKETPLACE_TRANSLATIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.TRANSLATIONS) || {};
+    const MARKETPLACE_LANG_OPTIONS = (window.GETDRESSAI_LOCALES && window.GETDRESSAI_LOCALES.LANG_OPTIONS) || [{ id: "en", label: "English" }];
+    let marketplaceLang = localStorage.getItem("getdressai_lang") || "uz";
+    if (!MARKETPLACE_TRANSLATIONS[marketplaceLang]) marketplaceLang = "en";
+
+    function t(key, fallback) {
+      const pack = MARKETPLACE_TRANSLATIONS[marketplaceLang] || MARKETPLACE_TRANSLATIONS.en || {};
+      const fb = MARKETPLACE_TRANSLATIONS.en || {};
+      return pack[key] || fb[key] || fallback || key;
+    }
+
+    function marketplaceBackText() {
+      if (marketplaceLang === "ru") return "← Назад в GetDressAI";
+      if (marketplaceLang === "uz") return "← GetDressAI ga qaytish";
+      if (marketplaceLang === "de") return "← Zurück zu GetDressAI";
+      if (marketplaceLang === "fr") return "← Retour à GetDressAI";
+      if (marketplaceLang === "es") return "← Volver a GetDressAI";
+      if (marketplaceLang === "pt") return "← Voltar ao GetDressAI";
+      if (marketplaceLang === "ar") return "← العودة إلى GetDressAI";
+      return "← Back to GetDressAI";
+    }
+
+    function renderLanguageSelector() {
+      const el = document.getElementById("marketplace-lang-select");
+      if (!el) return;
+      const options = MARKETPLACE_LANG_OPTIONS.map(
+        (o) => `<option value="${o.id}" ${marketplaceLang === o.id ? "selected" : ""}>${o.label}</option>`
+      ).join("");
+      el.innerHTML = `<label class="flex items-center gap-2 text-sm"><span class="text-neutral-500 whitespace-nowrap">${t("langLabel", "Language")}</span><select id="marketplace-lang" class="border rounded-lg px-2 py-1.5 bg-white">${options}</select></label>`;
+      el.querySelector("select")?.addEventListener("change", (e) => {
+        marketplaceLang = e.target.value;
+        localStorage.setItem("getdressai_lang", marketplaceLang);
+        applyMarketplaceLanguageChrome();
+      });
+    }
+
+    function applyMarketplaceLanguageChrome() {
+      document.documentElement.lang = marketplaceLang;
+      const backLink = document.getElementById("marketplace-back-link");
+      if (backLink) backLink.textContent = marketplaceBackText();
+      renderLanguageSelector();
+    }
+
     function escapeHtml(s) {
       if (s == null) return "";
       const div = document.createElement("div");
@@ -245,6 +292,7 @@
       }
     }
 
+    applyMarketplaceLanguageChrome();
     document.getElementById("search-btn").addEventListener("click", searchAllMarketplaces);
   </script>
 </body>
