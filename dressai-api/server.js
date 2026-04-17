@@ -8,10 +8,7 @@ const cors = require("cors");
 const OpenAI = require("openai");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Stripe = require("stripe");
 const { createClient } = require("@supabase/supabase-js");
-const { handleStripeTrial } = require("./api/stripe-trial.js");
-const { handleCancelTrial } = require("./api/cancel-trial.js");
 const { handleUserSubscriptionStatus } = require("./api/user-subscription-status.js");
 const { handleUserQuota } = require("./api/user-quota.js");
 const { handlePaddleWebhook } = require("./api/paddle-webhook.js");
@@ -23,8 +20,6 @@ app.set("trust proxy", 1);
 const port = Number(process.env.PORT) || 3000;
 const usersFilePath = path.join(__dirname, "data", "users.json");
 const jwtSecret = process.env.JWT_SECRET || "dev-only-secret-change-me";
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const stripePriceId = process.env.STRIPE_PRO_PRICE_ID || "";
 const supabaseUrl = process.env.SUPABASE_URL?.trim();
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 const supabaseAdmin =
@@ -152,122 +147,6 @@ app.use(
     credentials: Boolean(corsAllowed && corsAllowed !== "*"),
   })
 );
-
-async function applyProStripeCheckoutToSupabase(userId, session) {
-  const cust = session.customer;
-  const stripeCustomerId =
-    typeof cust === "string"
-      ? cust
-      : cust && typeof cust === "object" && cust.id
-        ? cust.id
-        : null;
-  const now = new Date().toISOString();
-  await ensureUserQuotaRow(userId);
-  const { error: e1 } = await supabaseAdmin.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      stripe_customer_id: stripeCustomerId,
-      stripe_subscription_id:
-        typeof session.subscription === "string" ? session.subscription : null,
-      status: "active",
-      plan_type: "stripe_checkout",
-      current_period_start: now,
-      current_period_end: null,
-      updated_at: now,
-    },
-    { onConflict: "user_id" }
-  );
-  if (e1) {
-    throw e1;
-  }
-  const { error: e2 } = await supabaseAdmin.from("user_quotas").upsert(
-    {
-      user_id: userId,
-      is_premium: true,
-      is_trial: false,
-      trial_days_left: 0,
-      ai_generations_used: 0,
-      ai_generations_limit: -1,
-      tryon_limit: -1,
-      saved_outfits_limit: -1,
-      updated_at: now,
-    },
-    { onConflict: "user_id" }
-  );
-  if (e2) {
-    throw e2;
-  }
-}
-
-/**
- * Stripe checkout.session.completed — dressai `users.json` ёки Supabase `user_id`.
- * @returns {{ kind: "dressai", user: object } | { kind: "supabase", userId: string } | null}
- */
-async function processSuccessfulCheckoutSession(session) {
-  const userId = session.metadata?.userId || session.client_reference_id;
-
-  if (!userId) {
-    return null;
-  }
-
-  if (String(session.metadata?.auth_provider || "") === "supabase" && supabaseAdmin) {
-    await applyProStripeCheckoutToSupabase(userId, session);
-    return { kind: "supabase", userId };
-  }
-
-  const user = updateUser(userId, (currentUser) => ({
-    plan: "pro",
-    stripeCustomerEmail: session.customer_details?.email || currentUser.email,
-    lastCheckoutSessionId: session.id,
-    lastPaymentStatus: session.payment_status || "paid",
-  }));
-
-  return user ? { kind: "dressai", user } : null;
-}
-
-app.post("/billing/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
-    return res.status(503).json({
-      error: "Stripe webhook is not configured.",
-    });
-  }
-
-  const signature = req.headers["stripe-signature"];
-
-  if (typeof signature !== "string" || signature.trim() === "") {
-    return res.status(400).json({
-      error: "Missing Stripe signature header.",
-    });
-  }
-
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (error) {
-    return res.status(400).json({
-      error: "Invalid Stripe webhook signature.",
-      details: error.message,
-    });
-  }
-
-  try {
-    if (event.type === "checkout.session.completed") {
-      await processSuccessfulCheckoutSession(event.data.object).catch((err) => {
-        console.error("checkout.session.completed handler:", err);
-      });
-    }
-
-    return res.json({ received: true });
-  } catch (error) {
-    console.error("Stripe webhook handling failed:", error);
-
-    return res.status(500).json({
-      error: "Failed to process Stripe webhook.",
-      details: error.message,
-    });
-  }
-});
 
 app.post("/billing/paddle-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   return handlePaddleWebhook(req, res, {
@@ -1105,18 +984,14 @@ app.get("/config", (req, res) => {
   const ao = process.env.ALLOWED_ORIGIN?.trim();
   res.json({
     authEnabled: true,
-    paymentEnabled: Boolean(stripe && stripePriceId),
-    paymentProvider: stripe && stripePriceId ? "stripe" : null,
+    paymentEnabled: Boolean(process.env.PADDLE_API_KEY?.trim() && supabaseAdmin),
+    paymentProvider: process.env.PADDLE_API_KEY?.trim() && supabaseAdmin ? "paddle" : null,
     hybridVtonProxy: Boolean(process.env.HYBRID_VTON_SERVICE_URL?.trim()),
     amazonSearchProxy: Boolean(process.env.AMAZON_PA_API_UPSTREAM_URL?.trim()),
     ebaySearchProxy: Boolean(process.env.EBAY_BROWSE_UPSTREAM_URL?.trim()),
     aliexpressSearchProxy: Boolean(process.env.ALIEXPRESS_AFFILIATE_UPSTREAM_URL?.trim()),
     hybridMarketplaceProxy: Boolean(process.env.HYBRID_MARKETPLACE_UPSTREAM_URL?.trim()),
-    stripeTrialEnabled: Boolean(
-      stripe &&
-        supabaseAdmin &&
-        (process.env.STRIPE_MONTHLY_PRICE_ID?.trim() || stripePriceId)
-    ),
+    stripeTrialEnabled: false,
     paddleWebhookEnabled: Boolean(
       process.env.PADDLE_API_KEY?.trim() &&
         process.env.PADDLE_WEBHOOK_SECRET?.trim() &&
@@ -1224,7 +1099,7 @@ app.post("/auth/login", authRouteLimiter, async (req, res) => {
 app.get("/auth/me", requireAuth, (req, res) => {
   return res.json({
     user: buildPublicUserFromRequest(req),
-    paymentEnabled: Boolean(stripe && stripePriceId),
+    paymentEnabled: Boolean(process.env.PADDLE_API_KEY?.trim() && supabaseAdmin),
     authSource: req.authSource || "dressai",
   });
 });
@@ -1264,190 +1139,31 @@ app.get("/v1/user-quota", requireAuth, async (req, res) => {
  * Auth: JWT — body ичида user_id ишончсиз; req.user ишлатилади.
  */
 app.post("/v1/stripe-trial", requireAuth, async (req, res) => {
-  if (!stripe) {
-    return res.status(503).json({
-      error: "Payments are not configured.",
-      details: "Set STRIPE_SECRET_KEY.",
-    });
-  }
-
-  if (!supabaseAdmin) {
-    return res.status(503).json({
-      error: "Supabase is not configured.",
-      details: "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
-    });
-  }
-
-  const monthlyPriceId =
-    process.env.STRIPE_MONTHLY_PRICE_ID?.trim() || stripePriceId || "";
-
-  if (!monthlyPriceId) {
-    return res.status(503).json({
-      error: "Stripe price is not configured.",
-      details: "Set STRIPE_MONTHLY_PRICE_ID or STRIPE_PRO_PRICE_ID.",
-    });
-  }
-
-  return handleStripeTrial(req, res, {
-    stripe,
-    supabase: supabaseAdmin,
-    monthlyPriceId,
-    userId: req.user.id,
-    userEmail: req.user.email,
+  return res.status(410).json({
+    error: "Stripe billing has been removed.",
+    details: "Use Paddle checkout from the web pricing flow instead.",
   });
 });
 
-/**
- * Stripe подписка: `cancel_at_period_end` + Supabase янгилаш.
- * Body: `{ "subscription_id": "sub_..." }` — ихтиёрий; бўлмаса базадаги `stripe_subscription_id` ишлатилади.
- */
 app.post("/v1/cancel-trial", requireAuth, async (req, res) => {
-  if (!stripe) {
-    return res.status(503).json({
-      error: "Payments are not configured.",
-      details: "Set STRIPE_SECRET_KEY.",
-    });
-  }
-
-  if (!supabaseAdmin) {
-    return res.status(503).json({
-      error: "Supabase is not configured.",
-      details: "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
-    });
-  }
-
-  return handleCancelTrial(req, res, {
-    stripe,
-    supabase: supabaseAdmin,
-    userId: req.user.id,
+  return res.status(410).json({
+    error: "Stripe billing has been removed.",
+    details: "Subscription cancellation is now handled by Paddle billing.",
   });
 });
 
 app.post("/billing/create-checkout-session", requireAuth, async (req, res) => {
-  if (!stripe || !stripePriceId) {
-    return res.status(503).json({
-      error: "Payments are not configured.",
-      details: "Set STRIPE_SECRET_KEY and STRIPE_PRO_PRICE_ID in the backend environment.",
-    });
-  }
-
-  const { successUrl, cancelUrl } = req.body || {};
-
-  if (!isValidRedirectUrl(successUrl) || !isValidRedirectUrl(cancelUrl)) {
-    return res.status(400).json({
-      error: "Valid successUrl and cancelUrl are required.",
-    });
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [
-        {
-          price: stripePriceId,
-          quantity: 1,
-        },
-      ],
-      success_url: appendSessionIdPlaceholder(successUrl),
-      cancel_url: cancelUrl,
-      customer_email: req.user.email,
-      client_reference_id: req.user.id,
-      metadata: {
-        userId: req.user.id,
-        plan: "pro",
-        auth_provider: req.authSource === "supabase" ? "supabase" : "dressai",
-      },
-    });
-
-    if (req.authSource === "dressai") {
-      const updatedUser = updateUser(req.user.id, () => ({
-        stripeCustomerEmail: req.user.email,
-        lastCheckoutSessionId: session.id,
-      }));
-      if (updatedUser) {
-        req.user = updatedUser;
-      }
-    }
-
-    return res.json({
-      checkoutUrl: session.url,
-      sessionId: session.id,
-    });
-  } catch (error) {
-    console.error("Stripe checkout session failed:", error);
-
-    return res.status(500).json({
-      error: "Failed to create checkout session.",
-      details: error.message,
-    });
-  }
+  return res.status(410).json({
+    error: "Stripe checkout has been removed.",
+    details: "Use the Next.js Paddle checkout endpoint instead.",
+  });
 });
 
 app.get("/billing/confirm", requireAuth, async (req, res) => {
-  if (!stripe || !stripePriceId) {
-    return res.status(503).json({
-      error: "Payments are not configured.",
-    });
-  }
-
-  const sessionId = String(req.query.session_id || "").trim();
-
-  if (!sessionId) {
-    return res.status(400).json({
-      error: "session_id is required.",
-    });
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const sessionUserId = session.metadata?.userId || session.client_reference_id;
-
-    if (sessionUserId !== req.user.id) {
-      return res.status(403).json({
-        error: "This checkout session does not belong to the current user.",
-      });
-    }
-
-    if (session.payment_status !== "paid") {
-      return res.status(409).json({
-        error: "Payment is not completed yet.",
-        paymentStatus: session.payment_status,
-      });
-    }
-
-    const checkoutResult = await processSuccessfulCheckoutSession(session);
-
-    if (!checkoutResult) {
-      return res.status(500).json({
-        error: "Could not apply checkout to user.",
-      });
-    }
-
-    if (checkoutResult.kind === "dressai") {
-      req.user = checkoutResult.user;
-      return res.json({
-        user: buildPublicUser(checkoutResult.user),
-        paymentStatus: session.payment_status,
-      });
-    }
-
-    const bearer = getBearerToken(req);
-    if (bearer) {
-      await tryPopulateUserFromToken(req, bearer);
-    }
-
-    return res.json({
-      user: buildPublicUserFromRequest(req),
-      paymentStatus: session.payment_status,
-    });
-  } catch (error) {
-    console.error("Stripe session confirmation failed:", error);
-
-    return res.status(500).json({
-      error: "Failed to confirm payment.",
-      details: error.message,
-    });
-  }
+  return res.status(410).json({
+    error: "Stripe checkout confirmation has been removed.",
+    details: "Premium access sync is handled by Paddle webhooks.",
+  });
 });
 
 app.post("/analyze", async (req, res) => {

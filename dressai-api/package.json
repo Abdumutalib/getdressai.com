@@ -2,7 +2,7 @@
   "name": "dressai-api",
   "version": "1.0.0",
   "private": true,
-  "description": "DressAI Express API — auth, Stripe, OpenAI analyze + image (mobile & optional web clients)",
+  "description": "DressAI Express API - auth, Paddle, OpenAI analyze + image (mobile & optional web clients)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -21,7 +21,6 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "openai": "^4.86.1",
-    "redis": "^4.7.1",
-    "stripe": "^21.0.1"
+    "redis": "^4.7.1"
   }
 }

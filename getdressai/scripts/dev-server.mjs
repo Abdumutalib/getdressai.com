@@ -239,7 +239,6 @@ function injectSupabaseIntoIndexHtml(html) {
 function injectPremiumHtml(html) {
   let h = html;
   const api = process.env.DRESSAI_API_URL?.trim() ?? "http://127.0.0.1:3000";
-  const pk = process.env.STRIPE_PUBLISHABLE_KEY?.trim() ?? "";
   const paddleToken = process.env.PADDLE_CLIENT_SIDE_TOKEN?.trim() ?? "";
   const paddleEnv = (process.env.PADDLE_ENVIRONMENT?.trim() || "sandbox").toLowerCase();
   const paddlePrice = process.env.PADDLE_PRICE_TOPUP_10_USD?.trim() ?? "";
@@ -248,7 +247,6 @@ function injectPremiumHtml(html) {
   const successU = `${publicOrigin.replace(/\/$/, "")}/public/premium.html?paddle=ok`;
   const cancelU = `${publicOrigin.replace(/\/$/, "")}/public/premium.html?paddle=cancel`;
   h = h.replace('"DRESSAI_API_URL_PLACEHOLDER"', JSON.stringify(api));
-  h = h.replace('"STRIPE_PUBLISHABLE_KEY_PLACEHOLDER"', JSON.stringify(pk));
   h = h.replace('"PADDLE_CLIENT_SIDE_TOKEN_PLACEHOLDER"', JSON.stringify(paddleToken));
   h = h.replace(
     '"PADDLE_ENVIRONMENT_PLACEHOLDER"',

@@ -11,7 +11,6 @@
   <script>
     window.GETDRESSAI_PREMIUM = {
       dressaiApiUrl: "DRESSAI_API_URL_PLACEHOLDER",
-      stripePublishableKey: "STRIPE_PUBLISHABLE_KEY_PLACEHOLDER",
       paddleClientToken: "PADDLE_CLIENT_SIDE_TOKEN_PLACEHOLDER",
       paddleEnvironment: "PADDLE_ENVIRONMENT_PLACEHOLDER",
       paddlePriceTopup10: "PADDLE_PRICE_ID_PLACEHOLDER",
@@ -34,7 +33,7 @@
       <div id="api-login-panel" class="max-w-md mx-auto mb-10 bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
         <h2 class="font-bold text-neutral-800 text-sm">DressAI API account</h2>
         <p class="text-xs text-neutral-500 mt-1">
-          Trial uses <code class="bg-neutral-100 px-1 rounded">dressai-api</code> (same user as mobile if you use that backend). Sign in to get a JWT.
+          Sign in to sync legacy premium status and mobile account data from <code class="bg-neutral-100 px-1 rounded">dressai-api</code>.
         </p>
         <div class="mt-3 grid gap-2">
           <input id="login-email" type="email" placeholder="Email" class="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm" autocomplete="username">
@@ -72,7 +71,7 @@
       <!-- 3 кунлик пробный баннер -->
       <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-8 mb-12 text-center">
         <span class="text-5xl">🎁</span>
-        <h2 class="text-3xl font-bold mt-3">3 Days Free Trial</h2>
+        <h2 class="text-3xl font-bold mt-3">Premium Checkout</h2>
         <p class="text-white/80 mt-2">Try all premium features for 3 days — no charge!</p>
         <p class="text-sm text-white/60 mt-1">After trial: <strong>yearly first</strong> at checkout • Monthly also available • Cancel anytime</p>
 
@@ -161,8 +160,6 @@
     let premiumLang = localStorage.getItem("getdressai_lang") || "uz";
     if (!PREMIUM_TRANSLATIONS[premiumLang]) premiumLang = "en";
 
-    let stripe = null;
-
     function t(key, fallback) {
       const pack = PREMIUM_TRANSLATIONS[premiumLang] || PREMIUM_TRANSLATIONS.en || {};
       const fb = PREMIUM_TRANSLATIONS.en || {};
@@ -238,28 +235,6 @@
       return h;
     }
 
-    async function loadStripeJs() {
-      if (window.Stripe) return;
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://js.stripe.com/v3/";
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-
-    async function ensureStripe() {
-      const pk = String(PREMIUM.stripePublishableKey || "").trim();
-      if (!pk || pk.includes("PLACEHOLDER")) {
-        console.warn("Set STRIPE_PUBLISHABLE_KEY in getdressai .env for card confirmation.");
-        return null;
-      }
-      await loadStripeJs();
-      stripe = window.Stripe(pk);
-      return stripe;
-    }
-
     function setLoginMsg(text, isErr) {
       const el = document.getElementById("api-login-msg");
       if (!el) return;
@@ -321,7 +296,7 @@
       const token = getToken();
       if (!token) {
         statusDiv.innerHTML =
-          '<div class="bg-neutral-100 rounded-xl p-4 inline-block"><span class="text-neutral-600">👤 Sign in above to see trial status.</span></div>';
+          '<div class="bg-neutral-100 rounded-xl p-4 inline-block"><span class="text-neutral-600">👤 Sign in above to see premium status.</span></div>';
         return;
       }
 
@@ -377,75 +352,17 @@
     }
 
     async function startTrial() {
-      const token = getToken();
-      const email = localStorage.getItem(DRESSAI_EMAIL_KEY) || document.getElementById("login-email")?.value?.trim();
-
-      if (!token || !email) {
-        alert("Please sign in above (DressAI API) first.");
+      const paddleBtn = document.getElementById("btn-paddle-checkout");
+      if (paddleBtn instanceof HTMLButtonElement) {
+        paddleBtn.click();
         return;
       }
-
-      const btn = document.getElementById("start-trial-btn");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "⏳ Starting trial...";
-      }
-
-      try {
-        await ensureStripe();
-        const response = await fetch(apiUrl("/v1/stripe-trial"), {
-          method: "POST",
-          headers: authHeaders(),
-          body: JSON.stringify({}),
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || data.details || "Request failed");
-        }
-
-        if (data.success && data.clientSecret && stripe) {
-          const result = await stripe.confirmCardPayment(data.clientSecret);
-          if (result.error) {
-            console.warn(result.error.message);
-          }
-        }
-
-        if (data.success) {
-          alert("✨ Your 3-day free trial has started! Enjoy premium features.");
-          window.location.reload();
-        } else {
-          alert(data.message || "Something went wrong. Please try again.");
-        }
-      } catch (err) {
-        alert("Error: " + (err.message || String(err)));
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "✨ Start My Free Trial";
-        }
-      }
+      alert("Paddle checkout is not ready yet. Configure Paddle first.");
     }
 
     async function cancelTrial(subscriptionId) {
-      if (!confirm("Are you sure you want to cancel? Premium access may end per your plan.")) {
-        return;
-      }
-      const response = await fetch(apiUrl("/v1/cancel-trial"), {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(
-          subscriptionId ? { subscription_id: subscriptionId } : {}
-        ),
-      });
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        alert("Trial cancelled. You will be downgraded to free plan.");
-        window.location.reload();
-      } else {
-        alert("Error: " + (data.error || response.statusText));
-      }
+      void subscriptionId;
+      alert("Stripe cancellation has been removed. Cancel active billing from Paddle instead.");
     }
 
     function premiumInjectedString(v) {
