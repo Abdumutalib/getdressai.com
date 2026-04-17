@@ -22,6 +22,12 @@ export default function LoginPage() {
     setMessage("");
     setError("");
 
+    if (!supabase) {
+      setError("Login is temporarily unavailable. Supabase is not configured.");
+      setBusy(false);
+      return;
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -46,6 +52,12 @@ export default function LoginPage() {
     setBusy(true);
     setMessage("");
     setError("");
+
+    if (!supabase) {
+      setError("Password reset is temporarily unavailable. Supabase is not configured.");
+      setBusy(false);
+      return;
+    }
 
     const redirectTo =
       typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;

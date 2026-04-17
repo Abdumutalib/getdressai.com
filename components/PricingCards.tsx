@@ -34,6 +34,11 @@ export function PricingCards() {
         return;
       }
 
+      if (!supabase) {
+        router.push(`/login?plan=${plan}`);
+        return;
+      }
+
       const {
         data: { user }
       } = await supabase.auth.getUser();

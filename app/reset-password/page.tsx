@@ -20,6 +20,14 @@ export default function ResetPasswordPage() {
     let mounted = true;
 
     async function hydrateRecoverySession() {
+      if (!supabase) {
+        if (mounted) {
+          setError("Password reset is temporarily unavailable. Supabase is not configured.");
+          setHasRecoverySession(false);
+        }
+        return;
+      }
+
       const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
       const params = new URLSearchParams(hash);
       const accessToken = params.get("access_token");
@@ -79,6 +87,11 @@ export default function ResetPasswordPage() {
 
     if (!hasRecoverySession) {
       setError(t("resetPassword.missingSession"));
+      return;
+    }
+
+    if (!supabase) {
+      setError("Password reset is temporarily unavailable. Supabase is not configured.");
       return;
     }
 
