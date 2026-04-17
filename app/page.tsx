@@ -5,8 +5,6 @@ import Link from "next/link";
 import { Hero } from "@/components/Hero";
 import { TrustBadges } from "@/components/TrustBadges";
 import { HowItWorks } from "@/components/HowItWorks";
-import { StickyMobileCTA } from "@/components/StickyMobileCTA";
-import { ExitIntentOffer } from "@/components/ExitIntentOffer";
 import { useLanguage } from "@/components/LanguageProvider";
 
 const ExamplesGrid = dynamic(() => import("@/components/ExamplesGrid").then((module) => module.ExamplesGrid));
@@ -80,7 +78,6 @@ export default function HomePage() {
 
   return (
     <main>
-      <ExitIntentOffer />
       <Hero />
       <TrustBadges />
       <HowItWorks />
@@ -107,7 +104,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <StickyMobileCTA />
     </main>
   );
 }
