@@ -27,6 +27,7 @@
   </script>
   <script src="./locales.js"></script>
   <script src="./public/hybrid-tryon.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Tailwind + Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -410,7 +411,11 @@
   async function ensureSupabase() {
     if (supabaseClient) return supabaseClient;
     if (!isSupabaseConfigured()) return null;
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    let createClient = globalThis?.supabase?.createClient;
+    if (!createClient) {
+      const mod = await import("https://esm.sh/@supabase/supabase-js@2");
+      createClient = mod.createClient;
+    }
     supabaseClient = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {
       auth: {
         persistSession: true,
@@ -420,6 +425,41 @@
       },
     });
     return supabaseClient;
+  }
+
+  async function supabasePasswordRequest(grantType, payload) {
+    const res = await fetch(
+      `${CONFIG.supabaseUrl.replace(/\/$/, "")}/auth/v1/token?grant_type=${encodeURIComponent(grantType)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: CONFIG.supabaseAnonKey,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.msg || data.error_description || data.error || res.statusText || "Auth failed");
+    }
+    return data;
+  }
+
+  async function supabaseSignupRequest(payload) {
+    const res = await fetch(`${CONFIG.supabaseUrl.replace(/\/$/, "")}/auth/v1/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: CONFIG.supabaseAnonKey,
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.msg || data.error_description || data.error || res.statusText || "Signup failed");
+    }
+    return data;
   }
 
   function applyAuthUser(user) {
@@ -1264,13 +1304,26 @@
     const password = document.getElementById("loginPassword")?.value;
     if (!email) return toast(t("errEnterEmail"), "error");
     if (isSupabaseConfigured()) {
-      if (!password) return toast(t("passwordRequired"), "error");
-      const sb = await ensureSupabase();
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return toast(error.message, "error");
-      if (data.user) {
-        applyAuthUser(data.user);
-        render();
+      try {
+        if (!password) return toast(t("passwordRequired"), "error");
+        let user = null;
+        try {
+          const sb = await ensureSupabase();
+          const { data, error } = await sb.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          user = data.user || null;
+        } catch {
+          const data = await supabasePasswordRequest("password", { email, password });
+          user = data.user || null;
+        }
+        if (user) {
+          applyAuthUser(user);
+          render();
+        } else {
+          toast(t("signin"), "success");
+        }
+      } catch (e) {
+        return toast(e?.message || "Login failed", "error");
       }
       return;
     }
@@ -1288,14 +1341,26 @@
     const password = document.getElementById("loginPassword")?.value;
     if (!email) return toast(t("errEnterEmail"), "error");
     if (!password) return toast(t("passwordRequired"), "error");
-    const sb = await ensureSupabase();
-    const { error } = await sb.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
-    });
-    if (error) return toast(error.message, "error");
-    toast(t("signupEmailSent"), "success");
+    try {
+      try {
+        const sb = await ensureSupabase();
+        const { error } = await sb.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
+        });
+        if (error) throw error;
+      } catch {
+        await supabaseSignupRequest({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
+        });
+      }
+      toast(t("signupEmailSent"), "success");
+    } catch (e) {
+      return toast(e?.message || "Signup failed", "error");
+    }
   };
 
   window.logout = async () => {
