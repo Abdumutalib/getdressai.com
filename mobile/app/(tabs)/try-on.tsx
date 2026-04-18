@@ -233,7 +233,7 @@ export default function TryOnScreen() {
     };
 
     if (!uploadResponse.ok || !uploadData.sourceImagePath) {
-      throw new Error(uploadData.error || 'Could not save uploaded photo.');
+      throw new Error(uploadData.error || t('tryonSavePhotoError'));
     }
 
     setSourceImagePath(uploadData.sourceImagePath);
@@ -278,7 +278,7 @@ export default function TryOnScreen() {
     try {
       await persistSelectedPhoto(nextPhoto);
     } catch (error) {
-      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Could not save photo.');
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : t('tryonSavePhotoError'));
     }
   }
 
@@ -314,7 +314,7 @@ export default function TryOnScreen() {
     try {
       await persistSelectedPhoto(nextPhoto);
     } catch (error) {
-      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Could not save photo.');
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : t('tryonSavePhotoError'));
     }
   }
 
@@ -355,7 +355,7 @@ export default function TryOnScreen() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.error || 'Could not generate result.');
+        throw new Error(data?.error || t('tryonGenerateError'));
       }
 
       setResultImage(data.resultUrl || null);
@@ -372,7 +372,7 @@ export default function TryOnScreen() {
 
       await handleRecommend(data.sourceImagePath || sourceImagePath || undefined);
     } catch (error) {
-      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Something went wrong.');
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : t('tryonGenerateError'));
     } finally {
       setLoading(false);
     }
@@ -403,13 +403,13 @@ export default function TryOnScreen() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.error || 'Could not load recommendations.');
+        throw new Error(data?.error || t('tryonRecommendationsError'));
       }
 
       setRecommendedSize(data.recommendedSize || '');
       setRecommendations(Array.isArray(data.products) ? data.products : []);
     } catch (error) {
-      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Something went wrong.');
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : t('tryonRecommendationsError'));
     } finally {
       setRecommending(false);
     }

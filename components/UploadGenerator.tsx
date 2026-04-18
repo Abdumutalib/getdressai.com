@@ -5,6 +5,11 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
+import {
+  clothingFieldCopy as translatedClothingFieldCopy,
+  genderCopy as translatedGenderCopy,
+  marketplaceCopy as translatedMarketplaceCopy
+} from "@/lib/generator-copy";
 import { formatCurrency } from "@/lib/utils";
 
 type GeneratorMode = "photo" | "mannequin";
@@ -183,11 +188,9 @@ type UploadGeneratorProps = {
 
 export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProps) {
   const { t, tm, language } = useLanguage();
-  const localizedMarketplaceCopy =
-    marketplaceCopy[language as keyof typeof marketplaceCopy] ?? marketplaceCopy.en;
-  const localizedGenderCopy = genderCopy[language as keyof typeof genderCopy] ?? genderCopy.en;
-  const localizedClothingFieldCopy =
-    clothingFieldCopy[language as keyof typeof clothingFieldCopy] ?? clothingFieldCopy.en;
+  const localizedMarketplaceCopy = translatedMarketplaceCopy[language] ?? translatedMarketplaceCopy.en;
+  const localizedGenderCopy = translatedGenderCopy[language] ?? translatedGenderCopy.en;
+  const localizedClothingFieldCopy = translatedClothingFieldCopy[language] ?? translatedClothingFieldCopy.en;
   const presets = tm<string[]>("upload.presets");
   const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
@@ -423,7 +426,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       };
 
       if (!response.ok || !data.sourceImagePath) {
-        throw new Error(data.error || "Could not save uploaded photo.");
+        throw new Error(data.error || t("upload.generationFailed"));
       }
 
       setSavedSourcePath(data.sourceImagePath);

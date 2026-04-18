@@ -61,12 +61,12 @@ export default function DashboardPage() {
       const data = (await response.json()) as { items?: StoredGeneration[]; error?: string };
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not load saved results.");
+        throw new Error(data.error || t("dashboard.historyLoadError"));
       }
 
       setHistory(Array.isArray(data.items) ? data.items : []);
     } catch (error) {
-      setHistoryError(error instanceof Error ? error.message : "Could not load saved results.");
+      setHistoryError(error instanceof Error ? error.message : t("dashboard.historyLoadError"));
       setHistory([]);
     } finally {
       setLoadingHistory(false);
@@ -114,7 +114,7 @@ export default function DashboardPage() {
 
             <div className="xl:justify-self-end">
               <div className="mb-2 text-right text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-                Quiet overview
+                {t("dashboard.quietOverview")}
               </div>
               <Suspense fallback={<DashboardSkeleton />}>
                 <StatsCards />
@@ -131,7 +131,7 @@ export default function DashboardPage() {
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{t("dashboard.downloadHd")}</p>
                 </div>
                 <span className="rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold text-accent">
-                  {history.length} saved
+                  {history.length} {t("dashboard.savedBadge")}
                 </span>
               </div>
 
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                               {formatHistoryTime(item.createdAt, locale)}
                             </p>
                             <div className="mt-3 inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
-                              {item.mode === "photo" ? "Saved from your photo" : "Saved mannequin look"}
+                              {item.mode === "photo" ? t("dashboard.savedFromPhoto") : t("dashboard.savedFromMannequin")}
                             </div>
                           </div>
                           <a
@@ -187,7 +187,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="rounded-[1.5rem] border border-slate-200 bg-white/80 px-4 py-8 text-sm text-slate-500 shadow-soft dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                  Your saved looks will appear here after you generate one.
+                  {t("dashboard.emptySavedLooks")}
                 </div>
               )}
             </div>
