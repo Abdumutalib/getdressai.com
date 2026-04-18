@@ -195,8 +195,8 @@ export const translations = {
     upload: {
       modePhoto: "Use my photo",
       modeMannequin: "Use virtual mannequin",
-      genderLabel: "Body type",
-      genderHint: "Pick the closest body type.",
+      genderLabel: "Gender",
+      genderHint: "Choose who this look is for.",
       genderFemale: "Female",
       genderMale: "Male",
       genderUnisex: "Unisex",
@@ -793,8 +793,8 @@ export const translations = {
     upload: {
       modePhoto: "Mening rasmim",
       modeMannequin: "Virtual maneken",
-      genderLabel: "Tana turi",
-      genderHint: "Eng yaqin tana turini tanlang.",
+      genderLabel: "Jinsi",
+      genderHint: "Bu look kim uchun ekanini tanlang.",
       genderFemale: "Ayol",
       genderMale: "Erkak",
       genderUnisex: "Uniseks",
