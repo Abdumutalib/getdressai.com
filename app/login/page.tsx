@@ -57,6 +57,20 @@ export default function LoginPage() {
     setPinEnabled(nextMode === "signup");
   }
 
+  async function clearAllAuthState() {
+    if (supabase) {
+      await supabase.auth.signOut({ scope: "local" });
+    }
+
+    clearPinAuthRecord();
+    setSavedPinEmail("");
+    setPinSessionReady(false);
+    setPasswordFallback(false);
+    setAuthMode("login");
+    resetFormFields();
+    resetFeedback();
+  }
+
   function resetFormFields() {
     setEmail("");
     setPassword("");
@@ -289,17 +303,8 @@ export default function LoginPage() {
   }
 
   async function removeSavedPin() {
-    if (supabase) {
-      await supabase.auth.signOut({ scope: "local" });
-    }
-
-    clearPinAuthRecord();
-    setSavedPinEmail("");
-    setPinSessionReady(false);
-    setPasswordFallback(false);
-    resetFormFields();
+    await clearAllAuthState();
     setMessage(t("login.pinRemoved"));
-    setError("");
   }
 
   return (
@@ -494,9 +499,18 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-sm text-slate-500 dark:text-slate-300">
-            <Link href="/reset-password" className="font-medium text-accent transition hover:opacity-80">
-              {t("login.sendReset")}
-            </Link>
+            <div className="flex items-center justify-between gap-3">
+              <Link href="/reset-password" className="font-medium text-accent transition hover:opacity-80">
+                {t("login.sendReset")}
+              </Link>
+              <button
+                type="button"
+                onClick={clearAllAuthState}
+                className="font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+              >
+                {t("login.clearAll")}
+              </button>
+            </div>
           </div>
         </div>
         ) : null}
