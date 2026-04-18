@@ -22,10 +22,17 @@ export function middleware(request: NextRequest) {
     return applyIndexingHeaders(NextResponse.next());
   }
 
-  const hasSession =
-    request.cookies.has("sb-access-token") ||
-    request.cookies.has("sb-refresh-token") ||
-    request.cookies.has("getdressai_session");
+  const hasSession = request.cookies.getAll().some((cookie) => {
+    if (cookie.name === "getdressai_session") {
+      return true;
+    }
+
+    if (!cookie.name.startsWith("sb-")) {
+      return false;
+    }
+
+    return cookie.name.includes("auth-token");
+  });
 
   if (hasSession) {
     return applyIndexingHeaders(NextResponse.next());
