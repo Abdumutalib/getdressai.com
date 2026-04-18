@@ -16,7 +16,8 @@ export default function LoginPage() {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pinEnabled, setPinEnabled] = useState(false);
@@ -159,12 +160,12 @@ export default function LoginPage() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
+    setAuthBusy(true);
     resetFeedback();
 
     if (!supabase) {
       setError(t("login.unavailable"));
-      setBusy(false);
+      setAuthBusy(false);
       return;
     }
 
@@ -191,7 +192,7 @@ export default function LoginPage() {
             setPin("");
             setPinConfirm("");
             setMessage(duplicateEmailMessage());
-            setBusy(false);
+            setAuthBusy(false);
             return;
           }
 
@@ -268,17 +269,17 @@ export default function LoginPage() {
       router.refresh();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t("login.genericError"));
-      setBusy(false);
+      setAuthBusy(false);
     }
   }
 
   async function handlePinLogin() {
-    setBusy(true);
+    setAuthBusy(true);
     resetFeedback();
 
     if (!supabase) {
       setError(t("login.unavailable"));
-      setBusy(false);
+      setAuthBusy(false);
       return;
     }
 
@@ -311,7 +312,7 @@ export default function LoginPage() {
       } else {
         setError(nextError instanceof Error ? nextError.message : t("login.pinLoginError"));
       }
-      setBusy(false);
+      setAuthBusy(false);
     }
   }
 
@@ -321,12 +322,12 @@ export default function LoginPage() {
       return;
     }
 
-    setBusy(true);
+    setResetBusy(true);
     resetFeedback();
 
     if (!supabase) {
       setError(t("login.resetUnavailable"));
-      setBusy(false);
+      setResetBusy(false);
       return;
     }
 
@@ -339,12 +340,12 @@ export default function LoginPage() {
 
     if (resetError) {
       setError(resetError.message);
-      setBusy(false);
+      setResetBusy(false);
       return;
     }
 
     setMessage(t("login.resetSent"));
-    setBusy(false);
+    setResetBusy(false);
   }
 
   async function removeSavedPin() {
@@ -392,10 +393,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handlePinLogin}
-                disabled={busy}
+                disabled={authBusy}
                 className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white"
               >
-                {busy ? t("login.sending") : t("login.pinButton")}
+                {authBusy ? t("login.sending") : t("login.pinButton")}
               </button>
               <button
                 type="button"
@@ -528,16 +529,16 @@ export default function LoginPage() {
                   type="button"
                   onClick={sendResetLink}
                   className="text-sm font-medium text-accent transition hover:opacity-80"
-                  disabled={busy}
+                  disabled={resetBusy || authBusy}
                 >
-                  {busy ? t("login.sending") : t("login.forgotPassword")}
+                  {resetBusy ? t("login.sending") : t("login.forgotPassword")}
                 </button>
                 <span className="text-xs text-slate-500 dark:text-slate-300">{t("login.resetHint")}</span>
               </div>
             ) : null}
 
             <button type="submit" className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white">
-              {busy ? t("login.sending") : authMode === "signup" ? t("login.signupButton") : t("login.button")}
+              {authBusy ? t("login.sending") : authMode === "signup" ? t("login.signupButton") : t("login.button")}
             </button>
             {message ? <p className="text-sm font-medium text-emerald-600">{message}</p> : null}
             {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
