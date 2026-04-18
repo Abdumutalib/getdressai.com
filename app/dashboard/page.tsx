@@ -21,9 +21,9 @@ type StoredGeneration = {
 
 function DashboardSkeleton() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       {[1, 2, 3, 4].map((item) => (
-        <div key={item} className="h-36 animate-pulse rounded-[2rem] bg-slate-100 dark:bg-white/5" />
+        <div key={item} className="h-28 animate-pulse rounded-[1.5rem] bg-slate-100 dark:bg-white/5" />
       ))}
     </div>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CreditCard, Gift, History, Settings, Sparkles } from "lucide-react";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 
@@ -15,18 +16,17 @@ const items = [
 ];
 
 export function DashboardSidebar() {
-  const { t, tm } = useLanguage();
+  const { tm } = useLanguage();
   const pathname = usePathname();
   const labels = tm<string[]>("dashboard.sidebar");
   const safeLabels = Array.isArray(labels) ? labels : ["Generate", "History", "Billing", "Referrals", "Settings"];
 
   return (
-    <aside className="glass-panel rounded-[2rem] p-4">
-      <div className="mb-4 rounded-[1.5rem] bg-ink p-4 text-white">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{t("dashboard.workflowEyebrow")}</p>
-        <p className="mt-2 text-lg font-semibold">{t("dashboard.workflowCopy")}</p>
+    <aside className="space-y-4">
+      <div className="overflow-hidden rounded-[2rem]">
+        <BeforeAfterSlider beforeSrc="/examples/before.svg" afterSrc="/examples/luxury.svg" />
       </div>
-      <nav className="space-y-2">
+      <nav className="glass-panel rounded-[2rem] p-4 space-y-2">
         {items.map((item, index) => {
           const Icon = item.icon;
           const active =
