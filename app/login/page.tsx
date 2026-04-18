@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
 import { clearPinAuthRecord, readPinAuthRecord, savePinAuthRecord, verifyPinAuthRecord } from "@/lib/pin-auth";
 import { createBrowserSafeSupabase } from "@/lib/supabase-browser";
@@ -12,6 +12,7 @@ type AuthMode = "login" | "signup";
 export default function LoginPage() {
   const { t } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = useMemo(() => createBrowserSafeSupabase(), []);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -35,6 +36,13 @@ export default function LoginPage() {
       setPinSessionReady(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("pin") === "1") {
+      setMessage(t("login.signupSuccessWithPin"));
+      setError("");
+    }
+  }, [searchParams, t]);
 
   function resetFeedback() {
     setMessage("");
@@ -129,7 +137,21 @@ export default function LoginPage() {
 
         if (data.session) {
           await savePinIfNeeded(email, data.session);
-          setMessage(pinEnabled ? t("login.signupSuccessWithPin") : t("login.signupSuccess"));
+          if (pinEnabled) {
+            await supabase.auth.signOut({ scope: "local" });
+            setSavedPinEmail(email);
+            setPinSessionReady(true);
+            setPasswordFallback(false);
+            setPinLogin("");
+            setPassword("");
+            setPin("");
+            setPinConfirm("");
+            router.replace("/login?pin=1");
+            router.refresh();
+            return;
+          }
+
+          setMessage(t("login.signupSuccess"));
           router.push("/dashboard");
           router.refresh();
           return;
