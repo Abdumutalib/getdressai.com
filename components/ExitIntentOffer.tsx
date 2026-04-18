@@ -42,7 +42,7 @@ export function ExitIntentOffer() {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 dark:border-white/10 dark:text-slate-300"
+            className="btn-muted inline-flex size-10 items-center justify-center rounded-full"
             aria-label="Close offer"
           >
             <X className="size-4" />
@@ -59,7 +59,7 @@ export function ExitIntentOffer() {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 px-5 py-4 text-sm font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
+            className="btn-muted inline-flex flex-1 items-center justify-center rounded-full px-5 py-4 text-sm font-semibold"
           >
             Continue browsing
           </button>

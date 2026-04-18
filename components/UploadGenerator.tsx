@@ -575,7 +575,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 mode === item.value
                   ? "btn-primary text-white"
-                  : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-white/10"
+                  : "btn-muted"
               }`}
             >
               {item.label}
@@ -597,7 +597,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                   gender === option.value
                     ? "btn-primary text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200"
+                    : "btn-muted"
                 }`}
               >
                 {option.label}
@@ -656,7 +656,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                 <button
                   type="button"
                   onClick={openFilePicker}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
+                  className="btn-muted inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
                 >
                   <UploadCloud className="size-4" />
                   {t("upload.modePhoto")}
@@ -774,7 +774,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               className={`rounded-full px-4 py-2 text-sm transition ${
                 selected === preset
                   ? "btn-primary text-white"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200"
+                  : "btn-muted"
               }`}
             >
               {preset}
@@ -881,7 +881,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <button
                     type="button"
                     onClick={shareResult}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
+                    className="btn-muted inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
                   >
                     <Share2 className="size-4" />
                     {t("upload.shareButton")}

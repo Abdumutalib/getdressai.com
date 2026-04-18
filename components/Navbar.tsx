@@ -74,7 +74,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
+            className="btn-muted inline-flex size-11 items-center justify-center rounded-full"
             aria-label="Toggle dark mode"
           >
             {dark ? <SunMedium className="size-4" /> : <MoonStar className="size-4" />}
@@ -87,7 +87,7 @@ export function Navbar() {
           </Link>
           <button
             type="button"
-            className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 md:hidden dark:border-white/10"
+            className="btn-muted inline-flex size-11 items-center justify-center rounded-full md:hidden"
             onClick={() => setOpen((value) => !value)}
             aria-label="Open navigation"
           >

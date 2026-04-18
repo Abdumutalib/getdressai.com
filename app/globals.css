@@ -59,6 +59,10 @@ body::selection {
   @apply bg-accentSoft text-accent transition hover:bg-[#E2E6FF];
 }
 
+.btn-muted {
+  @apply border border-[#D8DEFF] bg-[#F5F7FF] text-[#4B56C5] transition hover:bg-[#E9EDFF] active:scale-[0.99];
+}
+
 .dark .premium-ring {
   box-shadow:
     0 18px 40px rgba(2, 6, 23, 0.45),
