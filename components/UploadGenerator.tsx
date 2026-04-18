@@ -472,7 +472,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               type="button"
               onClick={() => void fetchRecommendations()}
               disabled={!hasRecommendationInputs || recommending}
-              className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {recommending ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
               {recommending ? localizedMarketplaceCopy.recommendationsLoading : localizedMarketplaceCopy.recommendationsButton}
@@ -551,7 +551,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                       href={product.affiliateUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+                      className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
                     >
                       <ExternalLink className="size-4" />
                       {localizedMarketplaceCopy.openProduct}
@@ -574,7 +574,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               onClick={() => setMode(item.value)}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 mode === item.value
-                  ? "bg-ink text-white shadow-glow"
+                  ? "btn-primary text-white"
                   : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-white/10"
               }`}
             >
@@ -596,7 +596,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                 onClick={() => setGender(option.value)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                   gender === option.value
-                    ? "bg-ink text-white shadow-glow"
+                    ? "btn-primary text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200"
                 }`}
               >
@@ -773,7 +773,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               }}
               className={`rounded-full px-4 py-2 text-sm transition ${
                 selected === preset
-                  ? "bg-ink text-white"
+                  ? "btn-primary text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200"
               }`}
             >
@@ -825,7 +825,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         <button
           type="button"
           onClick={handleGenerate}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white shadow-glow"
+          className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-4 text-sm font-semibold"
         >
           {generating ? <LoaderCircle className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
           {generating ? t("upload.generating") : t("upload.generate")}
@@ -890,7 +890,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                     href={result.resultUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+                    className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
                   >
                     {t("upload.downloadHd")}
                   </a>

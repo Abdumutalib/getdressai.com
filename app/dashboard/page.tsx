@@ -176,7 +176,7 @@ export default function DashboardPage() {
                             href={item.resultUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white shadow-glow"
+                            className="btn-primary inline-flex rounded-full px-4 py-2 text-sm font-semibold"
                           >
                             {t("dashboard.download")}
                           </a>

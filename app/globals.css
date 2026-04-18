@@ -51,6 +51,14 @@ body::selection {
     0 0 0 1px rgba(255, 255, 255, 0.7) inset;
 }
 
+.btn-primary {
+  @apply bg-accent text-white shadow-glow transition hover:bg-[#7A74FF] active:scale-[0.99];
+}
+
+.btn-secondary-soft {
+  @apply bg-accentSoft text-accent transition hover:bg-[#E2E6FF];
+}
+
 .dark .premium-ring {
   box-shadow:
     0 18px 40px rgba(2, 6, 23, 0.45),

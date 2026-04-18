@@ -52,7 +52,7 @@ export function ExitIntentOffer() {
           <Link
             href="/pricing"
             onClick={() => trackEvent("checkout_opened", { source: "exit_offer" })}
-            className="inline-flex flex-1 items-center justify-center rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white"
+            className="btn-primary inline-flex flex-1 items-center justify-center rounded-full px-5 py-4 text-sm font-semibold"
           >
             Claim 30% Discount
           </Link>

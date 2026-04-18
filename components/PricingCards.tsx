@@ -100,7 +100,7 @@ export function PricingCards() {
           <div
             key={plan.name}
             className={`rounded-[2rem] border p-8 shadow-soft ${
-              plan.highlight ? "border-accent bg-ink text-white" : "glass-panel text-slate-950 dark:text-white"
+              plan.highlight ? "border-accent bg-gradient-to-br from-accent to-[#847DFF] text-white" : "glass-panel text-slate-950 dark:text-white"
             }`}
           >
             {plan.highlight ? (
@@ -145,7 +145,7 @@ export function PricingCards() {
               onClick={() => handlePlanClick(plan.plan as "free" | "starter" | "popular" | "pro")}
               disabled={loadingPlan === plan.plan}
               className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition ${
-                plan.highlight ? "bg-white text-slate-950 hover:bg-white/90" : "bg-ink text-white hover:opacity-90"
+                plan.highlight ? "bg-white text-slate-950 hover:bg-white/90" : "btn-primary"
               } ${loadingPlan === plan.plan ? "cursor-wait opacity-70" : ""}`}
             >
               {loadingPlan === plan.plan ? t("pricing.loading") : plan.cta}

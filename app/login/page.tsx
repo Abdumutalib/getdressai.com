@@ -460,7 +460,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={handlePinLogin}
                   disabled={authBusy}
-                  className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white sm:text-base"
+                  className="btn-primary w-full rounded-full px-5 py-4 text-sm font-semibold sm:text-base"
                 >
                   {authBusy ? t("login.sending") : t("login.pinButton")}
                 </button>
@@ -608,7 +608,7 @@ export default function LoginPage() {
                   </div>
                 ) : null}
 
-                <button type="submit" className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white sm:text-base">
+                <button type="submit" className="btn-primary w-full rounded-full px-5 py-4 text-sm font-semibold sm:text-base">
                   {authBusy ? t("login.sending") : authMode === "signup" ? t("login.signupButton") : t("login.button")}
                 </button>
                 {message ? <p className="text-sm font-medium leading-6 text-emerald-600">{message}</p> : null}

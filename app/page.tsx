@@ -100,7 +100,7 @@ export default function HomePage() {
             {t("urgency.copy")}
           </p>
           <div className="mt-6">
-            <Link href="/pricing" className="inline-flex rounded-full bg-ink px-6 py-4 text-sm font-semibold text-white">
+            <Link href="/pricing" className="btn-primary inline-flex rounded-full px-6 py-4 text-sm font-semibold">
               {t("urgency.button")}
             </Link>
           </div>

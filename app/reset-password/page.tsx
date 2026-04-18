@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
             onChange={(event) => setConfirmPassword(event.target.value)}
             className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
           />
-          <button type="submit" className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white">
+          <button type="submit" className="btn-primary w-full rounded-full px-5 py-4 text-sm font-semibold">
             {busy ? t("resetPassword.saving") : t("resetPassword.button")}
           </button>
           {message ? <p className="text-sm font-medium text-emerald-600">{message}</p> : null}

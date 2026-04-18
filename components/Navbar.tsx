@@ -48,7 +48,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/75 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70">
       <div className="section-shell flex h-20 items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3 font-semibold text-slate-950 dark:text-white">
-          <span className="flex size-11 items-center justify-center rounded-2xl bg-ink text-white shadow-glow">
+          <span className="btn-primary flex size-11 items-center justify-center rounded-2xl">
             <Sparkles className="size-5" />
           </span>
           <span className="text-lg tracking-tight">GetDressAI</span>
@@ -81,7 +81,7 @@ export function Navbar() {
           </button>
           <Link
             href="/dashboard"
-            className="hidden rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:opacity-90 md:inline-flex"
+            className="btn-primary hidden rounded-full px-5 py-3 text-sm font-semibold md:inline-flex"
           >
             {t("navbar.tryFree")}
           </Link>
@@ -111,7 +111,7 @@ export function Navbar() {
           ))}
           <Link
             href="/dashboard"
-            className="rounded-2xl bg-ink px-4 py-3 text-center text-sm font-semibold text-white"
+            className="btn-primary rounded-2xl px-4 py-3 text-center text-sm font-semibold"
             onClick={() => setOpen(false)}
           >
             {t("navbar.tryFree")}

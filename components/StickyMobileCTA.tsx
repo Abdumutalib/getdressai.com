@@ -13,7 +13,7 @@ export function StickyMobileCTA() {
       <Link
         href="/login"
         onClick={() => trackEvent("cta_clicked", { location: "sticky_mobile_cta" })}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white shadow-glow"
+        className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-4 text-sm font-semibold"
       >
         {t("navbar.tryFree")}
         <ArrowRight className="size-4" />

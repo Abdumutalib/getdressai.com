@@ -8,7 +8,7 @@ export function CTA() {
 
   return (
     <section className="section-shell py-24">
-      <div className="overflow-hidden rounded-[2.25rem] bg-ink px-8 py-14 text-white shadow-glow sm:px-12">
+      <div className="overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-accent to-[#847DFF] px-8 py-14 text-white shadow-glow sm:px-12">
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="space-y-5">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/60">{t("cta.eyebrow")}</p>

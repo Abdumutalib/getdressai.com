@@ -82,7 +82,7 @@ export function Hero() {
             <Link
               href="/login"
               onClick={() => trackEvent("cta_clicked", { location: "hero_primary" })}
-              className="inline-flex items-center justify-center rounded-full bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow"
+              className="btn-primary inline-flex items-center justify-center rounded-full px-6 py-4 text-sm font-semibold"
             >
               {t("navbar.tryFree")}
               <ArrowRight className="ml-2 size-4" />
