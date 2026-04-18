@@ -145,6 +145,24 @@ const genderCopy = {
   }
 } as const;
 
+const clothingFieldCopy = {
+  en: {
+    label: "Text entry",
+    placeholder: "Type clothing here...",
+    aiHint: "We automatically understand clothing type, color, material, and occasion from your text."
+  },
+  ru: {
+    label: "Поле для текста",
+    placeholder: "Опишите одежду здесь...",
+    aiHint: "Мы автоматически понимаем тип одежды, цвет, материал и повод из вашего текста."
+  },
+  uz: {
+    label: "Tekst yozish joyi",
+    placeholder: "Bu yerga kiyimni yozing...",
+    aiHint: "Tizim matndan kiyim turi, rang, mato va vaziyatni o'zi tushunadi."
+  }
+} as const;
+
 type UploadGeneratorProps = {
   skipInitialLoad?: boolean;
 };
@@ -154,6 +172,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const localizedMarketplaceCopy =
     marketplaceCopy[language as keyof typeof marketplaceCopy] ?? marketplaceCopy.en;
   const localizedGenderCopy = genderCopy[language as keyof typeof genderCopy] ?? genderCopy.en;
+  const localizedClothingFieldCopy =
+    clothingFieldCopy[language as keyof typeof clothingFieldCopy] ?? clothingFieldCopy.en;
   const presets = tm<string[]>("upload.presets");
   const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
@@ -183,12 +203,6 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   }, [language, safePresets, t]);
 
   useEffect(() => {
-    if (!clothingRequest.trim()) {
-      setClothingRequest(safePresets[0] ?? "Luxury");
-    }
-  }, [safePresets, clothingRequest]);
-
-  useEffect(() => {
     async function loadLatest() {
       if (skipInitialLoad) {
         setHydrating(false);
@@ -215,7 +229,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         setGender(latest.gender);
         setSelected(latest.preset);
         setPrompt(latest.prompt);
-        setClothingRequest(latest.preset);
+        setClothingRequest("");
         setSavedSourcePath(latest.sourceImagePath ?? null);
 
         if (latest.measurements) {
@@ -617,20 +631,19 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               {localizedMarketplaceCopy.clothingHint}
             </p>
             <p className="text-[11px] leading-5 text-accent">
-              {(localizedMarketplaceCopy as typeof marketplaceCopy.en).aiHint}
+              {localizedClothingFieldCopy.aiHint}
             </p>
             <div className="surface-soft rounded-[1.2rem] p-3">
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                {(localizedMarketplaceCopy as (typeof marketplaceCopy)["en"] & { clothingInputLabel?: string }).clothingInputLabel ??
-                  "Text entry"}
+                {localizedClothingFieldCopy.label}
               </label>
-            <input
-              type="text"
-              value={clothingRequest}
-              onChange={(event) => setClothingRequest(event.target.value)}
-              placeholder={localizedMarketplaceCopy.clothingPlaceholder}
-              className="w-full rounded-[1rem] border border-[#D8DEFF] bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-950/60"
-            />
+              <input
+                type="text"
+                value={clothingRequest}
+                onChange={(event) => setClothingRequest(event.target.value)}
+                placeholder={localizedClothingFieldCopy.placeholder}
+                className="w-full rounded-[1rem] border border-[#D8DEFF] bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-950/60"
+              />
             </div>
           </div>
         </div>
