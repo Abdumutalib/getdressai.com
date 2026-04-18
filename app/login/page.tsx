@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
-import { clearPinAuthRecord, readPinAuthRecord, savePinAuthRecord, unlockPinAuthRecord } from "@/lib/pin-auth";
+import { clearPinAuthRecord, readPinAuthRecord, savePinAuthRecord, verifyPinAuthRecord } from "@/lib/pin-auth";
 import { createBrowserSafeSupabase } from "@/lib/supabase-browser";
 
 type AuthMode = "login" | "signup";
@@ -24,20 +24,39 @@ export default function LoginPage() {
   const [pinConfirm, setPinConfirm] = useState("");
   const [savedPinEmail, setSavedPinEmail] = useState("");
   const [pinLogin, setPinLogin] = useState("");
+  const [pinSessionReady, setPinSessionReady] = useState(false);
 
   useEffect(() => {
     const record = readPinAuthRecord();
     if (record) {
       setSavedPinEmail(record.email);
     }
-  }, []);
+
+    if (!supabase) {
+      return;
+    }
+
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) {
+        return;
+      }
+
+      const sessionEmail = data.session?.user?.email || "";
+      setPinSessionReady(Boolean(record && sessionEmail && sessionEmail === record?.email));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
 
   function resetFeedback() {
     setMessage("");
     setError("");
   }
 
-  async function savePinIfNeeded(nextEmail: string, nextPassword: string) {
+  async function savePinIfNeeded(nextEmail: string) {
     if (!pinEnabled) {
       return;
     }
@@ -50,8 +69,9 @@ export default function LoginPage() {
       throw new Error(t("login.pinMismatch"));
     }
 
-    await savePinAuthRecord(nextEmail, nextPassword, pin);
+    await savePinAuthRecord(nextEmail, pin);
     setSavedPinEmail(nextEmail);
+    setPinSessionReady(true);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -79,16 +99,15 @@ export default function LoginPage() {
           throw signUpError;
         }
 
-        await savePinIfNeeded(email, password);
-
         if (data.session) {
+          await savePinIfNeeded(email);
           setMessage(pinEnabled ? t("login.signupSuccessWithPin") : t("login.signupSuccess"));
           router.push("/dashboard");
           router.refresh();
           return;
         }
 
-        setMessage(pinEnabled ? t("login.signupPendingWithPin") : t("login.signupPending"));
+        setMessage(t("login.signupPending"));
         setAuthMode("login");
         setPin("");
         setPinConfirm("");
@@ -105,7 +124,7 @@ export default function LoginPage() {
         throw signInError;
       }
 
-      await savePinIfNeeded(email, password);
+      await savePinIfNeeded(email);
       router.push("/dashboard");
       router.refresh();
     } catch (nextError) {
@@ -125,14 +144,13 @@ export default function LoginPage() {
     }
 
     try {
-      const unlocked = await unlockPinAuthRecord(pinLogin);
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: unlocked.email,
-        password: unlocked.password
-      });
+      const unlocked = await verifyPinAuthRecord(pinLogin);
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
 
-      if (signInError) {
-        throw signInError;
+      if (!session?.user?.email || session.user.email !== unlocked.email) {
+        throw new Error(t("login.pinSessionMissing"));
       }
 
       router.push("/dashboard");
@@ -178,6 +196,7 @@ export default function LoginPage() {
   function removeSavedPin() {
     clearPinAuthRecord();
     setSavedPinEmail("");
+    setPinSessionReady(false);
     setPinLogin("");
     setMessage(t("login.pinRemoved"));
     setError("");
@@ -193,6 +212,9 @@ export default function LoginPage() {
               <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">{t("login.pinTitle")}</h2>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 {t("login.pinCopy")} {savedPinEmail}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">
+                {pinSessionReady ? t("login.pinReady") : t("login.pinNeedsPassword")}
               </p>
             </div>
 

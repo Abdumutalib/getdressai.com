@@ -256,7 +256,7 @@ export const translations = {
     login: {
       eyebrow: "Login",
       title: "Sign in to GetDressAI",
-      copy: "Use your email and password, or save a PIN for quick login on this device.",
+      copy: "Use your email and password. You can also save a PIN for quick access on this device.",
       email: "Email",
       password: "Password",
       button: "Continue",
@@ -267,15 +267,15 @@ export const translations = {
       sending: "Sending...",
       sendReset: "Send reset link",
       resetSent: "Password reset link sent.",
-      resetHint: "We will email you a reset link.",
+      resetHint: "We will send you a reset link by email.",
       emailRequired: "Please enter your email.",
       unavailable: "Login is temporarily unavailable. Supabase is not configured.",
       resetUnavailable: "Password reset is temporarily unavailable. Supabase is not configured.",
       genericError: "Something went wrong. Please try again.",
       signupSuccess: "Account created. You are now signed in.",
-      signupSuccessWithPin: "Account created and PIN login saved on this device.",
-      signupPending: "Account created. Check your email and then sign in.",
-      signupPendingWithPin: "Account created. Check your email, then you can sign in with your password or this device PIN.",
+      signupSuccessWithPin: "Account created. A PIN was saved on this device.",
+      signupPending: "Account created. Check your email, then sign in.",
+      signupPendingWithPin: "Account created. Check your email, then you can use your password or this device PIN.",
       pinEnable: "Save a 4-digit PIN on this device",
       pinPlaceholder: "4-digit PIN",
       pinConfirm: "Confirm PIN",
@@ -283,11 +283,14 @@ export const translations = {
       pinMismatch: "PIN codes do not match.",
       pinEyebrow: "Quick PIN login",
       pinTitle: "Use your PIN",
-      pinCopy: "Quick login is ready for",
-      pinButton: "Login with PIN",
+      pinCopy: "Quick access is ready for",
+      pinButton: "Open with PIN",
       pinRemove: "Remove saved PIN",
       pinRemoved: "Saved PIN removed from this device.",
-      pinLoginError: "PIN login failed. Please try again."
+      pinLoginError: "PIN login failed. Please try again.",
+      pinSessionMissing: "Please sign in with your password once on this device before using PIN.",
+      pinReady: "PIN access is ready on this device.",
+      pinNeedsPassword: "Sign in with your password once on this device to activate PIN access."
     },
     resetPassword: {
       eyebrow: "Reset password",
@@ -541,40 +544,43 @@ export const translations = {
       ]
     },
     login: {
-      eyebrow: "????",
-      title: "??????? ? GetDressAI",
-      copy: "??????????? email ? ?????? ??? ????????? PIN ??? ???????? ????? ?? ???? ??????????.",
+      eyebrow: "Вход",
+      title: "Войдите в GetDressAI",
+      copy: "Используйте email и пароль. На этом устройстве можно также сохранить PIN для быстрого входа.",
       email: "Email",
-      password: "??????",
-      button: "??????????",
-      signupButton: "??????? ???????",
-      loginTab: "????",
-      signupTab: "???????????",
-      forgotPassword: "?????? ???????",
-      sending: "????????...",
-      sendReset: "????????? ??????",
-      resetSent: "?????? ??? ?????? ?????? ??????????.",
-      resetHint: "?? ???????? ??? ?????? ?? email.",
-      emailRequired: "??????? email.",
-      unavailable: "???? ???????? ??????????. Supabase ?? ????????.",
-      resetUnavailable: "????? ?????? ???????? ??????????. Supabase ?? ????????.",
-      genericError: "???-?? ????? ?? ???. ?????????? ??? ???.",
-      signupSuccess: "??????? ??????. ?? ??? ?????.",
-      signupSuccessWithPin: "??????? ??????, PIN ??? ????? ???????? ?? ???? ??????????.",
-      signupPending: "??????? ??????. ????????? ????? ? ????? ???????.",
-      signupPendingWithPin: "??????? ??????. ????????? ?????, ????? ??????? ????? ??????? ??? PIN ?? ???? ??????????.",
-      pinEnable: "????????? 4-??????? PIN ?? ???? ??????????",
-      pinPlaceholder: "4-??????? PIN",
-      pinConfirm: "????????? PIN",
-      pinInvalid: "PIN ?????? ???????? ?? 4 ????.",
-      pinMismatch: "PIN-???? ?? ?????????.",
-      pinEyebrow: "??????? ???? ?? PIN",
-      pinTitle: "??????? ?? PIN",
-      pinCopy: "??????? ???? ???????? ???",
-      pinButton: "????? ?? PIN",
-      pinRemove: "??????? ??????????? PIN",
-      pinRemoved: "??????????? PIN ?????? ? ????? ??????????.",
-      pinLoginError: "?? ??????? ????? ?? PIN. ?????????? ??? ???."
+      password: "Пароль",
+      button: "Продолжить",
+      signupButton: "Создать аккаунт",
+      loginTab: "Вход",
+      signupTab: "Регистрация",
+      forgotPassword: "Забыли пароль?",
+      sending: "Отправка...",
+      sendReset: "Отправить ссылку",
+      resetSent: "Ссылка для сброса пароля отправлена.",
+      resetHint: "Мы отправим ссылку для сброса на email.",
+      emailRequired: "Введите email.",
+      unavailable: "Вход временно недоступен. Supabase не настроен.",
+      resetUnavailable: "Сброс пароля временно недоступен. Supabase не настроен.",
+      genericError: "Что-то пошло не так. Попробуйте еще раз.",
+      signupSuccess: "Аккаунт создан. Вы уже вошли.",
+      signupSuccessWithPin: "Аккаунт создан. PIN сохранен на этом устройстве.",
+      signupPending: "Аккаунт создан. Проверьте email, затем войдите.",
+      signupPendingWithPin: "Аккаунт создан. После подтверждения email вы сможете войти паролем или PIN на этом устройстве.",
+      pinEnable: "Сохранить 4-значный PIN на этом устройстве",
+      pinPlaceholder: "4-значный PIN",
+      pinConfirm: "Повторите PIN",
+      pinInvalid: "PIN должен состоять из 4 цифр.",
+      pinMismatch: "PIN-коды не совпадают.",
+      pinEyebrow: "Быстрый вход по PIN",
+      pinTitle: "Войти по PIN",
+      pinCopy: "Быстрый доступ готов для",
+      pinButton: "Открыть по PIN",
+      pinRemove: "Удалить сохраненный PIN",
+      pinRemoved: "Сохраненный PIN удален с этого устройства.",
+      pinLoginError: "Не удалось войти по PIN. Попробуйте еще раз.",
+      pinSessionMissing: "Сначала один раз войдите с паролем на этом устройстве, чтобы PIN начал работать.",
+      pinReady: "PIN-вход готов на этом устройстве.",
+      pinNeedsPassword: "Один раз войдите с паролем на этом устройстве, чтобы активировать PIN-вход."
     },
     resetPassword: {
       eyebrow: "Сброс пароля",
@@ -830,7 +836,7 @@ export const translations = {
     login: {
       eyebrow: "Kirish",
       title: "GetDressAI ga kiring",
-      copy: "Email va parol bilan kiring yoki shu qurilmada tez kirish uchun PIN saqlang.",
+      copy: "Email va parol bilan kiring. Shu qurilmada tez kirish uchun PIN ham saqlashingiz mumkin.",
       email: "Email",
       password: "Parol",
       button: "Davom etish",
@@ -841,14 +847,14 @@ export const translations = {
       sending: "Yuborilmoqda...",
       sendReset: "Tiklash havolasini yuborish",
       resetSent: "Parolni tiklash havolasi yuborildi.",
-      resetHint: "Sizga tiklash havolasini emailga yuboramiz.",
+      resetHint: "Tiklash havolasini emailga yuboramiz.",
       emailRequired: "Email kiriting.",
       unavailable: "Kirish vaqtincha ishlamayapti. Supabase sozlanmagan.",
       resetUnavailable: "Parolni tiklash vaqtincha ishlamayapti. Supabase sozlanmagan.",
       genericError: "Xatolik yuz berdi. Yana urinib ko'ring.",
       signupSuccess: "Hisob yaratildi. Siz tizimga kirdingiz.",
-      signupSuccessWithPin: "Hisob yaratildi va shu qurilmaga PIN kirish saqlandi.",
-      signupPending: "Hisob yaratildi. Emailingizni tekshirib, keyin kiring.",
+      signupSuccessWithPin: "Hisob yaratildi. Shu qurilmaga PIN saqlandi.",
+      signupPending: "Hisob yaratildi. Emailni tekshirib, keyin kiring.",
       signupPendingWithPin: "Hisob yaratildi. Emailni tasdiqlagach, parol yoki shu qurilma PIN bilan kira olasiz.",
       pinEnable: "Shu qurilmada 4 xonali PIN saqlash",
       pinPlaceholder: "4 xonali PIN",
@@ -856,12 +862,15 @@ export const translations = {
       pinInvalid: "PIN 4 ta raqamdan iborat bo'lishi kerak.",
       pinMismatch: "PIN lar mos emas.",
       pinEyebrow: "Tez PIN kirish",
-      pinTitle: "PIN bilan kiring",
+      pinTitle: "PIN bilan kirish",
       pinCopy: "Tez kirish tayyor:",
-      pinButton: "PIN bilan kirish",
+      pinButton: "PIN bilan ochish",
       pinRemove: "Saqlangan PIN ni o'chirish",
       pinRemoved: "Saqlangan PIN shu qurilmadan o'chirildi.",
-      pinLoginError: "PIN bilan kirib bo'lmadi. Yana urinib ko'ring."
+      pinLoginError: "PIN bilan kirib bo'lmadi. Yana urinib ko'ring.",
+      pinSessionMissing: "Avval shu qurilmada bir marta parol bilan kiring, keyin PIN ishlaydi.",
+      pinReady: "PIN kirish shu qurilmada tayyor.",
+      pinNeedsPassword: "PIN kirishni yoqish uchun shu qurilmada bir marta parol bilan kiring."
     },
     resetPassword: {
       eyebrow: "Parolni tiklash",
@@ -1089,7 +1098,7 @@ export const translations = {
     login: {
       eyebrow: "Giri?",
       title: "GetDressAI'a giri? yap?n",
-      copy: "E-posta ve ?ifrenizi kullan?n ya da bu cihazda h?zl? giri? i?in PIN kaydedin.",
+      copy: "E-posta ve ?ifrenizi kullan?n. Bu cihazda h?zl? giri? i?in PIN de kaydedebilirsiniz.",
       email: "E-posta",
       password: "?ifre",
       button: "Devam et",
@@ -1100,27 +1109,30 @@ export const translations = {
       sending: "G?nderiliyor...",
       sendReset: "S?f?rlama ba?lant?s? g?nder",
       resetSent: "?ifre s?f?rlama ba?lant?s? g?nderildi.",
-      resetHint: "Size e-posta ile s?f?rlama ba?lant?s? g?ndeririz.",
+      resetHint: "S?f?rlama ba?lant?s?n? e-posta ile g?ndeririz.",
       emailRequired: "L?tfen e-posta girin.",
       unavailable: "Giri? ge?ici olarak kullan?lam?yor. Supabase ayarl? de?il.",
       resetUnavailable: "?ifre s?f?rlama ge?ici olarak kullan?lam?yor. Supabase ayarl? de?il.",
-      genericError: "Bir sorun olu?tu. L?tfen tekrar deneyin.",
+      genericError: "Bir hata oldu. L?tfen tekrar deneyin.",
       signupSuccess: "Hesap olu?turuldu. Giri? yap?ld?.",
-      signupSuccessWithPin: "Hesap olu?turuldu ve bu cihaza PIN kaydedildi.",
+      signupSuccessWithPin: "Hesap olu?turuldu. PIN bu cihaza kaydedildi.",
       signupPending: "Hesap olu?turuldu. E-postan?z? kontrol edip sonra giri? yap?n.",
-      signupPendingWithPin: "Hesap olu?turuldu. E-postay? do?rulad?ktan sonra ?ifre veya cihaz PIN'i ile giri? yapabilirsiniz.",
+      signupPendingWithPin: "Hesap olu?turuldu. E-postay? do?rulad?ktan sonra ?ifre veya bu cihaz PIN'i ile giri? yapabilirsiniz.",
       pinEnable: "Bu cihaza 4 haneli PIN kaydet",
       pinPlaceholder: "4 haneli PIN",
       pinConfirm: "PIN'i do?rula",
       pinInvalid: "PIN 4 rakam olmal?d?r.",
       pinMismatch: "PIN kodlar? e?le?miyor.",
       pinEyebrow: "H?zl? PIN giri?i",
-      pinTitle: "PIN ile giri? yap",
+      pinTitle: "PIN ile giri?",
       pinCopy: "H?zl? giri? haz?r:",
-      pinButton: "PIN ile giri?",
+      pinButton: "PIN ile a?",
       pinRemove: "Kay?tl? PIN'i sil",
       pinRemoved: "Kay?tl? PIN bu cihazdan silindi.",
-      pinLoginError: "PIN ile giri? ba?ar?s?z oldu. L?tfen tekrar deneyin."
+      pinLoginError: "PIN ile giri? ba?ar?s?z oldu. L?tfen tekrar deneyin.",
+      pinSessionMissing: "?nce bu cihazda bir kez ?ifrenizle giri? yap?n, sonra PIN ?al???r.",
+      pinReady: "PIN giri?i bu cihazda haz?r.",
+      pinNeedsPassword: "PIN giri?ini a?mak i?in ?nce bu cihazda bir kez ?ifre ile giri? yap?n."
     },
     resetPassword: {
       eyebrow: "Şifre sıfırla",
@@ -1348,7 +1360,7 @@ export const translations = {
     login: {
       eyebrow: "Entrar",
       title: "Entra en GetDressAI",
-      copy: "Usa tu email y contrase?a o guarda un PIN para entrar r?pido en este dispositivo.",
+      copy: "Usa tu email y contrase?a. Tambi?n puedes guardar un PIN para entrar r?pido en este dispositivo.",
       email: "Email",
       password: "Contrase?a",
       button: "Continuar",
@@ -1359,15 +1371,15 @@ export const translations = {
       sending: "Enviando...",
       sendReset: "Enviar enlace",
       resetSent: "Enlace de restablecimiento enviado.",
-      resetHint: "Te enviaremos un enlace por email.",
+      resetHint: "Enviaremos el enlace por email.",
       emailRequired: "Introduce tu email.",
       unavailable: "El acceso no est? disponible ahora. Supabase no est? configurado.",
       resetUnavailable: "El restablecimiento no est? disponible ahora. Supabase no est? configurado.",
       genericError: "Algo sali? mal. Int?ntalo otra vez.",
       signupSuccess: "Cuenta creada. Ya has iniciado sesi?n.",
-      signupSuccessWithPin: "Cuenta creada y PIN guardado en este dispositivo.",
+      signupSuccessWithPin: "Cuenta creada. El PIN se guard? en este dispositivo.",
       signupPending: "Cuenta creada. Revisa tu email y luego entra.",
-      signupPendingWithPin: "Cuenta creada. Despu?s de confirmar tu email podr?s entrar con contrase?a o con el PIN de este dispositivo.",
+      signupPendingWithPin: "Cuenta creada. Despu?s de confirmar tu email podr?s entrar con tu contrase?a o con el PIN de este dispositivo.",
       pinEnable: "Guardar PIN de 4 d?gitos en este dispositivo",
       pinPlaceholder: "PIN de 4 d?gitos",
       pinConfirm: "Confirmar PIN",
@@ -1376,10 +1388,13 @@ export const translations = {
       pinEyebrow: "Acceso r?pido con PIN",
       pinTitle: "Entrar con PIN",
       pinCopy: "El acceso r?pido est? listo para",
-      pinButton: "Entrar con PIN",
+      pinButton: "Abrir con PIN",
       pinRemove: "Quitar PIN guardado",
       pinRemoved: "El PIN guardado se elimin? de este dispositivo.",
-      pinLoginError: "No se pudo entrar con PIN. Int?ntalo otra vez."
+      pinLoginError: "No se pudo entrar con PIN. Int?ntalo otra vez.",
+      pinSessionMissing: "Primero entra una vez con tu contrase?a en este dispositivo y luego funcionar? el PIN.",
+      pinReady: "El acceso con PIN est? listo en este dispositivo.",
+      pinNeedsPassword: "Para activar el acceso con PIN, primero entra una vez con tu contrase?a en este dispositivo."
     },
     resetPassword: {
       eyebrow: "Restablecer contraseña",
@@ -1607,7 +1622,7 @@ export const translations = {
     login: {
       eyebrow: "Connexion",
       title: "Connectez-vous ? GetDressAI",
-      copy: "Utilisez votre email et votre mot de passe ou enregistrez un PIN pour un acc?s rapide sur cet appareil.",
+      copy: "Utilisez votre email et votre mot de passe. Vous pouvez aussi enregistrer un PIN pour un acc?s rapide sur cet appareil.",
       email: "Email",
       password: "Mot de passe",
       button: "Continuer",
@@ -1618,27 +1633,30 @@ export const translations = {
       sending: "Envoi...",
       sendReset: "Envoyer le lien",
       resetSent: "Lien de r?initialisation envoy?.",
-      resetHint: "Nous vous enverrons un lien par email.",
+      resetHint: "Nous enverrons le lien par email.",
       emailRequired: "Entrez votre email.",
       unavailable: "La connexion est temporairement indisponible. Supabase n'est pas configur?.",
       resetUnavailable: "La r?initialisation est temporairement indisponible. Supabase n'est pas configur?.",
       genericError: "Un probl?me est survenu. R?essayez.",
       signupSuccess: "Compte cr??. Vous ?tes connect?.",
-      signupSuccessWithPin: "Compte cr?? et PIN enregistr? sur cet appareil.",
+      signupSuccessWithPin: "Compte cr??. Le PIN a ?t? enregistr? sur cet appareil.",
       signupPending: "Compte cr??. V?rifiez votre email puis connectez-vous.",
-      signupPendingWithPin: "Compte cr??. Apr?s validation de l'email, vous pourrez vous connecter avec le mot de passe ou le PIN de cet appareil.",
+      signupPendingWithPin: "Compte cr??. Apr?s validation de l'email, vous pourrez vous connecter avec votre mot de passe ou le PIN de cet appareil.",
       pinEnable: "Enregistrer un PIN ? 4 chiffres sur cet appareil",
       pinPlaceholder: "PIN ? 4 chiffres",
       pinConfirm: "Confirmer le PIN",
       pinInvalid: "Le PIN doit contenir 4 chiffres.",
       pinMismatch: "Les PIN ne correspondent pas.",
       pinEyebrow: "Connexion rapide par PIN",
-      pinTitle: "Se connecter avec le PIN",
-      pinCopy: "La connexion rapide est pr?te pour",
-      pinButton: "Se connecter avec PIN",
+      pinTitle: "Entrer avec le PIN",
+      pinCopy: "L'acc?s rapide est pr?t pour",
+      pinButton: "Ouvrir avec le PIN",
       pinRemove: "Supprimer le PIN enregistr?",
       pinRemoved: "Le PIN enregistr? a ?t? supprim? de cet appareil.",
-      pinLoginError: "La connexion par PIN a ?chou?. R?essayez."
+      pinLoginError: "La connexion par PIN a ?chou?. R?essayez.",
+      pinSessionMissing: "Connectez-vous d'abord une fois avec votre mot de passe sur cet appareil, puis le PIN fonctionnera.",
+      pinReady: "L'acc?s par PIN est pr?t sur cet appareil.",
+      pinNeedsPassword: "Pour activer l'acc?s par PIN, connectez-vous d'abord une fois avec votre mot de passe sur cet appareil."
     },
     resetPassword: {
       eyebrow: "Réinitialiser le mot de passe",
@@ -1866,7 +1884,7 @@ export const translations = {
     login: {
       eyebrow: "Login",
       title: "Bei GetDressAI anmelden",
-      copy: "Nutze E-Mail und Passwort oder speichere einen PIN f?r den schnellen Login auf diesem Ger?t.",
+      copy: "Nutze deine E-Mail und dein Passwort. Du kannst auf diesem Ger?t auch einen PIN f?r den schnellen Zugriff speichern.",
       email: "E-Mail",
       password: "Passwort",
       button: "Weiter",
@@ -1877,27 +1895,30 @@ export const translations = {
       sending: "Wird gesendet...",
       sendReset: "Link senden",
       resetSent: "Link zum Zur?cksetzen wurde gesendet.",
-      resetHint: "Wir senden dir einen Link per E-Mail.",
+      resetHint: "Wir senden den Link per E-Mail.",
       emailRequired: "Bitte gib deine E-Mail ein.",
       unavailable: "Login ist vor?bergehend nicht verf?gbar. Supabase ist nicht eingerichtet.",
       resetUnavailable: "Passwort-Reset ist vor?bergehend nicht verf?gbar. Supabase ist nicht eingerichtet.",
       genericError: "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
       signupSuccess: "Konto erstellt. Du bist jetzt angemeldet.",
-      signupSuccessWithPin: "Konto erstellt und PIN auf diesem Ger?t gespeichert.",
+      signupSuccessWithPin: "Konto erstellt. Der PIN wurde auf diesem Ger?t gespeichert.",
       signupPending: "Konto erstellt. Pr?fe deine E-Mail und melde dich dann an.",
-      signupPendingWithPin: "Konto erstellt. Nach der Best?tigung per E-Mail kannst du dich mit Passwort oder Ger?te-PIN anmelden.",
+      signupPendingWithPin: "Konto erstellt. Nach der Best?tigung per E-Mail kannst du dich mit deinem Passwort oder dem PIN dieses Ger?ts anmelden.",
       pinEnable: "4-stelligen PIN auf diesem Ger?t speichern",
       pinPlaceholder: "4-stelliger PIN",
       pinConfirm: "PIN best?tigen",
       pinInvalid: "Der PIN muss aus 4 Ziffern bestehen.",
       pinMismatch: "Die PIN-Codes stimmen nicht ?berein.",
-      pinEyebrow: "Schneller PIN-Login",
-      pinTitle: "Mit PIN anmelden",
-      pinCopy: "Schneller Login ist bereit f?r",
-      pinButton: "Mit PIN anmelden",
+      pinEyebrow: "Schneller PIN-Zugang",
+      pinTitle: "Mit PIN ?ffnen",
+      pinCopy: "Schneller Zugriff ist bereit f?r",
+      pinButton: "Mit PIN ?ffnen",
       pinRemove: "Gespeicherten PIN l?schen",
       pinRemoved: "Der gespeicherte PIN wurde von diesem Ger?t entfernt.",
-      pinLoginError: "PIN-Login fehlgeschlagen. Bitte versuche es erneut."
+      pinLoginError: "PIN-Anmeldung fehlgeschlagen. Bitte versuche es erneut.",
+      pinSessionMissing: "Melde dich zuerst einmal mit deinem Passwort auf diesem Ger?t an, dann funktioniert der PIN.",
+      pinReady: "PIN-Zugang ist auf diesem Ger?t bereit.",
+      pinNeedsPassword: "Um PIN-Zugang zu aktivieren, melde dich zuerst einmal mit deinem Passwort auf diesem Ger?t an."
     },
     resetPassword: {
       eyebrow: "Passwort zurücksetzen",
@@ -2123,40 +2144,43 @@ export const translations = {
       ]
     },
     login: {
-      eyebrow: "????? ??????",
-      title: "???? ?????? ??? GetDressAI",
-      copy: "?????? ????? ?????????? ????? ?????? ?? ???? ??? PIN ?????? ?????? ??? ??? ??????.",
-      email: "?????? ??????????",
-      password: "???? ??????",
-      button: "??????",
-      signupButton: "????? ????",
-      loginTab: "????",
-      signupTab: "?????",
-      forgotPassword: "?? ???? ???? ???????",
-      sending: "???? ???????...",
-      sendReset: "????? ??????",
-      resetSent: "?? ????? ???? ????? ???????.",
-      resetHint: "????? ?? ???? ????? ??????? ??? ??????.",
-      emailRequired: "???? ????? ??????????.",
-      unavailable: "????? ?????? ??? ???? ??????. ?? ??? ????? Supabase.",
-      resetUnavailable: "????? ????? ???? ?????? ??? ????? ??????. ?? ??? ????? Supabase.",
-      genericError: "??? ??? ??. ???? ??? ????.",
-      signupSuccess: "?? ????? ??????. ??? ?? ????? ?????.",
-      signupSuccessWithPin: "?? ????? ?????? ???? PIN ??? ??? ??????.",
-      signupPending: "?? ????? ??????. ????? ?? ????? ?????????? ?? ???? ??????.",
-      signupPendingWithPin: "?? ????? ??????. ??? ????? ?????? ????? ?????? ????? ?????? ?? PIN ??? ??????.",
-      pinEnable: "???? PIN ?? 4 ????? ??? ??? ??????",
-      pinPlaceholder: "PIN ?? 4 ?????",
-      pinConfirm: "????? PIN",
-      pinInvalid: "??? ?? ???? PIN ?? 4 ?????.",
-      pinMismatch: "???? PIN ??? ????????.",
-      pinEyebrow: "???? ???? ??? PIN",
-      pinTitle: "?????? ???????? PIN",
-      pinCopy: "?????? ?????? ???? ??",
-      pinButton: "?????? ???????? PIN",
-      pinRemove: "??? PIN ???????",
-      pinRemoved: "?? ??? PIN ??????? ?? ??? ??????.",
-      pinLoginError: "??? ?????? ??? PIN. ???? ??? ????."
+      eyebrow: "تسجيل الدخول",
+      title: "سجّل الدخول إلى GetDressAI",
+      copy: "استخدم بريدك الإلكتروني وكلمة المرور. يمكنك أيضًا حفظ PIN لدخول سريع على هذا الجهاز.",
+      email: "البريد الإلكتروني",
+      password: "كلمة المرور",
+      button: "متابعة",
+      signupButton: "إنشاء حساب",
+      loginTab: "دخول",
+      signupTab: "تسجيل",
+      forgotPassword: "هل نسيت كلمة المرور؟",
+      sending: "جارٍ الإرسال...",
+      sendReset: "إرسال الرابط",
+      resetSent: "تم إرسال رابط إعادة التعيين.",
+      resetHint: "سنرسل الرابط عبر البريد الإلكتروني.",
+      emailRequired: "أدخل بريدك الإلكتروني.",
+      unavailable: "تسجيل الدخول غير متاح حاليًا. Supabase غير مُعدّ بعد.",
+      resetUnavailable: "إعادة تعيين كلمة المرور غير متاحة حاليًا. Supabase غير مُعدّ بعد.",
+      genericError: "حدث خطأ. حاول مرة أخرى.",
+      signupSuccess: "تم إنشاء الحساب. تم تسجيل دخولك.",
+      signupSuccessWithPin: "تم إنشاء الحساب. تم حفظ PIN على هذا الجهاز.",
+      signupPending: "تم إنشاء الحساب. تحقق من بريدك الإلكتروني ثم سجل الدخول.",
+      signupPendingWithPin: "تم إنشاء الحساب. بعد تأكيد البريد الإلكتروني يمكنك الدخول بكلمة المرور أو PIN هذا الجهاز.",
+      pinEnable: "حفظ PIN من 4 أرقام على هذا الجهاز",
+      pinPlaceholder: "PIN من 4 أرقام",
+      pinConfirm: "تأكيد PIN",
+      pinInvalid: "يجب أن يتكون PIN من 4 أرقام.",
+      pinMismatch: "رمزا PIN غير متطابقين.",
+      pinEyebrow: "دخول سريع بـ PIN",
+      pinTitle: "افتح باستخدام PIN",
+      pinCopy: "الدخول السريع جاهز لـ",
+      pinButton: "افتح بالPIN",
+      pinRemove: "حذف PIN المحفوظ",
+      pinRemoved: "تم حذف PIN المحفوظ من هذا الجهاز.",
+      pinLoginError: "فشل الدخول بالPIN. حاول مرة أخرى.",
+      pinSessionMissing: "سجل الدخول مرة واحدة بكلمة المرور على هذا الجهاز أولًا, ثم سيعمل PIN.",
+      pinReady: "الدخول بالPIN جاهز على هذا الجهاز.",
+      pinNeedsPassword: "لتفعيل الدخول بالPIN، سجل الدخول أولًا بكلمة المرور على هذا الجهاز."
     },
     resetPassword: {
       eyebrow: "إعادة تعيين كلمة المرور",
@@ -2198,21 +2222,46 @@ export const translations = {
 
 export function getTranslationValue(language: SupportedLanguage, key: string) {
   const parts = key.split(".");
-  let current: unknown = translations[language] ?? translations.en;
+  const fallbackValue = readTranslationPath(translations.en, parts);
+  const localizedValue = readTranslationPath(translations[language] ?? translations.en, parts);
+
+  if (localizedValue === undefined) {
+    return fallbackValue ?? key;
+  }
+
+  if (hasBrokenTranslation(localizedValue)) {
+    return fallbackValue ?? key;
+  }
+
+  return localizedValue;
+}
+
+function readTranslationPath(source: Record<string, unknown>, parts: string[]) {
+  let current: unknown = source;
 
   for (const part of parts) {
     if (typeof current !== "object" || current === null || !(part in current)) {
-      current = translations.en;
-      for (const fallbackPart of parts) {
-        if (typeof current !== "object" || current === null || !(fallbackPart in current)) {
-          return key;
-        }
-        current = (current as Record<string, unknown>)[fallbackPart];
-      }
-      return current;
+      return undefined;
     }
+
     current = (current as Record<string, unknown>)[part];
   }
 
   return current;
+}
+
+function hasBrokenTranslation(value: unknown): boolean {
+  if (typeof value === "string") {
+    return /\?{2,}/.test(value) || /\p{L}\?\p{L}/u.test(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasBrokenTranslation(item));
+  }
+
+  if (typeof value === "object" && value !== null) {
+    return Object.values(value).some((item) => hasBrokenTranslation(item));
+  }
+
+  return false;
 }
