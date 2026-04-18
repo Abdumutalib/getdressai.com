@@ -15,10 +15,7 @@ export function Navbar() {
   const { t } = useLanguage();
 
   const links = [
-    { href: "/pricing", label: t("navbar.pricing") },
-    { href: "/examples", label: t("navbar.examples") },
-    { href: "/referrals", label: t("navbar.referrals") },
-    { href: "/login", label: t("navbar.login") }
+    { href: "/pricing", label: t("navbar.pricing") }
   ];
 
   useEffect(() => {
