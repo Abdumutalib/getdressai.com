@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabase";
+import { createSupabaseRequestClient } from "@/lib/supabase";
 import { parseClothingIntent } from "@/lib/clothing-intent";
 import {
   buildFallbackRecommendations,
@@ -27,7 +27,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseRequestClient(request);
     const {
       data: { user }
     } = await supabase.auth.getUser();

@@ -23,6 +23,27 @@ export async function createSupabaseServerClient() {
   });
 }
 
+export async function createSupabaseRequestClient(request: Request) {
+  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+  const bearer = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+
+  if (bearer) {
+    return createClient(url, anonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${bearer}`
+        }
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+  }
+
+  return createSupabaseServerClient();
+}
+
 export function createSupabaseAdmin() {
   if (!url || !serviceRoleKey) {
     throw new Error("Missing Supabase admin environment variables.");

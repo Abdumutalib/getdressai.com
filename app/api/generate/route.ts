@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseAdmin, createSupabaseServerClient } from "@/lib/supabase";
+import { createSupabaseAdmin, createSupabaseRequestClient } from "@/lib/supabase";
 import {
   buildStoragePath,
   createSignedAssetUrl,
@@ -75,7 +75,7 @@ function parseMeasurements(raw: FormDataEntryValue | null) {
 }
 
 async function requireUser(request: Request) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseRequestClient(request);
   const {
     data: { user }
   } = await supabase.auth.getUser();

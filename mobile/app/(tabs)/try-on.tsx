@@ -1,184 +1,458 @@
-import { readAsStringAsync, EncodingType } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
-import { useCallback, useState } from 'react';
+import * as Linking from 'expo-linking';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 
 import { LanguageBar } from '@/components/language-bar';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { useLocale } from '@/contexts/locale';
-import { fetchGarmentBase64, getSampleGarment, postHybridVton } from '@/lib/hybrid-vton';
+import { createAuthedHeaders, getAppOrigin } from '@/lib/mobile-api';
 
-type GarmentType = 'upper' | 'lower' | 'dress';
+type MeasurementKey = 'height' | 'chest' | 'waist' | 'hips' | 'inseam';
 
-const GARMENT_ORDER: GarmentType[] = ['upper', 'lower', 'dress'];
+type Recommendation = {
+  id: string;
+  title: string;
+  marketplace: string;
+  price: number;
+  currency: string;
+  image: string;
+  affiliateUrl: string;
+  totalFitScore: number;
+  recommendedSize: string;
+};
 
-function garmentLabel(t: (k: string) => string, type: GarmentType) {
-  if (type === 'upper') return t('tryonGarmentUpper');
-  if (type === 'lower') return t('tryonGarmentLower');
-  return t('tryonGarmentDress');
-}
+const DEFAULT_MEASUREMENTS: Record<MeasurementKey, string> = {
+  height: '170',
+  chest: '92',
+  waist: '74',
+  hips: '98',
+  inseam: '78',
+};
 
 export default function TryOnScreen() {
   const { t } = useLocale();
-  const [personUri, setPersonUri] = useState<string | null>(null);
-  const [garmentType, setGarmentType] = useState<GarmentType>('upper');
+  const presetLabels = useMemo(
+    () => [
+      t('presetLuxury'),
+      t('presetStreetwear'),
+      t('presetWedding'),
+      t('presetOffice'),
+      t('presetGym'),
+      t('presetAnime'),
+      t('presetCelebrity'),
+      t('presetCasual'),
+    ],
+    [t],
+  );
+  const [selectedPreset, setSelectedPreset] = useState(presetLabels[0] || 'Luxury');
+  const [photo, setPhoto] = useState<{ uri: string; mimeType?: string; fileName?: string } | null>(null);
+  const [measurements, setMeasurements] = useState(DEFAULT_MEASUREMENTS);
+  const [clothingRequest, setClothingRequest] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resultB64, setResultB64] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [recommending, setRecommending] = useState(false);
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [recommendedSize, setRecommendedSize] = useState('');
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
-  const pickPerson = useCallback(async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
+  useEffect(() => {
+    if (!presetLabels.includes(selectedPreset)) {
+      setSelectedPreset(presetLabels[0] || 'Luxury');
+    }
+  }, [presetLabels, selectedPreset]);
+
+  async function pickPhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
       Alert.alert(t('alertPermTitle'), t('alertPermBody'));
       return;
     }
-    const res = await ImagePicker.launchImageLibraryAsync({
+
+    const response = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.9,
     });
-    if (res.canceled || !res.assets[0]) return;
-    setPersonUri(res.assets[0].uri);
-    setResultB64(null);
-    setError(null);
-  }, [t]);
 
-  const runTryOn = useCallback(async () => {
-    if (!personUri) {
+    if (response.canceled || !response.assets[0]) {
+      return;
+    }
+
+    const asset = response.assets[0];
+    setPhoto({
+      uri: asset.uri,
+      mimeType: asset.mimeType || 'image/jpeg',
+      fileName: asset.fileName || 'mobile-upload.jpg',
+    });
+    setResultImage(null);
+    setRecommendations([]);
+    setRecommendedSize('');
+  }
+
+  async function handleGenerate() {
+    if (!photo) {
       Alert.alert(t('alertTryonTitle'), t('alertTryonNeedPhoto'));
       return;
     }
+
     setLoading(true);
-    setError(null);
-    setResultB64(null);
+
     try {
-      const personB64 = await readAsStringAsync(personUri, {
-        encoding: EncodingType.Base64,
+      const formData = new FormData();
+      const requestText = clothingRequest.trim() || selectedPreset;
+
+      formData.append('mode', 'photo');
+      formData.append('gender', 'female');
+      formData.append('prompt', `${selectedPreset}. ${requestText}`);
+      formData.append('preset', selectedPreset);
+      formData.append('clothingRequest', requestText);
+      formData.append(
+        'measurements',
+        JSON.stringify(Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)]))),
+      );
+      formData.append('file', {
+        uri: photo.uri,
+        name: photo.fileName || 'mobile-upload.jpg',
+        type: photo.mimeType || 'image/jpeg',
+      } as never);
+
+      const headers = await createAuthedHeaders();
+      const response = await fetch(`${getAppOrigin()}/api/generate`, {
+        method: 'POST',
+        headers,
+        body: formData,
       });
-      const sample = getSampleGarment();
-      const garmentBase64 = await fetchGarmentBase64(sample.url);
-      const type = garmentType;
-      const out = await postHybridVton({
-        personBase64: personB64,
-        garmentBase64,
-        garmentType: type,
-      });
-      if (out.resultImage) setResultB64(out.resultImage);
-      else throw new Error('No result image');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg);
-      Alert.alert(t('alertVtonTitle'), msg);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Could not generate result.');
+      }
+
+      setResultImage(data.resultUrl || null);
+
+      if (data.sourceImagePath) {
+        await handleRecommend(data.sourceImagePath);
+      }
+    } catch (error) {
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
-  }, [personUri, garmentType, t]);
+  }
+
+  async function handleRecommend(sourceImagePath?: string) {
+    if (!photo && !sourceImagePath) {
+      return;
+    }
+
+    setRecommending(true);
+
+    try {
+      const headers = await createAuthedHeaders({ 'Content-Type': 'application/json' });
+      const requestText = clothingRequest.trim() || selectedPreset;
+      const response = await fetch(`${getAppOrigin()}/api/recommend-products`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          prompt: `${selectedPreset}. ${requestText}`,
+          preset: selectedPreset,
+          clothingRequest: requestText,
+          gender: 'female',
+          sourceImagePath,
+          measurements: Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)])),
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Could not load recommendations.');
+      }
+
+      setRecommendedSize(data.recommendedSize || '');
+      setRecommendations(Array.isArray(data.products) ? data.products : []);
+    } catch (error) {
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Something went wrong.');
+    } finally {
+      setRecommending(false);
+    }
+  }
+
+  const measurementFields: Array<{ key: MeasurementKey; label: string }> = [
+    { key: 'height', label: t('tryonHeight') },
+    { key: 'chest', label: t('tryonChest') },
+    { key: 'waist', label: t('tryonWaist') },
+    { key: 'hips', label: t('tryonHips') },
+    { key: 'inseam', label: t('tryonInseam') },
+  ];
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <LanguageBar />
 
-      <ThemedView style={styles.header}>
-        <ThemedText style={styles.kicker}>{t('tryonKicker')}</ThemedText>
+      <View style={styles.hero}>
+        <ThemedText type="defaultSemiBold">{t('tryonKicker')}</ThemedText>
         <ThemedText type="title">{t('tryonTitle')}</ThemedText>
-        <ThemedText style={styles.hint}>{t('tryonHint')}</ThemedText>
-      </ThemedView>
-
-      <Pressable style={styles.btn} onPress={pickPerson}>
-        <ThemedText type="defaultSemiBold">{t('tryonStep1')}</ThemedText>
-      </Pressable>
-
-      {personUri ? (
-        <Image source={{ uri: personUri }} style={styles.preview} contentFit="contain" />
-      ) : null}
-
-      <ThemedText style={styles.label}>{t('tryonStep2')}</ThemedText>
-      <View style={styles.row}>
-        {GARMENT_ORDER.map((gt) => (
-          <Pressable
-            key={gt}
-            onPress={() => setGarmentType(gt)}
-            style={[styles.chip, garmentType === gt && styles.chipOn]}>
-            <ThemedText style={garmentType === gt ? styles.chipTextOn : undefined}>
-              {garmentLabel(t, gt)}
-            </ThemedText>
-          </Pressable>
-        ))}
+        <ThemedText>{t('tryonHint')}</ThemedText>
       </View>
 
-      <Pressable
-        style={[styles.btn, styles.btnPrimary, loading && styles.btnDisabled]}
-        onPress={runTryOn}
-        disabled={loading || !personUri}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <ThemedText style={styles.btnPrimaryText}>{t('tryonStep3')}</ThemedText>
-        )}
+      <View style={styles.section}>
+        <ThemedText type="subtitle">{t('tryonStep1')}</ThemedText>
+        <Pressable style={styles.primaryButton} onPress={pickPhoto}>
+          <ThemedText style={styles.primaryButtonText}>{t('tryonPhotoButton')}</ThemedText>
+        </Pressable>
+        {photo ? <Image source={{ uri: photo.uri }} style={styles.preview} contentFit="cover" /> : null}
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="subtitle">{t('tryonMeasurementsTitle')}</ThemedText>
+        <ThemedText>{t('tryonMeasurementsBody')}</ThemedText>
+        <View style={styles.measurementGrid}>
+          {measurementFields.map((field) => (
+            <View key={field.key} style={styles.measurementCard}>
+              <ThemedText type="defaultSemiBold">{field.label}</ThemedText>
+              <View style={styles.measurementInputRow}>
+                <TextInput
+                  value={measurements[field.key]}
+                  onChangeText={(value) => setMeasurements((current) => ({ ...current, [field.key]: value }))}
+                  keyboardType="number-pad"
+                  style={styles.measurementInput}
+                />
+                <ThemedText>{t('tryonUnit')}</ThemedText>
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="subtitle">{t('tryonPresetTitle')}</ThemedText>
+        <View style={styles.presetWrap}>
+          {presetLabels.map((preset) => (
+            <Pressable
+              key={preset}
+              onPress={() => setSelectedPreset(preset)}
+              style={[styles.presetChip, selectedPreset === preset && styles.presetChipActive]}>
+              <ThemedText style={selectedPreset === preset ? styles.presetChipTextActive : undefined}>{preset}</ThemedText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="subtitle">{t('tryonCustomLabel')}</ThemedText>
+        <TextInput
+          value={clothingRequest}
+          onChangeText={setClothingRequest}
+          placeholder={t('tryonCustomPlaceholder')}
+          placeholderTextColor="#7C88A1"
+          style={styles.textInput}
+        />
+      </View>
+
+      <Pressable style={[styles.primaryButton, loading && styles.buttonDisabled]} onPress={handleGenerate} disabled={loading}>
+        {loading ? <ActivityIndicator color="#ffffff" /> : <ThemedText style={styles.primaryButtonText}>{t('tryonStep3')}</ThemedText>}
       </Pressable>
 
-      {error ? <ThemedText style={styles.err}>{error}</ThemedText> : null}
+      <Pressable
+        style={[styles.secondaryButton, recommending && styles.buttonDisabled]}
+        onPress={() => void handleRecommend()}
+        disabled={recommending}>
+        {recommending ? <ActivityIndicator color="#4F46E5" /> : <ThemedText type="defaultSemiBold">{t('tryonRecommendButton')}</ThemedText>}
+      </Pressable>
 
-      {resultB64 ? (
-        <ThemedView style={styles.resultBox}>
+      {resultImage ? (
+        <View style={styles.section}>
           <ThemedText type="subtitle">{t('tryonResultTitle')}</ThemedText>
-          <ThemedText style={styles.resultHint}>{t('tryonResultHint')}</ThemedText>
-          <Image
-            source={{ uri: `data:image/png;base64,${resultB64}` }}
-            style={styles.resultImg}
-            contentFit="contain"
-          />
-        </ThemedView>
+          <ThemedText>{t('tryonResultHint')}</ThemedText>
+          <Image source={{ uri: resultImage }} style={styles.resultImage} contentFit="cover" />
+        </View>
       ) : null}
+
+      <View style={styles.section}>
+        <View style={styles.recommendationHeader}>
+          <View style={{ flex: 1 }}>
+            <ThemedText type="subtitle">{t('tryonRecommendationsTitle')}</ThemedText>
+            <ThemedText>{t('tryonRecommendationsBody')}</ThemedText>
+          </View>
+          {recommendedSize ? (
+            <View style={styles.sizeBadge}>
+              <ThemedText type="defaultSemiBold">
+                {t('tryonRecommendedSize')}: {recommendedSize}
+              </ThemedText>
+            </View>
+          ) : null}
+        </View>
+
+        {!recommendations.length ? (
+          <View style={styles.emptyCard}>
+            <ThemedText>{t('tryonNoRecommendations')}</ThemedText>
+          </View>
+        ) : (
+          recommendations.map((item) => (
+            <View key={item.id} style={styles.productCard}>
+              <Image source={{ uri: item.image }} style={styles.productImage} contentFit="cover" />
+              <View style={styles.productContent}>
+                <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
+                <ThemedText>
+                  {item.price} {item.currency} - {item.marketplace}
+                </ThemedText>
+                <Pressable style={styles.linkButton} onPress={() => void Linking.openURL(item.affiliateUrl)}>
+                  <ThemedText type="defaultSemiBold">{t('tryonOpenProduct')}</ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 48 },
-  header: { marginBottom: 16, gap: 8 },
-  kicker: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: '#7a4b2f',
+  content: { padding: 18, paddingBottom: 56, gap: 18 },
+  hero: {
+    gap: 10,
+    padding: 22,
+    borderRadius: 26,
+    backgroundColor: '#F3F6FF',
   },
-  hint: { opacity: 0.75, fontSize: 13, lineHeight: 19 },
-  btn: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 12,
-    padding: 14,
+  section: {
+    gap: 10,
+  },
+  primaryButton: {
+    backgroundColor: '#4F46E5',
+    borderRadius: 18,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
   },
-  btnPrimary: { backgroundColor: '#171717', borderColor: '#171717' },
-  btnDisabled: { opacity: 0.6 },
-  btnPrimaryText: { color: '#fff' },
-  preview: { width: '100%', height: 220, borderRadius: 12, marginBottom: 12, backgroundColor: '#eee' },
-  label: { marginTop: 8, marginBottom: 8, fontWeight: '600' },
-  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 16 },
-  chip: {
+  secondaryButton: {
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF2FF',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  buttonDisabled: {
+    opacity: 0.65,
+  },
+  preview: {
+    width: '100%',
+    height: 260,
+    borderRadius: 24,
+    backgroundColor: '#E5E7EB',
+  },
+  measurementGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  measurementCard: {
+    width: '48%',
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: '#EEF2FF',
+    gap: 8,
+  },
+  measurementInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  measurementInput: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#0F172A',
+  },
+  presetWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  presetChip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    paddingVertical: 11,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
   },
-  chipOn: { backgroundColor: '#171717', borderColor: '#171717' },
-  chipTextOn: { color: '#fff' },
-  err: { color: '#b91c1c', marginTop: 8 },
-  resultBox: { marginTop: 16, gap: 8 },
-  resultHint: { opacity: 0.75, fontSize: 13, lineHeight: 19 },
-  resultImg: { width: '100%', height: 360, borderRadius: 12, backgroundColor: '#f5f5f5' },
+  presetChipActive: {
+    backgroundColor: '#C7D2FE',
+  },
+  presetChipTextActive: {
+    color: '#312E81',
+    fontWeight: '700',
+  },
+  textInput: {
+    borderRadius: 18,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    fontSize: 15,
+    color: '#0F172A',
+  },
+  recommendationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  sizeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#E0E7FF',
+  },
+  emptyCard: {
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+  },
+  resultImage: {
+    width: '100%',
+    height: 360,
+    borderRadius: 24,
+    backgroundColor: '#E5E7EB',
+  },
+  productCard: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+  },
+  productImage: {
+    width: 92,
+    height: 120,
+    borderRadius: 18,
+    backgroundColor: '#E5E7EB',
+  },
+  productContent: {
+    flex: 1,
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  linkButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+  },
 });
