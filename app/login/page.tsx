@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [savedPinEmail, setSavedPinEmail] = useState("");
   const [pinLogin, setPinLogin] = useState("");
   const [pinSessionReady, setPinSessionReady] = useState(false);
+  const [passwordFallback, setPasswordFallback] = useState(false);
 
   useEffect(() => {
     const record = readPinAuthRecord();
@@ -48,6 +49,17 @@ export default function LoginPage() {
     setPinEnabled(false);
   }
 
+  function openPasswordFallback() {
+    setAuthMode("login");
+    setPasswordFallback(true);
+    setEmail(savedPinEmail);
+    setPassword("");
+    setPin("");
+    setPinConfirm("");
+    setPinEnabled(false);
+    resetFeedback();
+  }
+
   async function savePinIfNeeded(nextEmail: string, session: Awaited<ReturnType<NonNullable<typeof supabase>["auth"]["getSession"]>>["data"]["session"]) {
     if (!pinEnabled) {
       return;
@@ -68,6 +80,7 @@ export default function LoginPage() {
     await savePinAuthRecord(nextEmail, pin, session);
     setSavedPinEmail(nextEmail);
     setPinSessionReady(true);
+    setPasswordFallback(false);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -198,6 +211,7 @@ export default function LoginPage() {
     clearPinAuthRecord();
     setSavedPinEmail("");
     setPinSessionReady(false);
+    setPasswordFallback(false);
     resetFormFields();
     setMessage(t("login.pinRemoved"));
     setError("");
@@ -245,22 +259,34 @@ export default function LoginPage() {
               >
                 {t("login.pinRemove")}
               </button>
+              <button
+                type="button"
+                onClick={openPasswordFallback}
+                className="w-full text-sm font-medium text-accent transition hover:opacity-80"
+              >
+                {t("login.pinForgot")}
+              </button>
             </div>
           </div>
         ) : null}
 
+        {!savedPinEmail || passwordFallback ? (
         <div className="glass-panel rounded-[2rem] p-8">
           <div className="space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.eyebrow")}</p>
             <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">{t("login.title")}</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300">{t("login.copy")}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {passwordFallback ? t("login.pinPasswordFallback") : t("login.copy")}
+            </p>
           </div>
 
+          {!passwordFallback ? (
           <div className="mt-6 flex gap-2 rounded-full bg-slate-100 p-1 dark:bg-white/5">
             <button
               type="button"
               onClick={() => {
                 setAuthMode("login");
+                setPasswordFallback(false);
                 resetFormFields();
                 resetFeedback();
               }}
@@ -274,6 +300,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setAuthMode("signup");
+                setPasswordFallback(false);
                 resetFormFields();
                 resetFeedback();
               }}
@@ -284,6 +311,7 @@ export default function LoginPage() {
               {t("login.signupTab")}
             </button>
           </div>
+          ) : null}
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
             <input
@@ -291,7 +319,12 @@ export default function LoginPage() {
               autoComplete="username"
               placeholder={t("login.email")}
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                if (!passwordFallback) {
+                  setEmail(event.target.value);
+                }
+              }}
+              readOnly={passwordFallback}
               className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
             />
             <input
@@ -310,7 +343,9 @@ export default function LoginPage() {
                 onChange={(event) => setPinEnabled(event.target.checked)}
                 className="mt-1"
               />
-              <span className="text-slate-700 dark:text-slate-200">{t("login.pinEnable")}</span>
+              <span className="text-slate-700 dark:text-slate-200">
+                {passwordFallback ? t("login.pinReset") : t("login.pinEnable")}
+              </span>
             </label>
 
             {pinEnabled ? (
@@ -365,6 +400,7 @@ export default function LoginPage() {
             </Link>
           </div>
         </div>
+        ) : null}
       </div>
     </main>
   );
