@@ -10,7 +10,7 @@ import { createBrowserSafeSupabase } from "@/lib/supabase-browser";
 type AuthMode = "login" | "signup";
 
 export default function LoginPage() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createBrowserSafeSupabase(), []);
@@ -109,6 +109,27 @@ export default function LoginPage() {
     resetFeedback();
   }
 
+  function duplicateEmailMessage() {
+    switch (language) {
+      case "ru":
+        return "Этот email уже зарегистрирован. Просто войдите ниже.";
+      case "uz":
+        return "Bu email allaqachon ro'yxatdan o'tgan. Pastda kirib qo'ying.";
+      case "tr":
+        return "Bu e-posta zaten ro'yhatga olingan. Pastdan kirish kifoya.";
+      case "es":
+        return "Este correo ya esta registrado. Solo entra abajo.";
+      case "fr":
+        return "Cet email est deja inscrit. Connectez-vous ci-dessous.";
+      case "de":
+        return "Diese E-Mail ist schon registriert. Bitte unten einloggen.";
+      case "ar":
+        return "هذا البريد مسجل بالفعل. فقط سجل الدخول بالاسفل.";
+      default:
+        return "This email is already registered. Just sign in below.";
+    }
+  }
+
   async function savePinIfNeeded(nextEmail: string, session: Awaited<ReturnType<NonNullable<typeof supabase>["auth"]["getSession"]>>["data"]["session"]) {
     if (!pinEnabled) {
       return;
@@ -155,10 +176,21 @@ export default function LoginPage() {
 
         const payload = (await response.json()) as {
           error?: string;
+          code?: string;
           session?: { access_token: string; refresh_token: string };
         };
 
         if (!response.ok || !payload.session) {
+          if (payload.code === "EMAIL_EXISTS") {
+            setAuthMode("login");
+            setPinEnabled(false);
+            setPin("");
+            setPinConfirm("");
+            setMessage(duplicateEmailMessage());
+            setBusy(false);
+            return;
+          }
+
           throw new Error(payload.error || t("login.genericError"));
         }
 

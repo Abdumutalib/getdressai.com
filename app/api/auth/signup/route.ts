@@ -36,7 +36,13 @@ export async function POST(request: Request) {
     });
 
     if (createError) {
-      return NextResponse.json({ error: createError.message }, { status: 400 });
+      const normalizedMessage = createError.message.toLowerCase();
+      const code =
+        normalizedMessage.includes("already") && normalizedMessage.includes("registered")
+          ? "EMAIL_EXISTS"
+          : "SIGNUP_FAILED";
+
+      return NextResponse.json({ error: createError.message, code }, { status: 400 });
     }
 
     const anon = createSupabaseAnonClient();
@@ -58,7 +64,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Signup failed." },
+      { error: error instanceof Error ? error.message : "Signup failed.", code: "SIGNUP_FAILED" },
       { status: 400 }
     );
   }
