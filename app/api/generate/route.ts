@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const requestSchema = z.object({
   mode: z.enum(["photo", "mannequin"]).default("photo"),
+  gender: z.enum(["female", "male", "unisex"]).default("female"),
   prompt: z.string().min(5).max(400),
   preset: z.string().min(2).max(80).optional(),
   imagePath: z.string().min(1).optional(),
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       mode: body.mode,
+      gender: body.gender,
       prompt: body.prompt,
       preset: body.preset || "Custom",
       resultUrl: body.mode === "mannequin" ? "/examples/office.svg" : "/examples/luxury.svg",

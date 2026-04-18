@@ -176,6 +176,16 @@ export const translations = {
     upload: {
       modePhoto: "Use my photo",
       modeMannequin: "Use virtual mannequin",
+      genderLabel: "Model fit",
+      genderHint: "Choose the body shape closest to your outfit target.",
+      genderFemale: "Female",
+      genderMale: "Male",
+      genderUnisex: "Unisex",
+      genderValue: {
+        female: "Female",
+        male: "Male",
+        unisex: "Unisex"
+      },
       dropPhoto: "Drop your photo",
       formats: "PNG, JPG, WEBP up to 10MB",
       mannequinTitle: "No photo? Dress a virtual mannequin instead.",

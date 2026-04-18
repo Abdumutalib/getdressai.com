@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
 
 type GeneratorMode = "photo" | "mannequin";
+type GenderOption = "female" | "male" | "unisex";
 
 type Measurements = {
   height: string;
@@ -18,6 +19,7 @@ type Measurements = {
 
 type GenerateResponse = {
   mode: GeneratorMode;
+  gender: GenderOption;
   prompt: string;
   preset: string;
   resultUrl: string;
@@ -40,6 +42,7 @@ export function UploadGenerator() {
   const presets = tm<string[]>("upload.presets");
   const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
+  const [gender, setGender] = useState<GenderOption>("female");
   const [selected, setSelected] = useState(safePresets[0] ?? "Luxury");
   const [prompt, setPrompt] = useState(t("upload.defaultPrompt"));
   const [generating, setGenerating] = useState(false);
@@ -64,6 +67,16 @@ export function UploadGenerator() {
     [t]
   );
 
+  const genderOptions = useMemo(
+    () =>
+      ([
+        { value: "female", label: t("upload.genderFemale") },
+        { value: "male", label: t("upload.genderMale") },
+        { value: "unisex", label: t("upload.genderUnisex") }
+      ] as const),
+    [t]
+  );
+
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} • ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
 
   async function handleGenerate() {
@@ -72,12 +85,14 @@ export function UploadGenerator() {
     setError("");
     trackEvent("generation_started", {
       mode,
-      preset: selected
+      preset: selected,
+      gender
     });
 
     try {
       const payload = {
         mode,
+        gender,
         prompt,
         preset: selected,
         imagePath: mode === "photo" ? "/uploads/mock-user-photo.webp" : undefined,
@@ -107,6 +122,7 @@ export function UploadGenerator() {
       trackEvent("generation_completed", {
         mode: data.mode,
         preset: data.preset,
+        gender: data.gender,
         tookMs: data.tookMs
       });
     } catch (nextError) {
@@ -162,6 +178,29 @@ export function UploadGenerator() {
               {item.label}
             </button>
           ))}
+        </div>
+
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("upload.genderLabel")}</p>
+            <span className="text-xs text-slate-500 dark:text-slate-300">{t("upload.genderHint")}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {genderOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setGender(option.value)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  gender === option.value
+                    ? "bg-ink text-white shadow-glow"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {mode === "photo" ? (
@@ -297,6 +336,9 @@ export function UploadGenerator() {
                 <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" />
               </div>
               <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  {t("upload.genderLabel")}: {t(`upload.genderValue.${result.gender}`)}
+                </p>
                 <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
                   {result.mode === "mannequin" ? t("upload.resultSummaryMannequin") : t("upload.resultSummaryPhoto")}
                 </p>
