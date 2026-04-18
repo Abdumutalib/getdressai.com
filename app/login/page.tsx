@@ -30,33 +30,16 @@ export default function LoginPage() {
     const record = readPinAuthRecord();
     if (record) {
       setSavedPinEmail(record.email);
+      setPinSessionReady(true);
     }
-
-    if (!supabase) {
-      return;
-    }
-
-    let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) {
-        return;
-      }
-
-      const sessionEmail = data.session?.user?.email || "";
-      setPinSessionReady(Boolean(record && sessionEmail && sessionEmail === record?.email));
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
+  }, []);
 
   function resetFeedback() {
     setMessage("");
     setError("");
   }
 
-  async function savePinIfNeeded(nextEmail: string) {
+  async function savePinIfNeeded(nextEmail: string, session: Awaited<ReturnType<NonNullable<typeof supabase>["auth"]["getSession"]>>["data"]["session"]) {
     if (!pinEnabled) {
       return;
     }
@@ -69,7 +52,11 @@ export default function LoginPage() {
       throw new Error(t("login.pinMismatch"));
     }
 
-    await savePinAuthRecord(nextEmail, pin);
+    if (!session) {
+      throw new Error(t("login.pinSessionMissing"));
+    }
+
+    await savePinAuthRecord(nextEmail, pin, session);
     setSavedPinEmail(nextEmail);
     setPinSessionReady(true);
   }
@@ -100,7 +87,7 @@ export default function LoginPage() {
         }
 
         if (data.session) {
-          await savePinIfNeeded(email);
+          await savePinIfNeeded(email, data.session);
           setMessage(pinEnabled ? t("login.signupSuccessWithPin") : t("login.signupSuccess"));
           router.push("/dashboard");
           router.refresh();
@@ -115,7 +102,7 @@ export default function LoginPage() {
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
@@ -124,7 +111,7 @@ export default function LoginPage() {
         throw signInError;
       }
 
-      await savePinIfNeeded(email);
+      await savePinIfNeeded(email, data.session);
       router.push("/dashboard");
       router.refresh();
     } catch (nextError) {
@@ -145,12 +132,13 @@ export default function LoginPage() {
 
     try {
       const unlocked = await verifyPinAuthRecord(pinLogin);
-      const {
-        data: { session }
-      } = await supabase.auth.getSession();
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: unlocked.accessToken,
+        refresh_token: unlocked.refreshToken
+      });
 
-      if (!session?.user?.email || session.user.email !== unlocked.email) {
-        throw new Error(t("login.pinSessionMissing"));
+      if (sessionError) {
+        throw sessionError;
       }
 
       router.push("/dashboard");

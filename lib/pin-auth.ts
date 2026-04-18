@@ -1,11 +1,20 @@
 "use client";
 
+import type { Session } from "@supabase/supabase-js";
+
 const PIN_STORAGE_KEY = "getdressai-pin-auth";
+
+type PinSessionPayload = {
+  email: string;
+  accessToken: string;
+  refreshToken: string;
+};
 
 type PinAuthRecord = {
   email: string;
   salt: string;
-  hash: string;
+  iv: string;
+  ciphertext: string;
 };
 
 function toBase64(bytes: Uint8Array) {
@@ -25,11 +34,12 @@ function fromBase64(value: string) {
   return bytes;
 }
 
-async function hashPin(pin: string, salt: Uint8Array) {
+async function deriveKey(pin: string, salt: Uint8Array) {
   const keyMaterial = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, [
-    "deriveBits"
+    "deriveKey"
   ]);
-  const bits = await crypto.subtle.deriveBits(
+
+  return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: Uint8Array.from(salt),
@@ -37,10 +47,10 @@ async function hashPin(pin: string, salt: Uint8Array) {
       hash: "SHA-256"
     },
     keyMaterial,
-    256
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
   );
-
-  return toBase64(new Uint8Array(bits));
 }
 
 function isBrowserReady() {
@@ -57,6 +67,7 @@ export function readPinAuthRecord() {
     if (!raw) {
       return null;
     }
+
     return JSON.parse(raw) as PinAuthRecord;
   } catch {
     return null;
@@ -75,16 +86,35 @@ export function clearPinAuthRecord() {
   }
 }
 
-export async function savePinAuthRecord(email: string, pin: string) {
+export async function savePinAuthRecord(email: string, pin: string, session: Session) {
   if (!isBrowserReady()) {
     throw new Error("PIN login is not available in this browser.");
   }
 
+  if (!session.access_token || !session.refresh_token) {
+    throw new Error("PIN login is not available yet.");
+  }
+
   const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pin, salt);
+  const payload: PinSessionPayload = {
+    email,
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token
+  };
+
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(JSON.stringify(payload))
+  );
+
   const record: PinAuthRecord = {
     email,
     salt: toBase64(salt),
-    hash: await hashPin(pin, salt)
+    iv: toBase64(iv),
+    ciphertext: toBase64(new Uint8Array(encrypted))
   };
 
   window.localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(record));
@@ -96,12 +126,17 @@ export async function verifyPinAuthRecord(pin: string) {
     throw new Error("No PIN login found on this device.");
   }
 
-  const salt = fromBase64(record.salt);
-  const hash = await hashPin(pin, salt);
+  try {
+    const key = await deriveKey(pin, fromBase64(record.salt));
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: fromBase64(record.iv) },
+      key,
+      fromBase64(record.ciphertext)
+    );
+    const payload = JSON.parse(new TextDecoder().decode(decrypted)) as PinSessionPayload;
 
-  if (hash !== record.hash) {
+    return payload;
+  } catch {
     throw new Error("Incorrect PIN code.");
   }
-
-  return { email: record.email };
 }
