@@ -6,6 +6,7 @@ import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { StatsCards } from "@/components/StatsCards";
 import { UploadGenerator } from "@/components/UploadGenerator";
 import { useLanguage } from "@/components/LanguageProvider";
+import { authFetch } from "@/lib/supabase-browser";
 
 type StoredGeneration = {
   id: string;
@@ -54,7 +55,7 @@ export default function DashboardPage() {
     setHistoryError("");
 
     try {
-      const response = await fetch("/api/generate", {
+      const response = await authFetch("/api/generate", {
         method: "GET",
         cache: "no-store"
       });

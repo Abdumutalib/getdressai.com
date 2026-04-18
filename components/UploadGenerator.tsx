@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
+import { authFetch } from "@/lib/supabase-browser";
 import {
   clothingFieldCopy as translatedClothingFieldCopy,
   genderCopy as translatedGenderCopy,
@@ -233,8 +234,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
 
       try {
         const [preferencesResponse, historyResponse] = await Promise.all([
-          fetch("/api/preferences", { method: "GET", cache: "no-store" }),
-          fetch("/api/generate", { method: "GET", cache: "no-store" })
+          authFetch("/api/preferences", { method: "GET", cache: "no-store" }),
+          authFetch("/api/generate", { method: "GET", cache: "no-store" })
         ]);
 
         if (preferencesResponse.status !== 401) {
@@ -308,7 +309,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     }
 
     saveTimerRef.current = setTimeout(() => {
-      void fetch("/api/preferences", {
+      void authFetch("/api/preferences", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -415,7 +416,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       const formData = new FormData();
       formData.set("file", nextFile);
 
-      const response = await fetch("/api/preferences", {
+      const response = await authFetch("/api/preferences", {
         method: "POST",
         body: formData
       });
@@ -451,7 +452,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     setRecommendationError("");
 
     try {
-      const response = await fetch("/api/recommend-products", {
+      const response = await authFetch("/api/recommend-products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -531,7 +532,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         payload.set("existingSourcePath", savedSourcePath);
       }
 
-      const response = await fetch("/api/generate", {
+      const response = await authFetch("/api/generate", {
         method: "POST",
         body: payload
       });

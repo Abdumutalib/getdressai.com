@@ -17,3 +17,32 @@ export function createBrowserSafeSupabase() {
     }
   });
 }
+
+export async function getBrowserAccessToken() {
+  const supabase = createBrowserSafeSupabase();
+
+  if (!supabase) {
+    return "";
+  }
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  return session?.access_token ?? "";
+}
+
+export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const token = await getBrowserAccessToken();
+  const headers = new Headers(init.headers ?? {});
+
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  return fetch(input, {
+    ...init,
+    credentials: "same-origin",
+    headers
+  });
+}
