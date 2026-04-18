@@ -65,7 +65,13 @@ export default function DashboardPage() {
                           Ready for download
                         </div>
                       </div>
-                      <button className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white shadow-glow">{t("dashboard.download")}</button>
+                      <a
+                        href={item.src}
+                        download
+                        className="inline-flex rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white shadow-glow"
+                      >
+                        {t("dashboard.download")}
+                      </a>
                     </div>
                   </div>
                 ))}
