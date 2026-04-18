@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
-import { createSupabaseAdmin } from "@/lib/supabase";
+import { createSupabaseServerClient, createSupabaseAdmin } from "@/lib/supabase";
 
 const schema = z.object({
-  referrerId: z.string().min(1),
   invitedEmail: z.string().email(),
   conversionType: z.enum(["join", "purchase"])
 });
@@ -12,12 +11,25 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
+    const supabaseServer = await createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabaseServer.auth.getUser();
+
+    if (!user?.id || !user.email) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    if (body.invitedEmail.toLowerCase() === user.email.toLowerCase()) {
+      return NextResponse.json({ error: "You cannot invite yourself." }, { status: 400 });
+    }
+
     const supabase = createSupabaseAdmin();
     const resendKey = process.env.RESEND_API_KEY || "";
     const creditAmount = body.conversionType === "join" ? 2 : 5;
 
     await supabase.from("referral_events").insert({
-      referrer_id: body.referrerId,
+      referrer_id: user.id,
       invited_email: body.invitedEmail,
       conversion_type: body.conversionType,
       credit_amount: creditAmount
