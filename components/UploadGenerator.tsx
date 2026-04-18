@@ -78,9 +78,10 @@ const marketplaceCopy = {
     marketplaceSource: "Marketplace source",
     openProduct: "Open item",
     clothingLabel: "What clothes do you want?",
-    clothingPlaceholder: "Try beach set, pajamas, airport look, evening dress...",
+    clothingPlaceholder: "Type clothing here...",
     clothingHint: "Describe the exact outfit you want to try or buy.",
     aiHint: "We automatically understand clothing type, color, material, and occasion from your text.",
+    clothingInputLabel: "Text entry",
     autoSource: "Matched to your photo and measurements",
     marketplaceError: "Could not load marketplace recommendations.",
     savedPhoto: "Saved photo from your last session"
@@ -119,9 +120,10 @@ const marketplaceCopy = {
     marketplaceSource: "Marketpleys",
     openProduct: "Mahsulotni ochish",
     clothingLabel: "Qanday kiyim xohlaysiz?",
-    clothingPlaceholder: "Masalan: plyaj to'plami, pijama, sayohat looki, kechki ko'ylak...",
+    clothingPlaceholder: "Bu yerga kiyimni yozing...",
     clothingHint: "Kiydirmoqchi yoki topmoqchi bo'lgan kiyimni yozing.",
     aiHint: "Tizim matndan kiyim turi, rang, mato va vaziyatni o'zi tushunadi.",
+    clothingInputLabel: "Tekst yozish joyi",
     autoSource: "Rasmingiz va o'lchamingiz asosida tanlandi",
     marketplaceError: "Marketpleys tavsiyalarini yuklab bo'lmadi.",
     savedPhoto: "Oldingi kirishdan сақланган rasm"
@@ -617,13 +619,19 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
             <p className="text-[11px] leading-5 text-accent">
               {(localizedMarketplaceCopy as typeof marketplaceCopy.en).aiHint}
             </p>
+            <div className="surface-soft rounded-[1.2rem] p-3">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                {(localizedMarketplaceCopy as (typeof marketplaceCopy)["en"] & { clothingInputLabel?: string }).clothingInputLabel ??
+                  "Text entry"}
+              </label>
             <input
               type="text"
               value={clothingRequest}
               onChange={(event) => setClothingRequest(event.target.value)}
               placeholder={localizedMarketplaceCopy.clothingPlaceholder}
-              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-accent dark:border-white/10 dark:bg-slate-950/60"
+              className="w-full rounded-[1rem] border border-[#D8DEFF] bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-950/60"
             />
+            </div>
           </div>
         </div>
 
