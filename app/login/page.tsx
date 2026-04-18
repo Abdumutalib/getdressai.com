@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [pinLogin, setPinLogin] = useState("");
   const [pinSessionReady, setPinSessionReady] = useState(false);
   const [passwordFallback, setPasswordFallback] = useState(false);
+  const [pinAutoSubmitting, setPinAutoSubmitting] = useState(false);
   const pinInputsRef = useRef<Array<HTMLInputElement | null>>([]);
   const nextPath = searchParams.get("next") || "/dashboard";
 
@@ -49,6 +50,41 @@ export default function LoginPage() {
       setError("");
     }
   }, [searchParams, t]);
+
+  useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (cancelled || !data.session) {
+        return;
+      }
+
+      void persistServerSessionCookie().then(() => {
+        if (!cancelled) {
+          completeAuthRedirect();
+        }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, nextPath]);
+
+  useEffect(() => {
+    if (!savedPinEmail || pinLogin.length !== 4 || authBusy || pinAutoSubmitting) {
+      return;
+    }
+
+    setPinAutoSubmitting(true);
+    void handlePinLogin().finally(() => {
+      setPinAutoSubmitting(false);
+    });
+  }, [savedPinEmail, pinLogin, authBusy, pinAutoSubmitting]);
 
   function resetFeedback() {
     setMessage("");
@@ -106,6 +142,12 @@ export default function LoginPage() {
   function handlePinKeyDown(index: number, event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Backspace" && !pinLogin[index] && index > 0) {
       pinInputsRef.current[index - 1]?.focus();
+      return;
+    }
+
+    if (event.key === "Enter" && pinLogin.length === 4 && !authBusy) {
+      event.preventDefault();
+      void handlePinLogin();
     }
   }
 
