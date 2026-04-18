@@ -46,6 +46,13 @@ type MarketplaceProduct = {
   recommendedSize: string;
 };
 
+type ParsedIntent = {
+  category?: string;
+  occasion?: string;
+  color?: string;
+  material?: string;
+};
+
 const exampleSlugs = ["luxury", "streetwear", "wedding", "office", "gym", "anime", "celebrity", "casual"] as const;
 
 const defaultMeasurements: Measurements = {
@@ -73,6 +80,7 @@ const marketplaceCopy = {
     clothingLabel: "What clothes do you want?",
     clothingPlaceholder: "Try beach set, pajamas, airport look, evening dress...",
     clothingHint: "Describe the exact outfit you want to try or buy.",
+    aiHint: "We automatically understand clothing type, color, material, and occasion from your text.",
     autoSource: "Matched to your photo and measurements",
     marketplaceError: "Could not load marketplace recommendations.",
     savedPhoto: "Saved photo from your last session"
@@ -113,6 +121,7 @@ const marketplaceCopy = {
     clothingLabel: "Qanday kiyim xohlaysiz?",
     clothingPlaceholder: "Masalan: plyaj to'plami, pijama, sayohat looki, kechki ko'ylak...",
     clothingHint: "Kiydirmoqchi yoki topmoqchi bo'lgan kiyimni yozing.",
+    aiHint: "Tizim matndan kiyim turi, rang, mato va vaziyatni o'zi tushunadi.",
     autoSource: "Rasmingiz va o'lchamingiz asosida tanlandi",
     marketplaceError: "Marketpleys tavsiyalarini yuklab bo'lmadi.",
     savedPhoto: "Oldingi kirishdan сақланган rasm"
@@ -159,6 +168,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const [recommendationError, setRecommendationError] = useState("");
   const [recommendations, setRecommendations] = useState<MarketplaceProduct[]>([]);
   const [recommendedSize, setRecommendedSize] = useState("");
+  const [parsedIntent, setParsedIntent] = useState<ParsedIntent | null>(null);
   const [measurements, setMeasurements] = useState<Measurements>(defaultMeasurements);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
@@ -322,6 +332,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       const data = (await response.json()) as {
         recommendedSize?: string;
         products?: MarketplaceProduct[];
+        intent?: ParsedIntent;
         error?: string;
       };
 
@@ -331,6 +342,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
 
       setRecommendations(data.products);
       setRecommendedSize(data.recommendedSize || "");
+      setParsedIntent(data.intent ?? null);
       trackEvent("marketplace_recommendations_loaded", {
         preset: selected,
         clothingRequest,
@@ -343,6 +355,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       );
       setRecommendations([]);
       setRecommendedSize("");
+      setParsedIntent(null);
     } finally {
       setRecommending(false);
     }
@@ -472,6 +485,21 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
             </div>
           ) : null}
 
+          {parsedIntent && (parsedIntent.category || parsedIntent.color || parsedIntent.material || parsedIntent.occasion) ? (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[parsedIntent.category, parsedIntent.color, parsedIntent.material, parsedIntent.occasion]
+                .filter(Boolean)
+                .map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200"
+                  >
+                    {item}
+                  </span>
+                ))}
+            </div>
+          ) : null}
+
           {recommendationError ? (
             <p className="mb-4 text-sm font-medium text-rose-500">{recommendationError}</p>
           ) : null}
@@ -585,6 +613,9 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
             </p>
             <p className="text-xs leading-6 text-slate-500 dark:text-slate-300">
               {localizedMarketplaceCopy.clothingHint}
+            </p>
+            <p className="text-[11px] leading-5 text-accent">
+              {(localizedMarketplaceCopy as typeof marketplaceCopy.en).aiHint}
             </p>
             <input
               type="text"

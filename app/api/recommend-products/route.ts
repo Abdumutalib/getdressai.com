@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase";
+import { parseClothingIntent } from "@/lib/clothing-intent";
 import {
   buildFallbackRecommendations,
   inferRecommendedSize,
@@ -46,10 +47,12 @@ export async function POST(request: Request) {
       waist: body.measurements.waist,
       hips: body.measurements.hips
     });
+    const intent = parseClothingIntent(body.clothingRequest?.trim() || body.preset, body.preset);
 
     const requestBody = {
-      keywords: `${body.preset} ${body.prompt}`.trim(),
-      clothingRequest: body.clothingRequest?.trim() || body.preset,
+      keywords: `${intent.marketplaceQuery} ${body.prompt}`.trim(),
+      clothingRequest: intent.marketplaceQuery,
+      intent,
       style: body.preset,
       size: recommendedSize,
       measurements: {
@@ -123,13 +126,14 @@ export async function POST(request: Request) {
       products = buildFallbackRecommendations({
         preset: body.preset,
         prompt: body.prompt,
-        clothingRequest: body.clothingRequest,
+        clothingRequest: intent.marketplaceQuery,
         recommendedSize
       });
     }
 
     return NextResponse.json({
       recommendedSize,
+      intent,
       source,
       products
     });
