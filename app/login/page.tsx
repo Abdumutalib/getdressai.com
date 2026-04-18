@@ -420,203 +420,211 @@ export default function LoginPage() {
 
   return (
     <main className="section-shell py-20">
-      <div className="mx-auto max-w-md space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6">
         {savedPinEmail ? (
-          <div className="glass-panel rounded-[2rem] p-8">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.pinEyebrow")}</p>
-              <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">{t("login.pinTitle")}</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                {t("login.pinCopy")}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-300">
-                {pinSessionReady ? t("login.pinReady") : t("login.pinNeedsPassword")}
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-4 gap-3">
-                {Array.from({ length: 4 }, (_, index) => (
-                  <input
-                    key={index}
-                    ref={(element) => {
-                      pinInputsRef.current[index] = element;
-                    }}
-                    type="password"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    pattern="\d*"
-                    maxLength={1}
-                    aria-label={`${t("login.pinPlaceholder")} ${index + 1}`}
-                    value={pinLogin[index] || ""}
-                    onChange={(event) => updatePinLoginDigit(index, event.target.value)}
-                    onKeyDown={(event) => handlePinKeyDown(index, event)}
-                    className="h-16 rounded-[1.25rem] border border-slate-200 bg-white text-center text-2xl font-semibold tracking-[0.2em] outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
-                  />
-                ))}
+          <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
+            <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+              <div className="space-y-4">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.pinEyebrow")}</p>
+                <h2 className="text-3xl font-semibold text-slate-950 dark:text-white sm:text-4xl">{t("login.pinTitle")}</h2>
+                <p className="max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
+                  {t("login.pinCopy")}
+                </p>
+                <p className="max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-300">
+                  {pinSessionReady ? t("login.pinReady") : t("login.pinNeedsPassword")}
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={handlePinLogin}
-                disabled={authBusy}
-                className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white"
-              >
-                {authBusy ? t("login.sending") : t("login.pinButton")}
-              </button>
-              <button
-                type="button"
-                onClick={removeSavedPin}
-                className="w-full text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-300 dark:hover:text-white"
-              >
-                {t("login.pinRemove")}
-              </button>
-              <button
-                type="button"
-                onClick={openPasswordFallback}
-                className="w-full text-sm font-medium text-accent transition hover:opacity-80"
-              >
-                {t("login.pinForgot")}
-              </button>
+
+              <div className="space-y-4 rounded-[1.75rem] border border-slate-200 bg-white/75 p-5 shadow-soft dark:border-white/10 dark:bg-white/5 sm:p-6">
+                <div className="grid grid-cols-4 gap-3 sm:gap-4">
+                  {Array.from({ length: 4 }, (_, index) => (
+                    <input
+                      key={index}
+                      ref={(element) => {
+                        pinInputsRef.current[index] = element;
+                      }}
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      pattern="\d*"
+                      maxLength={1}
+                      aria-label={`${t("login.pinPlaceholder")} ${index + 1}`}
+                      value={pinLogin[index] || ""}
+                      onChange={(event) => updatePinLoginDigit(index, event.target.value)}
+                      onKeyDown={(event) => handlePinKeyDown(index, event)}
+                      className="h-16 rounded-[1.25rem] border border-slate-200 bg-white text-center text-2xl font-semibold tracking-[0.2em] outline-none focus:border-accent dark:border-white/10 dark:bg-white/5 sm:h-20 sm:text-3xl"
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePinLogin}
+                  disabled={authBusy}
+                  className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white sm:text-base"
+                >
+                  {authBusy ? t("login.sending") : t("login.pinButton")}
+                </button>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    type="button"
+                    onClick={removeSavedPin}
+                    className="text-left text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-300 dark:hover:text-white"
+                  >
+                    {t("login.pinRemove")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openPasswordFallback}
+                    className="text-left text-sm font-medium text-accent transition hover:opacity-80 sm:text-right"
+                  >
+                    {t("login.pinForgot")}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : null}
 
         {!savedPinEmail || passwordFallback ? (
-        <div className="glass-panel rounded-[2rem] p-8">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.eyebrow")}</p>
-            <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">
-              {passwordFallback
-                ? t("login.passwordTitle")
-                : authMode === "signup"
-                  ? t("login.signupTitle")
-                  : t("login.title")}
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {passwordFallback
-                ? t("login.pinPasswordFallback")
-                : authMode === "signup"
-                  ? t("login.signupCopy")
-                  : t("login.copy")}
-            </p>
-          </div>
+        <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div className="space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.eyebrow")}</p>
+              <h1 className="text-3xl font-semibold text-slate-950 dark:text-white sm:text-4xl">
+                {passwordFallback
+                  ? t("login.passwordTitle")
+                  : authMode === "signup"
+                    ? t("login.signupTitle")
+                    : t("login.title")}
+              </h1>
+              <p className="max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
+                {passwordFallback
+                  ? t("login.pinPasswordFallback")
+                  : authMode === "signup"
+                    ? t("login.signupCopy")
+                    : t("login.copy")}
+              </p>
+            </div>
 
-          {!passwordFallback ? (
-          <div className="mt-6 flex gap-2 rounded-full bg-slate-100 p-1 dark:bg-white/5">
-            <button
-              type="button"
-              onClick={() => switchMode("login")}
-              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                authMode === "login" ? "bg-white text-slate-950 shadow-soft dark:bg-white dark:text-slate-950" : "text-slate-600 dark:text-slate-300"
-              }`}
-            >
-              {t("login.loginTab")}
-            </button>
-            <button
-              type="button"
-              onClick={() => switchMode("signup")}
-              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                authMode === "signup" ? "bg-white text-slate-950 shadow-soft dark:bg-white dark:text-slate-950" : "text-slate-600 dark:text-slate-300"
-              }`}
-            >
-              {t("login.signupTab")}
-            </button>
-          </div>
-          ) : null}
-
-          <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-            <input
-              type="email"
-              autoComplete="username"
-              placeholder={t("login.email")}
-              value={email}
-              onChange={(event) => {
-                if (!passwordFallback) {
-                  setEmail(event.target.value);
-                }
-              }}
-              readOnly={passwordFallback}
-              className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
-            />
-            <input
-              type="password"
-              autoComplete={authMode === "signup" ? "new-password" : "current-password"}
-              placeholder={t("login.password")}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
-            />
-
-            {authMode === "signup" || passwordFallback ? (
-              <label className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5">
-                <input
-                  type="checkbox"
-                  checked={pinEnabled}
-                  onChange={(event) => setPinEnabled(event.target.checked)}
-                  className="mt-1"
-                />
-                <span className="text-slate-700 dark:text-slate-200">
-                  {passwordFallback ? t("login.pinReset") : t("login.pinEnable")}
-                </span>
-              </label>
-            ) : null}
-
-            {pinEnabled ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  pattern="\d*"
-                  maxLength={4}
-                  placeholder={t("login.pinPlaceholder")}
-                  value={pin}
-                  onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
-                />
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  pattern="\d*"
-                  maxLength={4}
-                  placeholder={t("login.pinConfirm")}
-                  value={pinConfirm}
-                  onChange={(event) => setPinConfirm(event.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
-                />
-              </div>
-            ) : null}
-
-            {authMode === "login" || passwordFallback ? (
-              <div className="flex items-center justify-between gap-3">
+            <div className="rounded-[1.75rem] border border-slate-200 bg-white/75 p-5 shadow-soft dark:border-white/10 dark:bg-white/5 sm:p-6">
+              {!passwordFallback ? (
+              <div className="flex gap-2 rounded-full bg-slate-100 p-1 dark:bg-white/5">
                 <button
                   type="button"
-                  onClick={sendResetLink}
-                  className="text-sm font-medium text-accent transition hover:opacity-80"
-                  disabled={resetBusy || authBusy}
+                  onClick={() => switchMode("login")}
+                  className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    authMode === "login" ? "bg-white text-slate-950 shadow-soft dark:bg-white dark:text-slate-950" : "text-slate-600 dark:text-slate-300"
+                  }`}
                 >
-                  {resetBusy ? t("login.sending") : t("login.forgotPassword")}
+                  {t("login.loginTab")}
                 </button>
-                <span className="text-xs text-slate-500 dark:text-slate-300">{t("login.resetHint")}</span>
+                <button
+                  type="button"
+                  onClick={() => switchMode("signup")}
+                  className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    authMode === "signup" ? "bg-white text-slate-950 shadow-soft dark:bg-white dark:text-slate-950" : "text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  {t("login.signupTab")}
+                </button>
               </div>
-            ) : null}
+              ) : null}
 
-            <button type="submit" className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white">
-              {authBusy ? t("login.sending") : authMode === "signup" ? t("login.signupButton") : t("login.button")}
-            </button>
-            {message ? <p className="text-sm font-medium text-emerald-600">{message}</p> : null}
-            {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
-          </form>
+              <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+                <input
+                  type="email"
+                  autoComplete="username"
+                  placeholder={t("login.email")}
+                  value={email}
+                  onChange={(event) => {
+                    if (!passwordFallback) {
+                      setEmail(event.target.value);
+                    }
+                  }}
+                  readOnly={passwordFallback}
+                  className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
+                />
+                <input
+                  type="password"
+                  autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+                  placeholder={t("login.password")}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
+                />
 
-          <div className="mt-6 flex justify-end text-sm text-slate-500 dark:text-slate-300">
-            <button
-              type="button"
-              onClick={clearAllAuthState}
-              className="font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-            >
-              {t("login.clearAll")}
-            </button>
+                {authMode === "signup" || passwordFallback ? (
+                  <label className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5">
+                    <input
+                      type="checkbox"
+                      checked={pinEnabled}
+                      onChange={(event) => setPinEnabled(event.target.checked)}
+                      className="mt-1"
+                    />
+                    <span className="text-slate-700 dark:text-slate-200">
+                      {passwordFallback ? t("login.pinReset") : t("login.pinEnable")}
+                    </span>
+                  </label>
+                ) : null}
+
+                {pinEnabled ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      pattern="\d*"
+                      maxLength={4}
+                      placeholder={t("login.pinPlaceholder")}
+                      value={pin}
+                      onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
+                      className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
+                    />
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      pattern="\d*"
+                      maxLength={4}
+                      placeholder={t("login.pinConfirm")}
+                      value={pinConfirm}
+                      onChange={(event) => setPinConfirm(event.target.value.replace(/\D/g, "").slice(0, 4))}
+                      className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
+                    />
+                  </div>
+                ) : null}
+
+                {authMode === "login" || passwordFallback ? (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                      type="button"
+                      onClick={sendResetLink}
+                      className="text-left text-sm font-medium text-accent transition hover:opacity-80"
+                      disabled={resetBusy || authBusy}
+                    >
+                      {resetBusy ? t("login.sending") : t("login.forgotPassword")}
+                    </button>
+                    <span className="text-xs leading-5 text-slate-500 dark:text-slate-300">{t("login.resetHint")}</span>
+                  </div>
+                ) : null}
+
+                <button type="submit" className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white sm:text-base">
+                  {authBusy ? t("login.sending") : authMode === "signup" ? t("login.signupButton") : t("login.button")}
+                </button>
+                {message ? <p className="text-sm font-medium leading-6 text-emerald-600">{message}</p> : null}
+                {error ? <p className="text-sm font-medium leading-6 text-rose-500">{error}</p> : null}
+              </form>
+
+              <div className="mt-6 flex justify-end text-sm text-slate-500 dark:text-slate-300">
+                <button
+                  type="button"
+                  onClick={clearAllAuthState}
+                  className="font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                >
+                  {t("login.clearAll")}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         ) : null}
