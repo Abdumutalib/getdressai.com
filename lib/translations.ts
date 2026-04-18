@@ -2,8 +2,6 @@ export const supportedLanguages = ["en", "ru", "uz", "tr", "es", "fr", "de", "ar
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
-const examplePresets = ["Luxury", "Streetwear", "Wedding", "Office", "Gym", "Anime", "Celebrity", "Casual"];
-
 export const translations = {
   en: {
     navbar: {
@@ -231,10 +229,12 @@ export const translations = {
       defaultPrompt: "Luxury outfit, clean light, simple background",
       generating: "Generating...",
       generate: "Generate result",
-      presets: examplePresets
+      presets: ["Luxury", "Streetwear", "Wedding", "Office", "Gym", "Anime", "Celebrity", "Casual"]
     },
     dashboard: {
       eyebrow: "Dashboard",
+      workflowEyebrow: "Pro workflow",
+      workflowCopy: "Generate, track, and monetize every look.",
       title: "Your results, credits, and history.",
       recentResults: "Recent results",
       downloadHd: "HD download is for paid plans",
@@ -530,10 +530,12 @@ export const translations = {
       defaultPrompt: "Роскошный образ, чистый свет, простой фон",
       generating: "Создание...",
       generate: "Создать результат",
-      presets: examplePresets
+      presets: ["Роскошь", "Стритвир", "Свадьба", "Офис", "Спортзал", "Аниме", "Знаменитость", "Повседневный"]
     },
     dashboard: {
       eyebrow: "Панель",
+      workflowEyebrow: "Профи-режим",
+      workflowCopy: "Создавайте, отслеживайте и монетизируйте каждый образ.",
       title: "Ваши результаты, кредиты и история.",
       recentResults: "Последние результаты",
       downloadHd: "HD загрузка доступна на платных планах",
@@ -825,10 +827,12 @@ export const translations = {
       defaultPrompt: "Hashamatli outfit, toza yorug'lik, oddiy fon",
       generating: "Yaratilmoqda...",
       generate: "Natijani yaratish",
-      presets: examplePresets
+      presets: ["Hashamat", "Streetwear", "To'y", "Ofis", "Sport", "Anime", "Mashhur uslub", "Kundalik"]
     },
     dashboard: {
       eyebrow: "Panel",
+      workflowEyebrow: "Pro ish oqimi",
+      workflowCopy: "Har bir look'ni yarating, kuzating va monetizatsiya qiling.",
       title: "Natijalar, kreditlar va tarixingiz.",
       recentResults: "So'nggi natijalar",
       downloadHd: "HD yuklash pullik planlarda bor",
@@ -1096,10 +1100,12 @@ export const translations = {
       defaultPrompt: "Lüks kombin, temiz ışık, sade arka plan",
       generating: "Oluşturuluyor...",
       generate: "Sonucu oluştur",
-      presets: examplePresets
+      presets: ["Luks", "Streetwear", "Dugun", "Ofis", "Spor", "Anime", "Unlu stili", "Gunluk"]
     },
     dashboard: {
       eyebrow: "Panel",
+      workflowEyebrow: "Pro akisi",
+      workflowCopy: "Her look'u olusturun, takip edin ve gelire cevirin.",
       title: "Sonuçlarınız, kredileriniz ve geçmişiniz.",
       recentResults: "Son sonuçlar",
       downloadHd: "HD indirme ücretli planlarda var",
@@ -1358,10 +1364,12 @@ export const translations = {
       defaultPrompt: "Outfit de lujo, luz limpia, fondo simple",
       generating: "Creando...",
       generate: "Crear resultado",
-      presets: examplePresets
+      presets: ["Lujo", "Streetwear", "Boda", "Oficina", "Gimnasio", "Anime", "Celebridad", "Casual"]
     },
     dashboard: {
       eyebrow: "Panel",
+      workflowEyebrow: "Flujo pro",
+      workflowCopy: "Crea, sigue y monetiza cada look.",
       title: "Tus resultados, créditos e historial.",
       recentResults: "Resultados recientes",
       downloadHd: "La descarga HD está en planes de pago",
@@ -1620,10 +1628,12 @@ export const translations = {
       defaultPrompt: "Tenue de luxe, lumière propre, fond simple",
       generating: "Création...",
       generate: "Créer le résultat",
-      presets: examplePresets
+      presets: ["Luxe", "Streetwear", "Mariage", "Bureau", "Salle de sport", "Anime", "Celebrité", "Casual"]
     },
     dashboard: {
       eyebrow: "Tableau de bord",
+      workflowEyebrow: "Flux pro",
+      workflowCopy: "Creez, suivez et monétisez chaque look.",
       title: "Vos résultats, crédits et historique.",
       recentResults: "Résultats récents",
       downloadHd: "Le téléchargement HD est pour les plans payants",
@@ -1882,10 +1892,12 @@ export const translations = {
       defaultPrompt: "Luxus Outfit, sauberes Licht, einfacher Hintergrund",
       generating: "Wird erstellt...",
       generate: "Ergebnis erstellen",
-      presets: examplePresets
+      presets: ["Luxus", "Streetwear", "Hochzeit", "Büro", "Fitness", "Anime", "Promi", "Casual"]
     },
     dashboard: {
       eyebrow: "Dashboard",
+      workflowEyebrow: "Pro-Workflow",
+      workflowCopy: "Erstelle, verfolge und monetarisiere jeden Look.",
       title: "Deine Ergebnisse, Credits und Historie.",
       recentResults: "Letzte Ergebnisse",
       downloadHd: "HD Download ist in bezahlten Plänen enthalten",
@@ -2144,10 +2156,12 @@ export const translations = {
       defaultPrompt: "إطلالة فاخرة، إضاءة نظيفة، خلفية بسيطة",
       generating: "جارٍ الإنشاء...",
       generate: "إنشاء النتيجة",
-      presets: examplePresets
+      presets: ["فاخر", "ملابس شارع", "زفاف", "مكتب", "رياضة", "أنمي", "مشاهير", "كاجوال"]
     },
     dashboard: {
       eyebrow: "لوحة التحكم",
+      workflowEyebrow: "وضع احترافي",
+      workflowCopy: "أنشئ كل إطلالة وتابعها وحوّلها إلى دخل.",
       title: "نتائجك وأرصدةك وسجلك.",
       recentResults: "آخر النتائج",
       downloadHd: "تنزيل HD متاح في الخطط المدفوعة",

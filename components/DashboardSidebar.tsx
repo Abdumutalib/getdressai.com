@@ -15,7 +15,7 @@ const items = [
 ];
 
 export function DashboardSidebar() {
-  const { tm } = useLanguage();
+  const { t, tm } = useLanguage();
   const pathname = usePathname();
   const labels = tm<string[]>("dashboard.sidebar");
   const safeLabels = Array.isArray(labels) ? labels : ["Generate", "History", "Billing", "Referrals", "Settings"];
@@ -23,8 +23,8 @@ export function DashboardSidebar() {
   return (
     <aside className="glass-panel rounded-[2rem] p-4">
       <div className="mb-4 rounded-[1.5rem] bg-ink p-4 text-white">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Pro workflow</p>
-        <p className="mt-2 text-lg font-semibold">Generate, track, and monetize every look.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{t("dashboard.workflowEyebrow")}</p>
+        <p className="mt-2 text-lg font-semibold">{t("dashboard.workflowCopy")}</p>
       </div>
       <nav className="space-y-2">
         {items.map((item, index) => {
