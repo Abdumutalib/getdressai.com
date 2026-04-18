@@ -407,8 +407,8 @@ export function UploadGenerator() {
                 {result.preset}
               </span>
             </div>
-            <div className="grid gap-4 md:grid-cols-[120px_1fr] md:items-center">
-              <div className="relative aspect-square overflow-hidden rounded-[1.25rem] border border-slate-200 dark:border-white/10">
+            <div className="grid gap-5 md:grid-cols-[220px_1fr] md:items-center">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/60">
                 <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" />
               </div>
               <div className="space-y-2">

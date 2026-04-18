@@ -53,8 +53,8 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-4">
                 {history.map((item) => (
-                  <div key={item.title} className="flex gap-4 rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
-                    <div className="relative size-24 overflow-hidden rounded-[1.2rem]">
+                  <div key={item.title} className="flex gap-5 rounded-[1.5rem] border border-slate-200 bg-white/80 p-5 shadow-soft dark:border-white/10 dark:bg-white/5">
+                    <div className="relative h-36 w-28 shrink-0 overflow-hidden rounded-[1.35rem] bg-slate-50 dark:bg-slate-950/60 sm:h-40 sm:w-32">
                       <Image src={item.src} alt={item.title} fill className="object-cover" />
                     </div>
                     <div className="flex flex-1 items-center justify-between gap-4">
