@@ -18,6 +18,7 @@ const bodySchema = z.object({
   gender: z.enum(["female", "male", "unisex"]).default("female"),
   prompt: z.string().min(5).max(400),
   preset: z.string().min(2).max(80).default("Custom"),
+  existingSourcePath: z.string().min(1).optional(),
   measurements: z
     .object({
       height: z.coerce.number().min(120).max(230),
@@ -38,6 +39,7 @@ type HistoryRow = {
   gender: "female" | "male" | "unisex";
   prompt: string;
   preset: string;
+  source_image_path: string | null;
   result_image_path: string;
   watermark: boolean;
   took_ms: number;
@@ -98,7 +100,7 @@ export async function GET(request: Request) {
     const admin = createSupabaseAdmin();
     const { data, error } = await admin
       .from("user_generations")
-      .select("id, mode, gender, prompt, preset, result_image_path, watermark, took_ms, created_at")
+      .select("id, mode, gender, prompt, preset, source_image_path, result_image_path, watermark, took_ms, created_at")
       .eq("user_id", authResult.id)
       .order("created_at", { ascending: false })
       .limit(12);
@@ -108,19 +110,24 @@ export async function GET(request: Request) {
     }
 
     const rows = (data ?? []) as HistoryRow[];
-    const signedUrls = await createSignedAssetUrls(
-      admin,
-      rows.map((row) => row.result_image_path)
-    );
+    const storagePaths = rows.flatMap((row) => [row.result_image_path, row.source_image_path].filter(Boolean) as string[]);
+    const signedUrls = storagePaths.length ? await createSignedAssetUrls(admin, storagePaths) : [];
+    const signedByPath = new Map<string, string>();
+
+    storagePaths.forEach((storagePath, index) => {
+      signedByPath.set(storagePath, signedUrls[index] ?? "");
+    });
 
     return NextResponse.json({
-      items: rows.map((row, index) => ({
+      items: rows.map((row) => ({
         id: row.id,
         mode: row.mode,
         gender: row.gender,
         prompt: row.prompt,
         preset: row.preset,
-        resultUrl: signedUrls[index] ?? "",
+        sourceUrl: row.source_image_path ? signedByPath.get(row.source_image_path) ?? "" : "",
+        sourceImagePath: row.source_image_path,
+        resultUrl: signedByPath.get(row.result_image_path) ?? "",
         createdAt: row.created_at,
         watermark: row.watermark,
         tookMs: row.took_ms
@@ -147,11 +154,24 @@ export async function POST(request: Request) {
       gender: formData.get("gender"),
       prompt: formData.get("prompt"),
       preset: formData.get("preset"),
+      existingSourcePath: formData.get("existingSourcePath"),
       measurements: parseMeasurements(formData.get("measurements"))
     });
 
     const photo = formData.get("file");
-    if (parsed.mode === "photo" && !(photo instanceof File)) {
+    let sourceImagePath: string | null = null;
+
+    if (photo instanceof File) {
+      const extension = photo.name.split(".").pop() || "jpg";
+      sourceImagePath = buildStoragePath(authResult.id, "uploads", photo.name, extension);
+      const sourceBuffer = Buffer.from(await photo.arrayBuffer());
+
+      const admin = createSupabaseAdmin();
+      await ensureGenerationBucket(admin);
+      await uploadGenerationAsset(admin, sourceImagePath, sourceBuffer, photo.type || "application/octet-stream");
+    } else if (parsed.mode === "photo" && parsed.existingSourcePath?.startsWith(`${authResult.id}/uploads/`)) {
+      sourceImagePath = parsed.existingSourcePath;
+    } else if (parsed.mode === "photo") {
       return NextResponse.json({ error: "Please upload a photo first." }, { status: 400 });
     }
 
@@ -167,14 +187,6 @@ export async function POST(request: Request) {
 
     const admin = createSupabaseAdmin();
     await ensureGenerationBucket(admin);
-
-    let sourceImagePath: string | null = null;
-    if (photo instanceof File) {
-      const extension = photo.name.split(".").pop() || "jpg";
-      sourceImagePath = buildStoragePath(authResult.id, "uploads", photo.name, extension);
-      const sourceBuffer = Buffer.from(await photo.arrayBuffer());
-      await uploadGenerationAsset(admin, sourceImagePath, sourceBuffer, photo.type || "application/octet-stream");
-    }
 
     const presetTemplate = await readPresetTemplate(parsed.preset);
     const resultImagePath = buildStoragePath(authResult.id, "results", parsed.preset, "svg");
@@ -204,6 +216,7 @@ export async function POST(request: Request) {
     }
 
     const resultUrl = await createSignedAssetUrl(admin, resultImagePath);
+    const sourceUrl = sourceImagePath ? await createSignedAssetUrl(admin, sourceImagePath) : "";
 
     return NextResponse.json({
       id: inserted.id,
@@ -212,6 +225,8 @@ export async function POST(request: Request) {
       gender: parsed.gender,
       prompt: parsed.prompt,
       preset: parsed.preset,
+      sourceUrl,
+      sourceImagePath,
       resultUrl,
       summary:
         parsed.mode === "mannequin"

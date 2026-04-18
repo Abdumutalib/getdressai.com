@@ -24,6 +24,8 @@ type GenerateResponse = {
   gender: GenderOption;
   prompt: string;
   preset: string;
+  sourceUrl?: string;
+  sourceImagePath?: string | null;
   resultUrl: string;
   summary: string;
   measurements?: Record<string, number> | null;
@@ -50,12 +52,14 @@ export function UploadGenerator() {
   const [selected, setSelected] = useState(safePresets[0] ?? "Luxury");
   const [prompt, setPrompt] = useState(t("upload.defaultPrompt"));
   const [generating, setGenerating] = useState(false);
+  const [hydrating, setHydrating] = useState(true);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [measurements, setMeasurements] = useState<Measurements>(defaultMeasurements);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
+  const [savedSourcePath, setSavedSourcePath] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -64,12 +68,45 @@ export function UploadGenerator() {
   }, [language, safePresets, t]);
 
   useEffect(() => {
-    return () => {
-      if (photoPreview) {
-        URL.revokeObjectURL(photoPreview);
+    async function loadLatest() {
+      setHydrating(true);
+
+      try {
+        const response = await fetch("/api/generate", { method: "GET", cache: "no-store" });
+        const data = (await response.json()) as { items?: GenerateResponse[] };
+
+        if (!response.ok || !Array.isArray(data.items) || !data.items.length) {
+          return;
+        }
+
+        const latest = data.items[0];
+        setResult(latest);
+        setMode(latest.mode);
+        setGender(latest.gender);
+        setSelected(latest.preset);
+        setPrompt(latest.prompt);
+        setSavedSourcePath(latest.sourceImagePath ?? null);
+
+        if (latest.mode === "photo" && latest.sourceUrl) {
+          setPhotoPreview(latest.sourceUrl);
+        }
+
+        if (latest.mode === "mannequin" && latest.measurements) {
+          setMeasurements({
+            height: String(latest.measurements.height ?? defaultMeasurements.height),
+            chest: String(latest.measurements.chest ?? defaultMeasurements.chest),
+            waist: String(latest.measurements.waist ?? defaultMeasurements.waist),
+            hips: String(latest.measurements.hips ?? defaultMeasurements.hips),
+            inseam: String(latest.measurements.inseam ?? defaultMeasurements.inseam)
+          });
+        }
+      } finally {
+        setHydrating(false);
       }
-    };
-  }, [photoPreview]);
+    }
+
+    void loadLatest();
+  }, []);
 
   const measurementFields = useMemo(
     () => [
@@ -94,6 +131,7 @@ export function UploadGenerator() {
 
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} · ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
   const resultIsRemote = Boolean(result?.resultUrl && !result.resultUrl.startsWith("/"));
+  const previewIsRemote = Boolean(photoPreview && !photoPreview.startsWith("blob:") && !photoPreview.startsWith("/"));
 
   function openFilePicker() {
     fileInputRef.current?.click();
@@ -114,20 +152,21 @@ export function UploadGenerator() {
       return;
     }
 
-    if (photoPreview) {
+    if (photoPreview.startsWith("blob:")) {
       URL.revokeObjectURL(photoPreview);
     }
 
     const previewUrl = URL.createObjectURL(nextFile);
     setPhotoFile(nextFile);
     setPhotoPreview(previewUrl);
+    setSavedSourcePath(null);
     setResult(null);
     setError("");
     trackEvent("upload_started", { mode: "photo", fileType: nextFile.type, size: nextFile.size });
   }
 
   async function handleGenerate() {
-    if (mode === "photo" && !photoFile) {
+    if (mode === "photo" && !photoFile && !savedSourcePath) {
       setError(t("upload.dropPhoto"));
       return;
     }
@@ -152,6 +191,10 @@ export function UploadGenerator() {
         payload.set("file", photoFile);
       }
 
+      if (mode === "photo" && !photoFile && savedSourcePath) {
+        payload.set("existingSourcePath", savedSourcePath);
+      }
+
       if (mode === "mannequin") {
         payload.set(
           "measurements",
@@ -174,6 +217,11 @@ export function UploadGenerator() {
       }
 
       setResult(data);
+      setSavedSourcePath(data.sourceImagePath ?? null);
+      if (data.mode === "photo" && data.sourceUrl) {
+        setPhotoPreview(data.sourceUrl);
+        setPhotoFile(null);
+      }
       setProgress(100);
       window.dispatchEvent(new CustomEvent("getdressai:generation-saved"));
       trackEvent("generation_completed", {
@@ -272,11 +320,19 @@ export function UploadGenerator() {
             {photoPreview ? (
               <div className="space-y-4">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/60">
-                  <Image src={photoPreview} alt="Uploaded photo preview" fill className="object-cover" unoptimized />
+                  {previewIsRemote ? (
+                    <img src={photoPreview} alt="Uploaded photo preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <Image src={photoPreview} alt="Uploaded photo preview" fill className="object-cover" unoptimized />
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-950 dark:text-white">{photoFile?.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-300">{t("upload.formats")}</p>
+                  <p className="text-sm font-medium text-slate-950 dark:text-white">
+                    {photoFile?.name || "Saved photo"}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
+                    {hydrating ? "Checking your saved upload..." : t("upload.formats")}
+                  </p>
                 </div>
                 <button
                   type="button"
