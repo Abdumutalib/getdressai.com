@@ -68,6 +68,11 @@ export default function LoginPage() {
       await supabase.auth.signOut({ scope: "local" });
     }
 
+    await fetch("/api/auth/session", {
+      method: "DELETE",
+      credentials: "same-origin"
+    });
+
     clearPinAuthRecord();
     setSavedPinEmail("");
     setPinSessionReady(false);
@@ -144,6 +149,13 @@ export default function LoginPage() {
 
     router.push(nextPath);
     router.refresh();
+  }
+
+  async function persistServerSessionCookie() {
+    await fetch("/api/auth/session", {
+      method: "POST",
+      credentials: "same-origin"
+    });
   }
 
   async function savePinIfNeeded(nextEmail: string, session: Awaited<ReturnType<NonNullable<typeof supabase>["auth"]["getSession"]>>["data"]["session"]) {
@@ -224,6 +236,7 @@ export default function LoginPage() {
         } = await supabase.auth.getSession();
 
         if (session) {
+          await persistServerSessionCookie();
           await savePinIfNeeded(email, session);
           if (pinEnabled) {
             setSavedPinEmail(email);
@@ -274,6 +287,7 @@ export default function LoginPage() {
         data: { session }
       } = await supabase.auth.getSession();
 
+      await persistServerSessionCookie();
       await savePinIfNeeded(email, session);
       completeAuthRedirect();
     } catch (nextError) {
@@ -303,6 +317,7 @@ export default function LoginPage() {
         throw sessionError;
       }
 
+      await persistServerSessionCookie();
       completeAuthRedirect();
     } catch (nextError) {
       const errorMessage = nextError instanceof Error ? nextError.message : "";
