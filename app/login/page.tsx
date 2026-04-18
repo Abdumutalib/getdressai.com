@@ -34,7 +34,12 @@ export default function LoginPage() {
     if (record) {
       setSavedPinEmail(record.email);
       setPinSessionReady(true);
+      return;
     }
+
+    setSavedPinEmail("");
+    setPinSessionReady(false);
+    setPasswordFallback(false);
   }, []);
 
   useEffect(() => {

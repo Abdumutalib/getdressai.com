@@ -15,6 +15,7 @@ type PinSessionPayload = {
 
 type PinAuthRecord = {
   version: number;
+  savedAt: number;
   email: string;
   salt: string;
   iv: string;
@@ -75,6 +76,8 @@ export function readPinAuthRecord() {
     const record = JSON.parse(raw) as Partial<PinAuthRecord>;
     if (
       record.version !== PIN_RECORD_VERSION ||
+      typeof record.savedAt !== "number" ||
+      !Number.isFinite(record.savedAt) ||
       typeof record.email !== "string" ||
       typeof record.salt !== "string" ||
       typeof record.iv !== "string" ||
@@ -129,6 +132,7 @@ export async function savePinAuthRecord(email: string, pin: string, session: Ses
 
   const record: PinAuthRecord = {
     version: PIN_RECORD_VERSION,
+    savedAt: Date.now(),
     email,
     salt: toBase64(salt),
     iv: toBase64(iv),
