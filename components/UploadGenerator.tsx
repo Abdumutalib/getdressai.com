@@ -110,10 +110,26 @@ const marketplaceCopy = {
   }
 } as const;
 
+const genderCopy = {
+  en: {
+    label: "Gender",
+    hint: "Choose who this look is for."
+  },
+  ru: {
+    label: "Пол",
+    hint: "Выберите, для кого этот образ."
+  },
+  uz: {
+    label: "Jinsi",
+    hint: "Bu look kim uchun ekanini tanlang."
+  }
+} as const;
+
 export function UploadGenerator() {
   const { t, tm, language } = useLanguage();
   const localizedMarketplaceCopy =
     marketplaceCopy[language as keyof typeof marketplaceCopy] ?? marketplaceCopy.en;
+  const localizedGenderCopy = genderCopy[language as keyof typeof genderCopy] ?? genderCopy.en;
   const presets = tm<string[]>("upload.presets");
   const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
@@ -501,8 +517,8 @@ export function UploadGenerator() {
 
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
           <div className="mb-3 flex items-center justify-between gap-4">
-            <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("upload.genderLabel")}</p>
-            <span className="text-xs text-slate-500 dark:text-slate-300">{t("upload.genderHint")}</span>
+            <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedGenderCopy.label}</p>
+            <span className="text-xs text-slate-500 dark:text-slate-300">{localizedGenderCopy.hint}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {genderOptions.map((option) => (
@@ -766,7 +782,7 @@ export function UploadGenerator() {
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  {t("upload.genderLabel")}: {t(`upload.genderValue.${result.gender}`)}
+                  {localizedGenderCopy.label}: {t(`upload.genderValue.${result.gender}`)}
                 </p>
                 <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
                   {result.mode === "mannequin" ? t("upload.resultSummaryMannequin") : t("upload.resultSummaryPhoto")}
