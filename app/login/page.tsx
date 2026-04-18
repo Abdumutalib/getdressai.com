@@ -39,6 +39,15 @@ export default function LoginPage() {
     setError("");
   }
 
+  function resetFormFields() {
+    setEmail("");
+    setPassword("");
+    setPin("");
+    setPinConfirm("");
+    setPinLogin("");
+    setPinEnabled(false);
+  }
+
   async function savePinIfNeeded(nextEmail: string, session: Awaited<ReturnType<NonNullable<typeof supabase>["auth"]["getSession"]>>["data"]["session"]) {
     if (!pinEnabled) {
       return;
@@ -181,11 +190,15 @@ export default function LoginPage() {
     setBusy(false);
   }
 
-  function removeSavedPin() {
+  async function removeSavedPin() {
+    if (supabase) {
+      await supabase.auth.signOut({ scope: "local" });
+    }
+
     clearPinAuthRecord();
     setSavedPinEmail("");
     setPinSessionReady(false);
-    setPinLogin("");
+    resetFormFields();
     setMessage(t("login.pinRemoved"));
     setError("");
   }
@@ -199,7 +212,7 @@ export default function LoginPage() {
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.pinEyebrow")}</p>
               <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">{t("login.pinTitle")}</h2>
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                {t("login.pinCopy")} {savedPinEmail}
+                {t("login.pinCopy")}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-300">
                 {pinSessionReady ? t("login.pinReady") : t("login.pinNeedsPassword")}
@@ -248,6 +261,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setAuthMode("login");
+                resetFormFields();
                 resetFeedback();
               }}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -260,6 +274,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setAuthMode("signup");
+                resetFormFields();
                 resetFeedback();
               }}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -273,6 +288,7 @@ export default function LoginPage() {
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
             <input
               type="email"
+              autoComplete="username"
               placeholder={t("login.email")}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -280,6 +296,7 @@ export default function LoginPage() {
             />
             <input
               type="password"
+              autoComplete={authMode === "signup" ? "new-password" : "current-password"}
               placeholder={t("login.password")}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -301,6 +318,7 @@ export default function LoginPage() {
                 <input
                   type="password"
                   inputMode="numeric"
+                  autoComplete="off"
                   pattern="\d*"
                   maxLength={4}
                   placeholder={t("login.pinPlaceholder")}
@@ -311,6 +329,7 @@ export default function LoginPage() {
                 <input
                   type="password"
                   inputMode="numeric"
+                  autoComplete="off"
                   pattern="\d*"
                   maxLength={4}
                   placeholder={t("login.pinConfirm")}
