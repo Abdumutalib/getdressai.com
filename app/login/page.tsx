@@ -145,20 +145,38 @@ export default function LoginPage() {
 
     try {
       if (authMode === "signup") {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined
-          }
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
         });
 
-        if (signUpError) {
-          throw signUpError;
+        const payload = (await response.json()) as {
+          error?: string;
+          session?: { access_token: string; refresh_token: string };
+        };
+
+        if (!response.ok || !payload.session) {
+          throw new Error(payload.error || t("login.genericError"));
         }
 
-        if (data.session) {
-          await savePinIfNeeded(email, data.session);
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: payload.session.access_token,
+          refresh_token: payload.session.refresh_token
+        });
+
+        if (setSessionError) {
+          throw setSessionError;
+        }
+
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          await savePinIfNeeded(email, session);
           if (pinEnabled) {
             await supabase.auth.signOut({ scope: "local" });
             setSavedPinEmail(email);
@@ -178,53 +196,39 @@ export default function LoginPage() {
           router.refresh();
           return;
         }
-
-        const { data: immediateLogin, error: immediateLoginError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (!immediateLoginError && immediateLogin.session) {
-          await savePinIfNeeded(email, immediateLogin.session);
-          if (pinEnabled) {
-            await supabase.auth.signOut({ scope: "local" });
-            setSavedPinEmail(email);
-            setPinSessionReady(true);
-            setPasswordFallback(false);
-            setPinLogin("");
-            setPassword("");
-            setPin("");
-            setPinConfirm("");
-            router.replace("/login?pin=1");
-            router.refresh();
-            return;
-          }
-
-          setMessage(t("login.signupSuccess"));
-          router.push("/dashboard");
-          router.refresh();
-          return;
-        }
-
-        setMessage(t("login.signupPendingSimple"));
-        setAuthMode("login");
-        setPin("");
-        setPinConfirm("");
-        setPinEnabled(false);
-        setBusy(false);
-        return;
       }
 
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
       });
 
-      if (signInError) {
-        throw signInError;
+      const payload = (await response.json()) as {
+        error?: string;
+        session?: { access_token: string; refresh_token: string };
+      };
+
+      if (!response.ok || !payload.session) {
+        throw new Error(payload.error || t("login.genericError"));
       }
 
-      await savePinIfNeeded(email, data.session);
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token: payload.session.access_token,
+        refresh_token: payload.session.refresh_token
+      });
+
+      if (setSessionError) {
+        throw setSessionError;
+      }
+
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      await savePinIfNeeded(email, session);
       router.push("/dashboard");
       router.refresh();
     } catch (nextError) {
