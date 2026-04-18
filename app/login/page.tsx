@@ -178,7 +178,6 @@ export default function LoginPage() {
         if (session) {
           await savePinIfNeeded(email, session);
           if (pinEnabled) {
-            await supabase.auth.signOut({ scope: "local" });
             setSavedPinEmail(email);
             setPinSessionReady(true);
             setPasswordFallback(false);
@@ -261,7 +260,13 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (nextError) {
-      if (nextError instanceof Error && nextError.message === "Saved PIN login expired.") {
+      const errorMessage = nextError instanceof Error ? nextError.message : "";
+
+      if (
+        errorMessage === "Saved PIN login expired." ||
+        /refresh token|invalid.*token|session/i.test(errorMessage)
+      ) {
+        clearPinAuthRecord();
         setSavedPinEmail("");
         setPinSessionReady(false);
         setPasswordFallback(false);
