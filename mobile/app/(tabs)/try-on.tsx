@@ -207,6 +207,46 @@ export default function TryOnScreen() {
     };
   }, [clothingRequest, measurements, selectedPreset, sourceImagePath]);
 
+  async function persistSelectedPhoto(nextPhoto: {
+    uri: string;
+    mimeType?: string;
+    fileName?: string;
+    persisted?: boolean;
+  }) {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: nextPhoto.uri,
+      name: nextPhoto.fileName || 'mobile-upload.jpg',
+      type: nextPhoto.mimeType || 'image/jpeg',
+    } as never);
+
+    const headers = await createAuthedHeaders();
+    const uploadResponse = await fetch(`${getAppOrigin()}/api/preferences`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const uploadData = (await uploadResponse.json()) as {
+      sourceImagePath?: string;
+      sourceUrl?: string;
+      error?: string;
+    };
+
+    if (!uploadResponse.ok || !uploadData.sourceImagePath) {
+      throw new Error(uploadData.error || 'Could not save uploaded photo.');
+    }
+
+    setSourceImagePath(uploadData.sourceImagePath);
+    if (uploadData.sourceUrl) {
+      setPhoto({
+        uri: uploadData.sourceUrl,
+        mimeType: nextPhoto.mimeType,
+        fileName: nextPhoto.fileName,
+        persisted: true,
+      });
+    }
+  }
+
   async function pickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -236,38 +276,43 @@ export default function TryOnScreen() {
     setRecommendedSize('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: nextPhoto.uri,
-        name: nextPhoto.fileName || 'mobile-upload.jpg',
-        type: nextPhoto.mimeType || 'image/jpeg',
-      } as never);
+      await persistSelectedPhoto(nextPhoto);
+    } catch (error) {
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Could not save photo.');
+    }
+  }
 
-      const headers = await createAuthedHeaders();
-      const uploadResponse = await fetch(`${getAppOrigin()}/api/preferences`, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-      const uploadData = (await uploadResponse.json()) as {
-        sourceImagePath?: string;
-        sourceUrl?: string;
-        error?: string;
-      };
+  async function takePhoto() {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(t('alertPermTitle'), t('alertCameraPermBody'));
+      return;
+    }
 
-      if (!uploadResponse.ok || !uploadData.sourceImagePath) {
-        throw new Error(uploadData.error || 'Could not save uploaded photo.');
-      }
+    const response = await ImagePicker.launchCameraAsync({
+      cameraType: ImagePicker.CameraType.front,
+      quality: 0.9,
+      allowsEditing: false,
+    });
 
-      setSourceImagePath(uploadData.sourceImagePath);
-      if (uploadData.sourceUrl) {
-        setPhoto({
-          uri: uploadData.sourceUrl,
-          mimeType: nextPhoto.mimeType,
-          fileName: nextPhoto.fileName,
-          persisted: true,
-        });
-      }
+    if (response.canceled || !response.assets[0]) {
+      return;
+    }
+
+    const asset = response.assets[0];
+    const nextPhoto = {
+      uri: asset.uri,
+      mimeType: asset.mimeType || 'image/jpeg',
+      fileName: asset.fileName || 'mobile-camera.jpg',
+      persisted: false,
+    };
+    setPhoto(nextPhoto);
+    setResultImage(null);
+    setRecommendations([]);
+    setRecommendedSize('');
+
+    try {
+      await persistSelectedPhoto(nextPhoto);
     } catch (error) {
       Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Could not save photo.');
     }
@@ -390,9 +435,14 @@ export default function TryOnScreen() {
 
       <View style={styles.section}>
         <ThemedText type="subtitle">{t('tryonStep1')}</ThemedText>
-        <Pressable style={styles.primaryButton} onPress={pickPhoto}>
-          <ThemedText style={styles.primaryButtonText}>{t('tryonPhotoButton')}</ThemedText>
-        </Pressable>
+        <View style={styles.photoActions}>
+          <Pressable style={styles.primaryButtonHalf} onPress={pickPhoto}>
+            <ThemedText style={styles.primaryButtonText}>{t('tryonPhotoButton')}</ThemedText>
+          </Pressable>
+          <Pressable style={styles.secondaryButtonHalf} onPress={takePhoto}>
+            <ThemedText type="defaultSemiBold">{t('tryonCameraButton')}</ThemedText>
+          </Pressable>
+        </View>
         {photo ? <Image source={{ uri: photo.uri }} style={styles.preview} contentFit="cover" /> : null}
       </View>
 
@@ -513,6 +563,10 @@ const styles = StyleSheet.create({
   section: {
     gap: 10,
   },
+  photoActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   primaryButton: {
     backgroundColor: '#4F46E5',
     borderRadius: 18,
@@ -520,7 +574,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  primaryButtonHalf: {
+    flex: 1,
+    backgroundColor: '#4F46E5',
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   secondaryButton: {
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF2FF',
+  },
+  secondaryButtonHalf: {
+    flex: 1,
     borderRadius: 18,
     paddingVertical: 15,
     alignItems: 'center',

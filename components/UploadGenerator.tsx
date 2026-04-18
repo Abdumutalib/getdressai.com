@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
+import { Camera, ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
 import { formatCurrency } from "@/lib/utils";
@@ -210,6 +210,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const [photoPreview, setPhotoPreview] = useState("");
   const [savedSourcePath, setSavedSourcePath] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const hydratedInitialRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -371,6 +372,10 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
 
   function openFilePicker() {
     fileInputRef.current?.click();
+  }
+
+  function openCameraPicker() {
+    cameraInputRef.current?.click();
   }
 
   async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
@@ -768,6 +773,14 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               className="hidden"
               onChange={handlePhotoChange}
             />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
             {photoPreview ? (
               <div className="space-y-4">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/60">
@@ -782,24 +795,54 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                     {photoFile?.name || localizedMarketplaceCopy.savedPhoto}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-300">
-                    {hydrating ? "Checking your saved upload..." : t("upload.formats")}
+                    {hydrating ? t("upload.checkingSavedUpload") : t("upload.formats")}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={openFilePicker}
-                  className="btn-muted inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
-                >
-                  <UploadCloud className="size-4" />
-                  {t("upload.modePhoto")}
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={openFilePicker}
+                    className="btn-muted inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                  >
+                    <UploadCloud className="size-4" />
+                    {t("upload.choosePhoto")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openCameraPicker}
+                    className="btn-muted inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                  >
+                    <Camera className="size-4" />
+                    {t("upload.takePhoto")}
+                  </button>
+                </div>
               </div>
             ) : (
-              <button type="button" onClick={openFilePicker} className="block w-full">
-                <UploadCloud className="mx-auto size-8 text-slate-500" />
-                <p className="mt-4 text-sm font-medium text-slate-950 dark:text-white">{t("upload.dropPhoto")}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("upload.formats")}</p>
-              </button>
+              <div className="space-y-4">
+                <div>
+                  <UploadCloud className="mx-auto size-8 text-slate-500" />
+                  <p className="mt-4 text-sm font-medium text-slate-950 dark:text-white">{t("upload.dropPhoto")}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("upload.formats")}</p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={openFilePicker}
+                    className="btn-primary inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold"
+                  >
+                    <UploadCloud className="size-4" />
+                    {t("upload.choosePhoto")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openCameraPicker}
+                    className="btn-muted inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold"
+                  >
+                    <Camera className="size-4" />
+                    {t("upload.takePhoto")}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         ) : (
