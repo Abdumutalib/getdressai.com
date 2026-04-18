@@ -69,20 +69,23 @@ function buildSearchUrl(marketplace: RecommendationSource, query: string) {
 export function buildFallbackRecommendations({
   preset,
   prompt,
+  clothingRequest,
   recommendedSize
 }: {
   preset: string;
   prompt: string;
+  clothingRequest?: string;
   recommendedSize: string;
 }) {
   const slug = preset.toLowerCase().replace(/[^a-z0-9]+/g, "") || "luxury";
   const image = fallbackImages[slug] || fallbackImages.luxury;
-  const keywords = `${preset} ${prompt}`.trim();
+  const requestLabel = clothingRequest?.trim() || preset;
+  const keywords = `${requestLabel} ${prompt}`.trim();
 
   const products = [
-    { marketplace: "amazon" as const, title: `${preset} look set`, price: 79 },
-    { marketplace: "ebay" as const, title: `${preset} style outfit`, price: 64 },
-    { marketplace: "aliexpress" as const, title: `${preset} fashion match`, price: 42 }
+    { marketplace: "amazon" as const, title: `${requestLabel} set`, price: 79 },
+    { marketplace: "ebay" as const, title: `${requestLabel} outfit`, price: 64 },
+    { marketplace: "aliexpress" as const, title: `${requestLabel} match`, price: 42 }
   ];
 
   return products.map((product, index) => ({

@@ -17,6 +17,7 @@ const bodySchema = z.object({
   mode: z.enum(["photo", "mannequin"]).default("photo"),
   gender: z.enum(["female", "male", "unisex"]).default("female"),
   prompt: z.string().min(5).max(400),
+  clothingRequest: z.string().max(160).optional(),
   preset: z.string().min(2).max(80).default("Custom"),
   existingSourcePath: z.string().min(1).optional(),
   measurements: z
@@ -155,6 +156,7 @@ export async function POST(request: Request) {
       mode: formData.get("mode"),
       gender: formData.get("gender"),
       prompt: formData.get("prompt"),
+      clothingRequest: formData.get("clothingRequest"),
       preset: formData.get("preset"),
       existingSourcePath: formData.get("existingSourcePath"),
       measurements: parseMeasurements(formData.get("measurements"))
@@ -232,8 +234,8 @@ export async function POST(request: Request) {
       resultUrl,
       summary:
         parsed.mode === "mannequin"
-          ? "Virtual mannequin generated from your saved size profile."
-          : "Photo-based try-on generated from your uploaded image.",
+          ? `Virtual mannequin generated for ${parsed.clothingRequest || parsed.preset}.`
+          : `Photo-based try-on generated for ${parsed.clothingRequest || parsed.preset}.`,
       measurements: parsed.measurements ?? null,
       watermark: true,
       tookMs: 12130

@@ -70,6 +70,9 @@ const marketplaceCopy = {
     fitScore: "Fit score",
     marketplaceSource: "Marketplace source",
     openProduct: "Open item",
+    clothingLabel: "What clothes do you want?",
+    clothingPlaceholder: "Try beach set, pajamas, airport look, evening dress...",
+    clothingHint: "Describe the exact outfit you want to try or buy.",
     autoSource: "Matched to your photo and measurements",
     marketplaceError: "Could not load marketplace recommendations.",
     savedPhoto: "Saved photo from your last session"
@@ -87,6 +90,9 @@ const marketplaceCopy = {
     fitScore: "Оценка совпадения",
     marketplaceSource: "Маркетплейс",
     openProduct: "Открыть товар",
+    clothingLabel: "Какую одежду вы хотите?",
+    clothingPlaceholder: "Например: пляжный набор, пижама, дорожный образ, вечернее платье...",
+    clothingHint: "Опишите одежду, которую хотите примерить или найти в магазинах.",
     autoSource: "Подбор по вашему фото и меркам",
     marketplaceError: "Не удалось загрузить рекомендации из маркетплейсов.",
     savedPhoto: "Сохранённое фото из прошлого входа"
@@ -104,6 +110,9 @@ const marketplaceCopy = {
     fitScore: "Moslik bahosi",
     marketplaceSource: "Marketpleys",
     openProduct: "Mahsulotni ochish",
+    clothingLabel: "Qanday kiyim xohlaysiz?",
+    clothingPlaceholder: "Masalan: plyaj to'plami, pijama, sayohat looki, kechki ko'ylak...",
+    clothingHint: "Kiydirmoqchi yoki topmoqchi bo'lgan kiyimni yozing.",
     autoSource: "Rasmingiz va o'lchamingiz asosida tanlandi",
     marketplaceError: "Marketpleys tavsiyalarini yuklab bo'lmadi.",
     savedPhoto: "Oldingi kirishdan сақланган rasm"
@@ -140,6 +149,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const [gender, setGender] = useState<GenderOption>("female");
   const [selected, setSelected] = useState(safePresets[0] ?? "Luxury");
   const [prompt, setPrompt] = useState(t("upload.defaultPrompt"));
+  const [clothingRequest, setClothingRequest] = useState("");
   const [generating, setGenerating] = useState(false);
   const [hydrating, setHydrating] = useState(true);
   const [recommending, setRecommending] = useState(false);
@@ -159,6 +169,12 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     setSelected(safePresets[0] ?? "Luxury");
     setPrompt(t("upload.defaultPrompt"));
   }, [language, safePresets, t]);
+
+  useEffect(() => {
+    if (!clothingRequest.trim()) {
+      setClothingRequest(safePresets[0] ?? "Luxury");
+    }
+  }, [safePresets, clothingRequest]);
 
   useEffect(() => {
     async function loadLatest() {
@@ -187,6 +203,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         setGender(latest.gender);
         setSelected(latest.preset);
         setPrompt(latest.prompt);
+        setClothingRequest(latest.preset);
         setSavedSourcePath(latest.sourceImagePath ?? null);
 
         if (latest.measurements) {
@@ -292,6 +309,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
+          clothingRequest,
           preset: selected,
           gender,
           sourceImagePath: savedSourcePath,
@@ -315,6 +333,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       setRecommendedSize(data.recommendedSize || "");
       trackEvent("marketplace_recommendations_loaded", {
         preset: selected,
+        clothingRequest,
         count: data.products.length,
         size: data.recommendedSize || ""
       });
@@ -349,6 +368,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       payload.set("mode", mode);
       payload.set("gender", gender);
       payload.set("prompt", prompt);
+      payload.set("clothingRequest", clothingRequest.trim() || selected);
       payload.set("preset", selected);
       payload.set(
         "measurements",
@@ -386,6 +406,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       trackEvent("generation_completed", {
         mode: data.mode,
         preset: data.preset,
+        clothingRequest: clothingRequest.trim() || data.preset,
         gender: data.gender,
         tookMs: data.tookMs
       });
@@ -554,6 +575,24 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                 {option.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-950 dark:text-white">
+              {localizedMarketplaceCopy.clothingLabel}
+            </p>
+            <p className="text-xs leading-6 text-slate-500 dark:text-slate-300">
+              {localizedMarketplaceCopy.clothingHint}
+            </p>
+            <input
+              type="text"
+              value={clothingRequest}
+              onChange={(event) => setClothingRequest(event.target.value)}
+              placeholder={localizedMarketplaceCopy.clothingPlaceholder}
+              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-accent dark:border-white/10 dark:bg-slate-950/60"
+            />
           </div>
         </div>
 

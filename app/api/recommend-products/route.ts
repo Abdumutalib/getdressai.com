@@ -10,6 +10,7 @@ import {
 const schema = z.object({
   prompt: z.string().min(3).max(400),
   preset: z.string().min(2).max(80),
+  clothingRequest: z.string().max(160).optional(),
   gender: z.enum(["female", "male", "unisex"]),
   sourceImagePath: z.string().min(1),
   measurements: z.object({
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
 
     const requestBody = {
       keywords: `${body.preset} ${body.prompt}`.trim(),
+      clothingRequest: body.clothingRequest?.trim() || body.preset,
       style: body.preset,
       size: recommendedSize,
       measurements: {
@@ -121,6 +123,7 @@ export async function POST(request: Request) {
       products = buildFallbackRecommendations({
         preset: body.preset,
         prompt: body.prompt,
+        clothingRequest: body.clothingRequest,
         recommendedSize
       });
     }
