@@ -1,3 +1,5 @@
+import { syncedProductCopy } from "@/shared/synced-product-copy";
+
 export const supportedLanguages = ["en", "ru", "uz", "tr", "es", "fr", "de", "ar"] as const;
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
@@ -229,12 +231,12 @@ export const translations = {
       defaultPrompt: "Luxury outfit, clean light, simple background",
       generating: "Generating...",
       generate: "Generate result",
-      presets: ["Luxury", "Streetwear", "Wedding", "Office", "Gym", "Anime", "Celebrity", "Casual"]
+      presets: syncedProductCopy.en.presets
     },
     dashboard: {
       eyebrow: "Dashboard",
-      workflowEyebrow: "Pro workflow",
-      workflowCopy: "Generate, track, and monetize every look.",
+      workflowEyebrow: syncedProductCopy.en.workflowEyebrow,
+      workflowCopy: syncedProductCopy.en.workflowCopy,
       title: "Your results, credits, and history.",
       recentResults: "Recent results",
       downloadHd: "HD download is for paid plans",
@@ -530,12 +532,12 @@ export const translations = {
       defaultPrompt: "Роскошный образ, чистый свет, простой фон",
       generating: "Создание...",
       generate: "Создать результат",
-      presets: ["Роскошь", "Стритвир", "Свадьба", "Офис", "Спортзал", "Аниме", "Знаменитость", "Повседневный"]
+      presets: syncedProductCopy.ru.presets
     },
     dashboard: {
       eyebrow: "Панель",
-      workflowEyebrow: "Профи-режим",
-      workflowCopy: "Создавайте, отслеживайте и монетизируйте каждый образ.",
+      workflowEyebrow: syncedProductCopy.ru.workflowEyebrow,
+      workflowCopy: syncedProductCopy.ru.workflowCopy,
       title: "Ваши результаты, кредиты и история.",
       recentResults: "Последние результаты",
       downloadHd: "HD загрузка доступна на платных планах",
@@ -827,12 +829,12 @@ export const translations = {
       defaultPrompt: "Hashamatli outfit, toza yorug'lik, oddiy fon",
       generating: "Yaratilmoqda...",
       generate: "Natijani yaratish",
-      presets: ["Hashamat", "Streetwear", "To'y", "Ofis", "Sport", "Anime", "Mashhur uslub", "Kundalik"]
+      presets: syncedProductCopy.uz.presets
     },
     dashboard: {
       eyebrow: "Panel",
-      workflowEyebrow: "Pro ish oqimi",
-      workflowCopy: "Har bir look'ni yarating, kuzating va monetizatsiya qiling.",
+      workflowEyebrow: syncedProductCopy.uz.workflowEyebrow,
+      workflowCopy: syncedProductCopy.uz.workflowCopy,
       title: "Natijalar, kreditlar va tarixingiz.",
       recentResults: "So'nggi natijalar",
       downloadHd: "HD yuklash pullik planlarda bor",
@@ -1100,12 +1102,12 @@ export const translations = {
       defaultPrompt: "Lüks kombin, temiz ışık, sade arka plan",
       generating: "Oluşturuluyor...",
       generate: "Sonucu oluştur",
-      presets: ["Luks", "Streetwear", "Dugun", "Ofis", "Spor", "Anime", "Unlu stili", "Gunluk"]
+      presets: syncedProductCopy.tr.presets
     },
     dashboard: {
       eyebrow: "Panel",
-      workflowEyebrow: "Pro akisi",
-      workflowCopy: "Her look'u olusturun, takip edin ve gelire cevirin.",
+      workflowEyebrow: syncedProductCopy.tr.workflowEyebrow,
+      workflowCopy: syncedProductCopy.tr.workflowCopy,
       title: "Sonuçlarınız, kredileriniz ve geçmişiniz.",
       recentResults: "Son sonuçlar",
       downloadHd: "HD indirme ücretli planlarda var",
@@ -1364,12 +1366,12 @@ export const translations = {
       defaultPrompt: "Outfit de lujo, luz limpia, fondo simple",
       generating: "Creando...",
       generate: "Crear resultado",
-      presets: ["Lujo", "Streetwear", "Boda", "Oficina", "Gimnasio", "Anime", "Celebridad", "Casual"]
+      presets: syncedProductCopy.es.presets
     },
     dashboard: {
       eyebrow: "Panel",
-      workflowEyebrow: "Flujo pro",
-      workflowCopy: "Crea, sigue y monetiza cada look.",
+      workflowEyebrow: syncedProductCopy.es.workflowEyebrow,
+      workflowCopy: syncedProductCopy.es.workflowCopy,
       title: "Tus resultados, créditos e historial.",
       recentResults: "Resultados recientes",
       downloadHd: "La descarga HD está en planes de pago",
@@ -1628,12 +1630,12 @@ export const translations = {
       defaultPrompt: "Tenue de luxe, lumière propre, fond simple",
       generating: "Création...",
       generate: "Créer le résultat",
-      presets: ["Luxe", "Streetwear", "Mariage", "Bureau", "Salle de sport", "Anime", "Celebrité", "Casual"]
+      presets: syncedProductCopy.fr.presets
     },
     dashboard: {
       eyebrow: "Tableau de bord",
-      workflowEyebrow: "Flux pro",
-      workflowCopy: "Creez, suivez et monétisez chaque look.",
+      workflowEyebrow: syncedProductCopy.fr.workflowEyebrow,
+      workflowCopy: syncedProductCopy.fr.workflowCopy,
       title: "Vos résultats, crédits et historique.",
       recentResults: "Résultats récents",
       downloadHd: "Le téléchargement HD est pour les plans payants",
@@ -1892,12 +1894,12 @@ export const translations = {
       defaultPrompt: "Luxus Outfit, sauberes Licht, einfacher Hintergrund",
       generating: "Wird erstellt...",
       generate: "Ergebnis erstellen",
-      presets: ["Luxus", "Streetwear", "Hochzeit", "Büro", "Fitness", "Anime", "Promi", "Casual"]
+      presets: syncedProductCopy.de.presets
     },
     dashboard: {
       eyebrow: "Dashboard",
-      workflowEyebrow: "Pro-Workflow",
-      workflowCopy: "Erstelle, verfolge und monetarisiere jeden Look.",
+      workflowEyebrow: syncedProductCopy.de.workflowEyebrow,
+      workflowCopy: syncedProductCopy.de.workflowCopy,
       title: "Deine Ergebnisse, Credits und Historie.",
       recentResults: "Letzte Ergebnisse",
       downloadHd: "HD Download ist in bezahlten Plänen enthalten",
@@ -2156,12 +2158,12 @@ export const translations = {
       defaultPrompt: "إطلالة فاخرة، إضاءة نظيفة، خلفية بسيطة",
       generating: "جارٍ الإنشاء...",
       generate: "إنشاء النتيجة",
-      presets: ["فاخر", "ملابس شارع", "زفاف", "مكتب", "رياضة", "أنمي", "مشاهير", "كاجوال"]
+      presets: syncedProductCopy.ar.presets
     },
     dashboard: {
       eyebrow: "لوحة التحكم",
-      workflowEyebrow: "وضع احترافي",
-      workflowCopy: "أنشئ كل إطلالة وتابعها وحوّلها إلى دخل.",
+      workflowEyebrow: syncedProductCopy.ar.workflowEyebrow,
+      workflowCopy: syncedProductCopy.ar.workflowCopy,
       title: "نتائجك وأرصدةك وسجلك.",
       recentResults: "آخر النتائج",
       downloadHd: "تنزيل HD متاح في الخطط المدفوعة",

@@ -1,4 +1,5 @@
 import { LEGACY_EN, LEGACY_RU, LEGACY_UZ } from './legacy-app-i18n';
+import { syncedProductCopy } from '../../shared/synced-product-copy';
 
 export const LANG_IDS = ['en', 'es', 'fr', 'pt', 'ar', 'de', 'ru', 'uz'] as const;
 export type AppLangId = (typeof LANG_IDS)[number];
@@ -243,7 +244,21 @@ const PARTIAL: Record<AppLangId, Partial<Record<string, string>>> = {
 function buildMobileStrings(): Record<AppLangId, Record<string, string>> {
   const out = {} as Record<AppLangId, Record<string, string>>;
   for (const id of LANG_IDS) {
-    out[id] = { ...EN, ...(PARTIAL[id] || {}) } as Record<string, string>;
+    const synced = syncedProductCopy[id] ?? syncedProductCopy.en;
+    out[id] = {
+      ...EN,
+      ...(PARTIAL[id] || {}),
+      exploreWorkflowEyebrow: synced.workflowEyebrow,
+      exploreWorkflowCopy: synced.workflowCopy,
+      presetLuxury: synced.presets[0],
+      presetStreetwear: synced.presets[1],
+      presetWedding: synced.presets[2],
+      presetOffice: synced.presets[3],
+      presetGym: synced.presets[4],
+      presetAnime: synced.presets[5],
+      presetCelebrity: synced.presets[6],
+      presetCasual: synced.presets[7]
+    } as Record<string, string>;
   }
   return out;
 }
