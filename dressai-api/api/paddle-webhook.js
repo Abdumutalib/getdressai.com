@@ -52,8 +52,6 @@ async function applyPaddleTransactionToSupabase(supabase, userId, tx) {
   };
 
   if (existing) {
-    subRow.stripe_customer_id = existing.stripe_customer_id;
-    subRow.stripe_subscription_id = existing.stripe_subscription_id;
     subRow.trial_start = existing.trial_start;
     subRow.trial_end = existing.trial_end;
     subRow.plan_type = existing.plan_type;
@@ -63,8 +61,6 @@ async function applyPaddleTransactionToSupabase(supabase, userId, tx) {
     subRow.status = existing.status;
     subRow.paddle_subscription_id = existing.paddle_subscription_id ?? null;
   } else {
-    subRow.stripe_customer_id = null;
-    subRow.stripe_subscription_id = null;
     subRow.trial_start = null;
     subRow.trial_end = null;
     subRow.plan_type = "paddle";
@@ -144,8 +140,6 @@ async function applyPaddleSubscriptionActivated(supabase, userId, sub) {
   };
 
   if (existing) {
-    subRow.stripe_customer_id = existing.stripe_customer_id;
-    subRow.stripe_subscription_id = existing.stripe_subscription_id;
     subRow.trial_start = existing.trial_start;
     subRow.trial_end = existing.trial_end;
     subRow.plan_type = existing.plan_type || "paddle";
@@ -155,8 +149,6 @@ async function applyPaddleSubscriptionActivated(supabase, userId, sub) {
     subRow.paddle_last_transaction_id = existing.paddle_last_transaction_id ?? null;
     subRow.status = existing.status === "trial" ? "trial" : "active";
   } else {
-    subRow.stripe_customer_id = null;
-    subRow.stripe_subscription_id = null;
     subRow.trial_start = null;
     subRow.trial_end = null;
     subRow.plan_type = "paddle";

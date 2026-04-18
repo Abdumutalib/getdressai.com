@@ -238,7 +238,6 @@ function buildLocalUserFromSupabaseAuthUser(authUser) {
     referral_source: null,
     createdAt: authUser.created_at || now,
     updatedAt: now,
-    stripeCustomerEmail: null,
     lastCheckoutSessionId: null,
     authProvider: "supabase",
   };
@@ -991,7 +990,6 @@ app.get("/config", (req, res) => {
     ebaySearchProxy: Boolean(process.env.EBAY_BROWSE_UPSTREAM_URL?.trim()),
     aliexpressSearchProxy: Boolean(process.env.ALIEXPRESS_AFFILIATE_UPSTREAM_URL?.trim()),
     hybridMarketplaceProxy: Boolean(process.env.HYBRID_MARKETPLACE_UPSTREAM_URL?.trim()),
-    stripeTrialEnabled: false,
     paddleWebhookEnabled: Boolean(
       process.env.PADDLE_API_KEY?.trim() &&
         process.env.PADDLE_WEBHOOK_SECRET?.trim() &&
@@ -1053,7 +1051,6 @@ app.post("/auth/register", authRouteLimiter, async (req, res) => {
     referral_source,
     createdAt: now,
     updatedAt: now,
-    stripeCustomerEmail: null,
     lastCheckoutSessionId: null,
   };
 
@@ -1135,7 +1132,7 @@ app.get("/v1/user-quota", requireAuth, async (req, res) => {
 });
 
 /**
- * Supabase `subscriptions` / `user_quotas` + Stripe 3-day trial (monthly price).
+ * Legacy billing route kept only for compatibility.
  * Auth: JWT — body ичида user_id ишончсиз; req.user ишлатилади.
  */
 app.post("/v1/stripe-trial", requireAuth, async (req, res) => {

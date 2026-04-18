@@ -18,9 +18,7 @@ async function handleUserSubscriptionStatus(req, res, ctx) {
   try {
     const { data: sub, error: e1 } = await supabase
       .from("subscriptions")
-      .select(
-        "status, stripe_subscription_id, paddle_subscription_id, trial_end, current_period_end, cancel_at_period_end"
-      )
+      .select("status, paddle_subscription_id, trial_end, current_period_end, cancel_at_period_end")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -58,7 +56,7 @@ async function handleUserSubscriptionStatus(req, res, ctx) {
       is_trial: Boolean(isTrialActive),
       is_premium: Boolean(isPremiumActive),
       trial_days_left: trialDaysLeft,
-      subscription_id: sub?.paddle_subscription_id ?? sub?.stripe_subscription_id ?? null,
+      subscription_id: sub?.paddle_subscription_id ?? null,
       current_period_end: sub?.current_period_end ?? null,
       status: st,
       cancel_at_period_end: Boolean(sub?.cancel_at_period_end),
