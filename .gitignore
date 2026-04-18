@@ -21,3 +21,4 @@ auto-caption-video/*.mp4
 .vercel
 .next/
 out/
+*.tsbuildinfo
