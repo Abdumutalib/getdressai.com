@@ -17,6 +17,9 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        lazy: true,
+        freezeOnBlur: true,
+        popToTopOnBlur: true,
       }}>
       <Tabs.Screen
         name="index"

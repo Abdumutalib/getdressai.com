@@ -125,7 +125,11 @@ const genderCopy = {
   }
 } as const;
 
-export function UploadGenerator() {
+type UploadGeneratorProps = {
+  skipInitialLoad?: boolean;
+};
+
+export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProps) {
   const { t, tm, language } = useLanguage();
   const localizedMarketplaceCopy =
     marketplaceCopy[language as keyof typeof marketplaceCopy] ?? marketplaceCopy.en;
@@ -158,11 +162,20 @@ export function UploadGenerator() {
 
   useEffect(() => {
     async function loadLatest() {
+      if (skipInitialLoad) {
+        setHydrating(false);
+        return;
+      }
+
       setHydrating(true);
 
       try {
         const response = await fetch("/api/generate", { method: "GET", cache: "no-store" });
         const data = (await response.json()) as { items?: GenerateResponse[] };
+
+        if (response.status === 401) {
+          return;
+        }
 
         if (!response.ok || !Array.isArray(data.items) || !data.items.length) {
           return;
@@ -195,7 +208,7 @@ export function UploadGenerator() {
     }
 
     void loadLatest();
-  }, []);
+  }, [skipInitialLoad]);
 
   const measurementFields = useMemo(
     () => [
@@ -455,9 +468,15 @@ export function UploadGenerator() {
                 >
                   <div className="relative aspect-[4/5] bg-white dark:bg-slate-950/60">
                     {product.image.startsWith("/") ? (
-                      <Image src={product.image} alt={product.title} fill className="object-cover" />
+                      <Image
+                        src={product.image}
+                        alt={product.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
                     ) : (
-                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
+                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" loading="lazy" />
                     )}
                   </div>
                   <div className="space-y-3 p-4">
@@ -551,9 +570,9 @@ export function UploadGenerator() {
               <div className="space-y-4">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/60">
                   {previewIsRemote ? (
-                    <img src={photoPreview} alt="Uploaded photo preview" className="h-full w-full object-cover" />
+                    <img src={photoPreview} alt="Uploaded photo preview" className="h-full w-full object-cover" loading="lazy" />
                   ) : (
-                    <Image src={photoPreview} alt="Uploaded photo preview" fill className="object-cover" unoptimized />
+                    <Image src={photoPreview} alt="Uploaded photo preview" fill className="object-cover" sizes="320px" unoptimized />
                   )}
                 </div>
                 <div className="space-y-1">
@@ -715,7 +734,7 @@ export function UploadGenerator() {
                   }`}
                 >
                   <div className="relative aspect-[4/5] bg-slate-50 dark:bg-slate-950/60">
-                    <Image src={`/examples/${slug}.svg`} alt={presetLabel} fill className="object-cover" />
+                    <Image src={`/examples/${slug}.svg`} alt={presetLabel} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                   </div>
                   <div className="px-3 py-3">
                     <p className="text-sm font-semibold text-slate-950 dark:text-white">{presetLabel}</p>
@@ -775,9 +794,9 @@ export function UploadGenerator() {
             <div className="grid gap-5 md:grid-cols-[220px_1fr] md:items-center">
               <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/60">
                 {resultIsRemote ? (
-                  <img src={result.resultUrl} alt={result.preset} className="h-full w-full object-cover" />
+                  <img src={result.resultUrl} alt={result.preset} className="h-full w-full object-cover" loading="lazy" />
                 ) : (
-                  <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" />
+                  <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" sizes="220px" />
                 )}
               </div>
               <div className="space-y-2">

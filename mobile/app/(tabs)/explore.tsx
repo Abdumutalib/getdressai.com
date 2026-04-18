@@ -25,7 +25,11 @@ export default function StyleHubScreen() {
   ];
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      removeClippedSubviews
+      showsVerticalScrollIndicator={false}>
       <LanguageBar />
 
       <View style={styles.hero}>

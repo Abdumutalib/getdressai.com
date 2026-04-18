@@ -1,14 +1,61 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowRight, PlayCircle, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
-import { UploadGenerator } from "@/components/UploadGenerator";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
 
+const UploadGenerator = dynamic(
+  () => import("@/components/UploadGenerator").then((module) => module.UploadGenerator),
+  {
+    loading: () => (
+      <div className="glass-panel rounded-[2rem] p-6">
+        <div className="space-y-4">
+          <div className="h-28 animate-pulse rounded-[1.5rem] bg-slate-100 dark:bg-white/5" />
+          <div className="h-16 animate-pulse rounded-[1.5rem] bg-slate-100 dark:bg-white/5" />
+          <div className="h-56 animate-pulse rounded-[1.5rem] bg-slate-100 dark:bg-white/5" />
+          <div className="h-12 animate-pulse rounded-full bg-slate-200 dark:bg-white/10" />
+        </div>
+      </div>
+    ),
+  }
+);
+
 export function Hero() {
   const { t } = useLanguage();
+  const [showGenerator, setShowGenerator] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let idleId: number | null = null;
+    const fallback = window.setTimeout(() => {
+      if (!cancelled) {
+        setShowGenerator(true);
+      }
+    }, 700);
+
+    if ("requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(
+        () => {
+          if (!cancelled) {
+            setShowGenerator(true);
+          }
+        },
+        { timeout: 1500 }
+      );
+    }
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallback);
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+    };
+  }, []);
 
   return (
     <section className="relative overflow-hidden bg-hero-radial py-16 sm:py-24">
@@ -92,7 +139,7 @@ export function Hero() {
 
         <div className="grid gap-6">
           <BeforeAfterSlider beforeSrc="/examples/before.svg" afterSrc="/examples/luxury.svg" />
-          <UploadGenerator />
+          {showGenerator ? <UploadGenerator skipInitialLoad /> : null}
         </div>
       </div>
     </section>

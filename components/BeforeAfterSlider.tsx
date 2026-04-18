@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
 
 type Props = {
@@ -9,25 +9,30 @@ type Props = {
   afterSrc: string;
 };
 
-export function BeforeAfterSlider({ beforeSrc, afterSrc }: Props) {
+export const BeforeAfterSlider = memo(function BeforeAfterSlider({ beforeSrc, afterSrc }: Props) {
   const { t } = useLanguage();
   const [position, setPosition] = useState(58);
 
   return (
     <div className="glass-panel premium-ring relative overflow-hidden rounded-[2rem] border">
       <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-900">
-        <Image src={beforeSrc} alt="19 y.o. model before" fill className="object-cover" priority />
+        <Image
+          src={beforeSrc}
+          alt="19 y.o. model before"
+          fill
+          className="object-cover"
+          priority
+          sizes="(max-width: 768px) 100vw, 48vw"
+        />
 
-        <div className="absolute inset-y-0 right-0 overflow-hidden" style={{ width: `${100 - position}%` }}>
-          <div className="relative h-full w-[calc(100vw)] max-w-none">
-            <Image
-              src={afterSrc}
-              alt="19 y.o. model after AI transformation"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
+        <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 0 0 ${position}%)` }}>
+          <Image
+            src={afterSrc}
+            alt="19 y.o. model after AI transformation"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 48vw"
+          />
         </div>
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
@@ -51,6 +56,7 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc }: Props) {
           min={8}
           max={92}
           value={position}
+          onInput={(event) => setPosition(Number((event.target as HTMLInputElement).value))}
           onChange={(event) => setPosition(Number(event.target.value))}
           className="absolute inset-x-6 bottom-6 z-20 accent-accent"
           aria-label="Before after slider"
@@ -58,4 +64,4 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc }: Props) {
       </div>
     </div>
   );
-}
+});

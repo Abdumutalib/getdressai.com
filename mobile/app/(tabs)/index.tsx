@@ -16,7 +16,11 @@ export default function HomeScreen() {
   const quickSteps = [t('homeStep1'), t('homeStep2'), t('homeStep3')];
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      removeClippedSubviews
+      showsVerticalScrollIndicator={false}>
       <LanguageBar />
 
       <View style={styles.hero}>
