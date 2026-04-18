@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -544,19 +543,14 @@ export default function LoginPage() {
             {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
           </form>
 
-          <div className="mt-6 text-sm text-slate-500 dark:text-slate-300">
-            <div className="flex items-center justify-between gap-3">
-              <Link href="/reset-password" className="font-medium text-accent transition hover:opacity-80">
-                {t("login.sendReset")}
-              </Link>
-              <button
-                type="button"
-                onClick={clearAllAuthState}
-                className="font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-              >
-                {t("login.clearAll")}
-              </button>
-            </div>
+          <div className="mt-6 flex justify-end text-sm text-slate-500 dark:text-slate-300">
+            <button
+              type="button"
+              onClick={clearAllAuthState}
+              className="font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            >
+              {t("login.clearAll")}
+            </button>
           </div>
         </div>
         ) : null}
