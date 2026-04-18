@@ -67,7 +67,7 @@ export function PricingCards() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Checkout failed.");
+        throw new Error(data.error || t("pricing.checkoutFailed"));
       }
 
       const checkoutUrl =
@@ -78,12 +78,12 @@ export function PricingCards() {
         data?.url;
 
       if (!checkoutUrl) {
-        throw new Error("Checkout URL not returned.");
+        throw new Error(t("pricing.checkoutUrlMissing"));
       }
 
       window.location.href = checkoutUrl;
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Checkout failed.");
+      setError(nextError instanceof Error ? nextError.message : t("pricing.checkoutFailed"));
     } finally {
       setLoadingPlan(null);
     }
@@ -105,7 +105,7 @@ export function PricingCards() {
           >
             {plan.highlight ? (
               <div className="mb-4 inline-flex rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
-                Best value for creators
+                {t("pricing.bestValue")}
               </div>
             ) : null}
             <div className="flex items-center justify-between gap-3">
@@ -148,10 +148,10 @@ export function PricingCards() {
                 plan.highlight ? "bg-white text-slate-950 hover:bg-white/90" : "bg-ink text-white hover:opacity-90"
               } ${loadingPlan === plan.plan ? "cursor-wait opacity-70" : ""}`}
             >
-              {loadingPlan === plan.plan ? "Loading..." : plan.cta}
+              {loadingPlan === plan.plan ? t("pricing.loading") : plan.cta}
             </button>
             <p className={`mt-3 text-xs ${plan.highlight ? "text-white/60" : "text-slate-500 dark:text-slate-300"}`}>
-              {plan.highlight ? "Most creators upgrade here after the first free try." : "Instant activation. Cancel or upgrade anytime."}
+              {plan.highlight ? t("pricing.highlightNote") : t("pricing.defaultNote")}
             </p>
           </div>
         ))}

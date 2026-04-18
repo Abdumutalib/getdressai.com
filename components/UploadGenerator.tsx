@@ -114,7 +114,7 @@ export function UploadGenerator() {
       const data = (await response.json()) as GenerateResponse | { error: string };
 
       if (!response.ok || "error" in data) {
-        throw new Error("error" in data ? data.error : "Generation failed.");
+        throw new Error("error" in data ? data.error : t("upload.generationFailed"));
       }
 
       setResult(data);
@@ -126,7 +126,7 @@ export function UploadGenerator() {
         tookMs: data.tookMs
       });
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Generation failed.");
+      setError(nextError instanceof Error ? nextError.message : t("upload.generationFailed"));
       setProgress(0);
     } finally {
       setGenerating(false);
@@ -144,8 +144,8 @@ export function UploadGenerator() {
     });
 
     const shareData = {
-      title: "GetDressAI result",
-      text: "See my AI outfit transformation from GetDressAI.",
+      title: t("upload.shareTitle"),
+      text: t("upload.shareText"),
       url: typeof window !== "undefined" ? window.location.href : ""
     };
 
@@ -350,13 +350,13 @@ export function UploadGenerator() {
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
                   >
                     <Share2 className="size-4" />
-                    Share result
+                    {t("upload.shareButton")}
                   </button>
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
                   >
-                    Download HD
+                    {t("upload.downloadHd")}
                   </button>
                 </div>
               </div>

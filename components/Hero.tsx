@@ -15,7 +15,7 @@ export function Hero() {
       <div className="absolute inset-x-0 top-0 z-10 border-b border-accent/15 bg-accentSoft/80 backdrop-blur">
         <div className="section-shell flex min-h-12 items-center justify-center gap-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-accent sm:text-sm">
           <Sparkles className="size-4" />
-          Founder drop: 30% off starter plans this week
+          {t("hero.founderDrop")}
         </div>
       </div>
       <div className="grid-overlay absolute inset-0 opacity-60" />
@@ -46,7 +46,7 @@ export function Hero() {
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-4 text-sm font-semibold text-slate-900 dark:border-white/15 dark:text-white"
             >
               <PlayCircle className="mr-2 size-4" />
-              View Examples
+              {t("hero.viewExamples")}
             </Link>
           </div>
 
@@ -70,21 +70,21 @@ export function Hero() {
               <ShieldCheck className="mt-0.5 size-5 text-emerald-500" />
               <div>
                 <p className="text-sm font-semibold text-slate-950 dark:text-white">Private secure uploads</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">Signed URLs and guarded asset access.</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustUploadCopy")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Zap className="mt-0.5 size-5 text-amber-500" />
               <div>
                 <p className="text-sm font-semibold text-slate-950 dark:text-white">Fast results</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">Built for fast feedback and repeat usage.</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustFastCopy")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Sparkles className="mt-0.5 size-5 text-accent" />
               <div>
                 <p className="text-sm font-semibold text-slate-950 dark:text-white">Loved worldwide</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">Creators, stylists, and shoppers in 190+ countries.</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustLovedCopy")}</p>
               </div>
             </div>
           </div>
