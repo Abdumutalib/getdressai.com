@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 
 const PIN_STORAGE_KEY = "getdressai-pin-auth";
 const PIN_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+const PIN_RECORD_VERSION = 2;
 
 type PinSessionPayload = {
   email: string;
@@ -13,6 +14,7 @@ type PinSessionPayload = {
 };
 
 type PinAuthRecord = {
+  version: number;
   email: string;
   salt: string;
   iv: string;
@@ -70,7 +72,19 @@ export function readPinAuthRecord() {
       return null;
     }
 
-    return JSON.parse(raw) as PinAuthRecord;
+    const record = JSON.parse(raw) as Partial<PinAuthRecord>;
+    if (
+      record.version !== PIN_RECORD_VERSION ||
+      typeof record.email !== "string" ||
+      typeof record.salt !== "string" ||
+      typeof record.iv !== "string" ||
+      typeof record.ciphertext !== "string"
+    ) {
+      clearPinAuthRecord();
+      return null;
+    }
+
+    return record as PinAuthRecord;
   } catch {
     return null;
   }
@@ -114,6 +128,7 @@ export async function savePinAuthRecord(email: string, pin: string, session: Ses
   );
 
   const record: PinAuthRecord = {
+    version: PIN_RECORD_VERSION,
     email,
     salt: toBase64(salt),
     iv: toBase64(iv),
