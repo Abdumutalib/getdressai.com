@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
 import { clearPinAuthRecord, readPinAuthRecord, savePinAuthRecord, verifyPinAuthRecord } from "@/lib/pin-auth";
@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [pinLogin, setPinLogin] = useState("");
   const [pinSessionReady, setPinSessionReady] = useState(false);
   const [passwordFallback, setPasswordFallback] = useState(false);
+  const pinInputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     const record = readPinAuthRecord();
@@ -47,6 +48,24 @@ export default function LoginPage() {
     setPinConfirm("");
     setPinLogin("");
     setPinEnabled(false);
+  }
+
+  function updatePinLoginDigit(index: number, rawValue: string) {
+    const nextDigit = rawValue.replace(/\D/g, "").slice(-1);
+    const digits = Array.from({ length: 4 }, (_, digitIndex) => pinLogin[digitIndex] || "");
+    digits[index] = nextDigit;
+    const nextPin = digits.join("");
+    setPinLogin(nextPin);
+
+    if (nextDigit && index < pinInputsRef.current.length - 1) {
+      pinInputsRef.current[index + 1]?.focus();
+    }
+  }
+
+  function handlePinKeyDown(index: number, event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Backspace" && !pinLogin[index] && index > 0) {
+      pinInputsRef.current[index - 1]?.focus();
+    }
   }
 
   function openPasswordFallback() {
@@ -234,16 +253,26 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              <input
-                type="password"
-                inputMode="numeric"
-                pattern="\d*"
-                maxLength={4}
-                placeholder={t("login.pinPlaceholder")}
-                value={pinLogin}
-                onChange={(event) => setPinLogin(event.target.value.replace(/\D/g, "").slice(0, 4))}
-                className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
-              />
+              <div className="grid grid-cols-4 gap-3">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <input
+                    key={index}
+                    ref={(element) => {
+                      pinInputsRef.current[index] = element;
+                    }}
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    pattern="\d*"
+                    maxLength={1}
+                    aria-label={`${t("login.pinPlaceholder")} ${index + 1}`}
+                    value={pinLogin[index] || ""}
+                    onChange={(event) => updatePinLoginDigit(index, event.target.value)}
+                    onKeyDown={(event) => handlePinKeyDown(index, event)}
+                    className="h-16 rounded-[1.25rem] border border-slate-200 bg-white text-center text-2xl font-semibold tracking-[0.2em] outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
+                  />
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={handlePinLogin}
