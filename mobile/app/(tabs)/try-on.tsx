@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -31,6 +31,17 @@ type Recommendation = {
   recommendedSize: string;
 };
 
+type PreferenceItem = {
+  mode: 'photo' | 'mannequin';
+  gender: 'female' | 'male' | 'unisex';
+  preset: string;
+  prompt: string;
+  clothingRequest: string;
+  measurements?: Partial<Record<MeasurementKey, number>> | null;
+  sourceImagePath?: string | null;
+  sourceUrl?: string;
+};
+
 const DEFAULT_MEASUREMENTS: Record<MeasurementKey, string> = {
   height: '170',
   chest: '92',
@@ -55,7 +66,7 @@ export default function TryOnScreen() {
     [t],
   );
   const [selectedPreset, setSelectedPreset] = useState(presetLabels[0] || 'Luxury');
-  const [photo, setPhoto] = useState<{ uri: string; mimeType?: string; fileName?: string } | null>(null);
+  const [photo, setPhoto] = useState<{ uri: string; mimeType?: string; fileName?: string; persisted?: boolean } | null>(null);
   const [measurements, setMeasurements] = useState(DEFAULT_MEASUREMENTS);
   const [clothingRequest, setClothingRequest] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,12 +74,138 @@ export default function TryOnScreen() {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [recommendedSize, setRecommendedSize] = useState('');
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [sourceImagePath, setSourceImagePath] = useState<string | null>(null);
+  const hydratedRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!presetLabels.includes(selectedPreset)) {
       setSelectedPreset(presetLabels[0] || 'Luxury');
     }
   }, [presetLabels, selectedPreset]);
+
+  function serializeMeasurements(current: Record<MeasurementKey, string>) {
+    return Object.fromEntries(
+      Object.entries(current)
+        .map(([key, value]) => [key, Number(value)] as const)
+        .filter((entry) => Number.isFinite(entry[1]) && entry[1] > 0),
+    );
+  }
+
+  useEffect(() => {
+    async function loadInitial() {
+      try {
+        const headers = await createAuthedHeaders();
+        const [preferencesResponse, historyResponse] = await Promise.all([
+          fetch(`${getAppOrigin()}/api/preferences`, {
+            method: 'GET',
+            headers,
+          }),
+          fetch(`${getAppOrigin()}/api/generate`, {
+            method: 'GET',
+            headers,
+          }),
+        ]);
+
+        if (preferencesResponse.ok) {
+          const preferencesData = (await preferencesResponse.json()) as { item?: PreferenceItem | null };
+          const item = preferencesData.item;
+          if (item) {
+            if (item.preset) {
+              setSelectedPreset(item.preset);
+            }
+            setClothingRequest(item.clothingRequest || '');
+            setSourceImagePath(item.sourceImagePath ?? null);
+            if (item.sourceUrl) {
+              setPhoto({
+                uri: item.sourceUrl,
+                fileName: 'saved-photo.jpg',
+                mimeType: 'image/jpeg',
+                persisted: true,
+              });
+            }
+            if (item.measurements) {
+              setMeasurements({
+                height: String(item.measurements.height ?? DEFAULT_MEASUREMENTS.height),
+                chest: String(item.measurements.chest ?? DEFAULT_MEASUREMENTS.chest),
+                waist: String(item.measurements.waist ?? DEFAULT_MEASUREMENTS.waist),
+                hips: String(item.measurements.hips ?? DEFAULT_MEASUREMENTS.hips),
+                inseam: String(item.measurements.inseam ?? DEFAULT_MEASUREMENTS.inseam),
+              });
+            }
+          }
+        }
+
+        if (historyResponse.ok) {
+          const historyData = (await historyResponse.json()) as {
+            items?: Array<{ resultUrl?: string; sourceImagePath?: string | null; sourceUrl?: string }>;
+          };
+          const latest = Array.isArray(historyData.items) ? historyData.items[0] : null;
+          if (latest?.resultUrl) {
+            setResultImage(latest.resultUrl);
+          }
+          if (!sourceImagePath && latest?.sourceImagePath) {
+            setSourceImagePath(latest.sourceImagePath);
+          }
+          if (!photo && latest?.sourceUrl) {
+            setPhoto({
+              uri: latest.sourceUrl,
+              fileName: 'saved-photo.jpg',
+              mimeType: 'image/jpeg',
+              persisted: true,
+            });
+          }
+        }
+      } catch {
+        // Keep the form usable even if restore fails.
+      } finally {
+        hydratedRef.current = true;
+      }
+    }
+
+    void loadInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current) {
+      return;
+    }
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      void (async () => {
+        try {
+          const headers = await createAuthedHeaders({ 'Content-Type': 'application/json' });
+          await fetch(`${getAppOrigin()}/api/preferences`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({
+              mode: 'photo',
+              gender: 'female',
+              preset: selectedPreset,
+              prompt: `${selectedPreset}. ${clothingRequest.trim() || selectedPreset}`,
+              clothingRequest: clothingRequest.trim(),
+              sourceImagePath,
+              measurements: serializeMeasurements(measurements),
+            }),
+          });
+        } catch {
+          // Ignore background autosave failures until the next user action.
+        }
+      })();
+    }, 450);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [clothingRequest, measurements, selectedPreset, sourceImagePath]);
 
   async function pickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -87,18 +224,57 @@ export default function TryOnScreen() {
     }
 
     const asset = response.assets[0];
-    setPhoto({
+    const nextPhoto = {
       uri: asset.uri,
       mimeType: asset.mimeType || 'image/jpeg',
       fileName: asset.fileName || 'mobile-upload.jpg',
-    });
+      persisted: false,
+    };
+    setPhoto(nextPhoto);
     setResultImage(null);
     setRecommendations([]);
     setRecommendedSize('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: nextPhoto.uri,
+        name: nextPhoto.fileName || 'mobile-upload.jpg',
+        type: nextPhoto.mimeType || 'image/jpeg',
+      } as never);
+
+      const headers = await createAuthedHeaders();
+      const uploadResponse = await fetch(`${getAppOrigin()}/api/preferences`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      const uploadData = (await uploadResponse.json()) as {
+        sourceImagePath?: string;
+        sourceUrl?: string;
+        error?: string;
+      };
+
+      if (!uploadResponse.ok || !uploadData.sourceImagePath) {
+        throw new Error(uploadData.error || 'Could not save uploaded photo.');
+      }
+
+      setSourceImagePath(uploadData.sourceImagePath);
+      if (uploadData.sourceUrl) {
+        setPhoto({
+          uri: uploadData.sourceUrl,
+          mimeType: nextPhoto.mimeType,
+          fileName: nextPhoto.fileName,
+          persisted: true,
+        });
+      }
+    } catch (error) {
+      Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Could not save photo.');
+    }
   }
 
   async function handleGenerate() {
-    if (!photo) {
+    if (!photo && !sourceImagePath) {
       Alert.alert(t('alertTryonTitle'), t('alertTryonNeedPhoto'));
       return;
     }
@@ -114,15 +290,16 @@ export default function TryOnScreen() {
       formData.append('prompt', `${selectedPreset}. ${requestText}`);
       formData.append('preset', selectedPreset);
       formData.append('clothingRequest', requestText);
-      formData.append(
-        'measurements',
-        JSON.stringify(Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)]))),
-      );
-      formData.append('file', {
-        uri: photo.uri,
-        name: photo.fileName || 'mobile-upload.jpg',
-        type: photo.mimeType || 'image/jpeg',
-      } as never);
+      formData.append('measurements', JSON.stringify(serializeMeasurements(measurements)));
+      if (photo && !photo.persisted) {
+        formData.append('file', {
+          uri: photo.uri,
+          name: photo.fileName || 'mobile-upload.jpg',
+          type: photo.mimeType || 'image/jpeg',
+        } as never);
+      } else if (sourceImagePath) {
+        formData.append('existingSourcePath', sourceImagePath);
+      }
 
       const headers = await createAuthedHeaders();
       const response = await fetch(`${getAppOrigin()}/api/generate`, {
@@ -138,9 +315,17 @@ export default function TryOnScreen() {
 
       setResultImage(data.resultUrl || null);
 
-      if (data.sourceImagePath) {
-        await handleRecommend(data.sourceImagePath);
+      setSourceImagePath(data.sourceImagePath || sourceImagePath || null);
+      if (data.sourceUrl) {
+        setPhoto({
+          uri: data.sourceUrl,
+          mimeType: photo?.mimeType || 'image/jpeg',
+          fileName: photo?.fileName || 'saved-photo.jpg',
+          persisted: true,
+        });
       }
+
+      await handleRecommend(data.sourceImagePath || sourceImagePath || undefined);
     } catch (error) {
       Alert.alert(t('alertVtonTitle'), error instanceof Error ? error.message : 'Something went wrong.');
     } finally {
@@ -167,7 +352,7 @@ export default function TryOnScreen() {
           clothingRequest: requestText,
           gender: 'female',
           sourceImagePath,
-          measurements: Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)])),
+          measurements: serializeMeasurements(measurements),
         }),
       });
       const data = await response.json();

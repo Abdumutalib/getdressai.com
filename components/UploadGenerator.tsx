@@ -34,6 +34,20 @@ type GenerateResponse = {
   tookMs: number;
 };
 
+type PreferencesResponse = {
+  item?: {
+    mode: GeneratorMode;
+    gender: GenderOption;
+    preset: string;
+    prompt: string;
+    clothingRequest: string;
+    measurements?: Record<string, number> | null;
+    sourceImagePath?: string | null;
+    sourceUrl?: string;
+  } | null;
+  error?: string;
+};
+
 type MarketplaceProduct = {
   id: string;
   title: string;
@@ -196,6 +210,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const [photoPreview, setPhotoPreview] = useState("");
   const [savedSourcePath, setSavedSourcePath] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const hydratedInitialRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setSelected(safePresets[0] ?? "Luxury");
@@ -203,7 +219,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   }, [language, safePresets, t]);
 
   useEffect(() => {
-    async function loadLatest() {
+    async function loadInitial() {
       if (skipInitialLoad) {
         setHydrating(false);
         return;
@@ -212,27 +228,54 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       setHydrating(true);
 
       try {
-        const response = await fetch("/api/generate", { method: "GET", cache: "no-store" });
-        const data = (await response.json()) as { items?: GenerateResponse[] };
+        const [preferencesResponse, historyResponse] = await Promise.all([
+          fetch("/api/preferences", { method: "GET", cache: "no-store" }),
+          fetch("/api/generate", { method: "GET", cache: "no-store" })
+        ]);
 
-        if (response.status === 401) {
+        if (preferencesResponse.status !== 401) {
+          const preferencesData = (await preferencesResponse.json()) as PreferencesResponse;
+          const preferencesItem = preferencesResponse.ok ? preferencesData.item : null;
+
+          if (preferencesItem) {
+            setMode(preferencesItem.mode);
+            setGender(preferencesItem.gender);
+            setSelected(preferencesItem.preset);
+            setPrompt(preferencesItem.prompt);
+            setClothingRequest(preferencesItem.clothingRequest || "");
+            setSavedSourcePath(preferencesItem.sourceImagePath ?? null);
+            if (preferencesItem.sourceUrl) {
+              setPhotoPreview(preferencesItem.sourceUrl);
+            }
+            if (preferencesItem.measurements) {
+              setMeasurements({
+                height: String(preferencesItem.measurements.height ?? defaultMeasurements.height),
+                chest: String(preferencesItem.measurements.chest ?? defaultMeasurements.chest),
+                waist: String(preferencesItem.measurements.waist ?? defaultMeasurements.waist),
+                hips: String(preferencesItem.measurements.hips ?? defaultMeasurements.hips),
+                inseam: String(preferencesItem.measurements.inseam ?? defaultMeasurements.inseam)
+              });
+            }
+          }
+        }
+
+        if (historyResponse.status === 401) {
           return;
         }
 
-        if (!response.ok || !Array.isArray(data.items) || !data.items.length) {
+        const historyData = (await historyResponse.json()) as { items?: GenerateResponse[] };
+        if (!historyResponse.ok || !Array.isArray(historyData.items) || !historyData.items.length) {
           return;
         }
 
-        const latest = data.items[0];
+        const latest = historyData.items[0];
         setResult(latest);
-        setMode(latest.mode);
-        setGender(latest.gender);
-        setSelected(latest.preset);
-        setPrompt(latest.prompt);
-        setClothingRequest("");
-        setSavedSourcePath(latest.sourceImagePath ?? null);
+        setSavedSourcePath((current) => current ?? latest.sourceImagePath ?? null);
+        if (!photoPreview && latest.mode === "photo" && latest.sourceUrl) {
+          setPhotoPreview(latest.sourceUrl);
+        }
 
-        if (latest.measurements) {
+        if (!hydratedInitialRef.current && latest.measurements) {
           setMeasurements({
             height: String(latest.measurements.height ?? defaultMeasurements.height),
             chest: String(latest.measurements.chest ?? defaultMeasurements.chest),
@@ -242,16 +285,49 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           });
         }
 
-        if (latest.mode === "photo" && latest.sourceUrl) {
-          setPhotoPreview(latest.sourceUrl);
-        }
       } finally {
+        hydratedInitialRef.current = true;
         setHydrating(false);
       }
     }
 
-    void loadLatest();
-  }, [skipInitialLoad]);
+    void loadInitial();
+  }, [photoPreview, skipInitialLoad]);
+
+  useEffect(() => {
+    if (!hydratedInitialRef.current || skipInitialLoad) {
+      return;
+    }
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      void fetch("/api/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          gender,
+          preset: selected,
+          prompt,
+          clothingRequest: clothingRequest.trim(),
+          sourceImagePath: savedSourcePath,
+          measurements: serializeMeasurements()
+        })
+      }).catch(() => {
+        // Ignore autosave failures until the user acts again.
+      });
+    }, 500);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [clothingRequest, gender, measurements, mode, prompt, savedSourcePath, selected, skipInitialLoad]);
 
   const measurementFields = useMemo(
     () => [
@@ -263,6 +339,14 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     ] as const,
     [t]
   );
+
+  function serializeMeasurements() {
+    return Object.fromEntries(
+      Object.entries(measurements)
+        .map(([key, value]) => [key, Number(value)] as const)
+        .filter((entry) => Number.isFinite(entry[1]) && entry[1] > 0)
+    );
+  }
 
   const genderOptions = useMemo(
     () =>
@@ -289,7 +373,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     fileInputRef.current?.click();
   }
 
-  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0];
 
     if (!nextFile) {
@@ -318,6 +402,35 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     setRecommendedSize("");
     setError("");
     trackEvent("upload_started", { mode: "photo", fileType: nextFile.type, size: nextFile.size });
+
+    try {
+      const formData = new FormData();
+      formData.set("file", nextFile);
+
+      const response = await fetch("/api/preferences", {
+        method: "POST",
+        body: formData
+      });
+      const data = (await response.json()) as {
+        sourceImagePath?: string;
+        sourceUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !data.sourceImagePath) {
+        throw new Error(data.error || "Could not save uploaded photo.");
+      }
+
+      setSavedSourcePath(data.sourceImagePath);
+      if (data.sourceUrl) {
+        if (previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(previewUrl);
+        }
+        setPhotoPreview(data.sourceUrl);
+      }
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : t("upload.generationFailed"));
+    }
   }
 
   async function fetchRecommendations() {
@@ -339,9 +452,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           preset: selected,
           gender,
           sourceImagePath: savedSourcePath,
-          measurements: Object.fromEntries(
-            Object.entries(measurements).map(([key, value]) => [key, Number(value)])
-          )
+          measurements: serializeMeasurements()
         })
       });
 
@@ -401,7 +512,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       payload.set("preset", selected);
       payload.set(
         "measurements",
-        JSON.stringify(Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)])))
+        JSON.stringify(serializeMeasurements())
       );
 
       if (mode === "photo" && photoFile) {

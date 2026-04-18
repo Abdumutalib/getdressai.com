@@ -10,6 +10,7 @@ import {
   readPresetTemplate,
   uploadGenerationAsset
 } from "@/lib/generation-storage";
+import { upsertUserGeneratorPreferences } from "@/lib/user-preferences";
 
 export const runtime = "nodejs";
 
@@ -218,6 +219,16 @@ export async function POST(request: Request) {
     if (insertError) {
       throw insertError;
     }
+
+    await upsertUserGeneratorPreferences(admin, authResult.id, {
+      mode: parsed.mode,
+      gender: parsed.gender,
+      preset: parsed.preset,
+      prompt: parsed.prompt,
+      clothingRequest: parsed.clothingRequest ?? null,
+      measurements: parsed.measurements ?? null,
+      sourceImagePath
+    });
 
     const resultUrl = await createSignedAssetUrl(admin, resultImagePath);
     const sourceUrl = sourceImagePath ? await createSignedAssetUrl(admin, sourceImagePath) : "";
