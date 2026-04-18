@@ -41,6 +41,7 @@ type HistoryRow = {
   preset: string;
   source_image_path: string | null;
   result_image_path: string;
+  measurements: Record<string, number> | null;
   watermark: boolean;
   took_ms: number;
   created_at: string;
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
     const admin = createSupabaseAdmin();
     const { data, error } = await admin
       .from("user_generations")
-      .select("id, mode, gender, prompt, preset, source_image_path, result_image_path, watermark, took_ms, created_at")
+      .select("id, mode, gender, prompt, preset, source_image_path, result_image_path, measurements, watermark, took_ms, created_at")
       .eq("user_id", authResult.id)
       .order("created_at", { ascending: false })
       .limit(12);
@@ -128,6 +129,7 @@ export async function GET(request: Request) {
         sourceUrl: row.source_image_path ? signedByPath.get(row.source_image_path) ?? "" : "",
         sourceImagePath: row.source_image_path,
         resultUrl: signedByPath.get(row.result_image_path) ?? "",
+        measurements: row.measurements,
         createdAt: row.created_at,
         watermark: row.watermark,
         tookMs: row.took_ms

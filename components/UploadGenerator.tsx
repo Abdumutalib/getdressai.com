@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { LoaderCircle, Ruler, Share2, UploadCloud, Wand2 } from "lucide-react";
+import { ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
+import { formatCurrency } from "@/lib/utils";
 
 type GeneratorMode = "photo" | "mannequin";
 type GenderOption = "female" | "male" | "unisex";
@@ -33,6 +34,18 @@ type GenerateResponse = {
   tookMs: number;
 };
 
+type MarketplaceProduct = {
+  id: string;
+  title: string;
+  marketplace: "amazon" | "ebay" | "aliexpress";
+  price: number;
+  currency: string;
+  image: string;
+  affiliateUrl: string;
+  totalFitScore: number;
+  recommendedSize: string;
+};
+
 const exampleSlugs = ["luxury", "streetwear", "wedding", "office", "gym", "anime", "celebrity", "casual"] as const;
 
 const defaultMeasurements: Measurements = {
@@ -43,8 +56,64 @@ const defaultMeasurements: Measurements = {
   inseam: "78"
 };
 
+const marketplaceCopy = {
+  en: {
+    fitTitle: "Size and fit",
+    fitCopy: "Add your real measurements so we can match clothes to your photo and body shape.",
+    fitReady: "Your measurements will be used for both try-on and shopping recommendations.",
+    recommendationsTitle: "Clothes we found for your photo and size",
+    recommendationsCopy: "These picks use your uploaded photo, chosen style, and body measurements.",
+    recommendationsHint: "Upload a photo and fill in height, chest, waist, and hips to unlock shopping recommendations.",
+    recommendationsButton: "Find matching clothes",
+    recommendationsLoading: "Finding clothes for your size...",
+    recommendedSize: "Recommended size",
+    fitScore: "Fit score",
+    marketplaceSource: "Marketplace source",
+    openProduct: "Open item",
+    autoSource: "Matched to your photo and measurements",
+    marketplaceError: "Could not load marketplace recommendations.",
+    savedPhoto: "Saved photo from your last session"
+  },
+  ru: {
+    fitTitle: "Размер и посадка",
+    fitCopy: "Добавьте реальные мерки, чтобы мы подобрали одежду под ваше фото и фигуру.",
+    fitReady: "Эти мерки используются и для примерки, и для рекомендаций из магазинов.",
+    recommendationsTitle: "Одежда по вашему фото и размерам",
+    recommendationsCopy: "Эти варианты подбираются по загруженному фото, стилю и вашим меркам.",
+    recommendationsHint: "Загрузите фото и заполните рост, грудь, талию и бёдра, чтобы открыть рекомендации.",
+    recommendationsButton: "Найти подходящую одежду",
+    recommendationsLoading: "Ищем одежду под ваши размеры...",
+    recommendedSize: "Рекомендуемый размер",
+    fitScore: "Оценка совпадения",
+    marketplaceSource: "Маркетплейс",
+    openProduct: "Открыть товар",
+    autoSource: "Подбор по вашему фото и меркам",
+    marketplaceError: "Не удалось загрузить рекомендации из маркетплейсов.",
+    savedPhoto: "Сохранённое фото из прошлого входа"
+  },
+  uz: {
+    fitTitle: "O'lcham va moslik",
+    fitCopy: "Haqiqiy o'lchamlaringizni kiriting, shunda kiyimlar rasmingiz va qomatingizga mos tanlanadi.",
+    fitReady: "Bu o'lchamlar try-on ham, marketpleys tavsiyalari ham uchun ishlatiladi.",
+    recommendationsTitle: "Rasmingiz va o'lchamingizga mos kiyimlar",
+    recommendationsCopy: "Bu tavsiyalar yuklangan rasm, tanlangan uslub va o'lchamlaringiz asosida chiqadi.",
+    recommendationsHint: "Rasm yuklang va bo'y, ko'krak, bel, son o'lchamlarini kiriting.",
+    recommendationsButton: "Mos kiyimlarni topish",
+    recommendationsLoading: "O'lchamingizga mos kiyimlar qidirilyapti...",
+    recommendedSize: "Tavsiya o'lcham",
+    fitScore: "Moslik bahosi",
+    marketplaceSource: "Marketpleys",
+    openProduct: "Mahsulotni ochish",
+    autoSource: "Rasmingiz va o'lchamingiz asosida tanlandi",
+    marketplaceError: "Marketpleys tavsiyalarini yuklab bo'lmadi.",
+    savedPhoto: "Oldingi kirishdan сақланган rasm"
+  }
+} as const;
+
 export function UploadGenerator() {
   const { t, tm, language } = useLanguage();
+  const localizedMarketplaceCopy =
+    marketplaceCopy[language as keyof typeof marketplaceCopy] ?? marketplaceCopy.en;
   const presets = tm<string[]>("upload.presets");
   const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
@@ -53,9 +122,13 @@ export function UploadGenerator() {
   const [prompt, setPrompt] = useState(t("upload.defaultPrompt"));
   const [generating, setGenerating] = useState(false);
   const [hydrating, setHydrating] = useState(true);
+  const [recommending, setRecommending] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState<GenerateResponse | null>(null);
+  const [recommendationError, setRecommendationError] = useState("");
+  const [recommendations, setRecommendations] = useState<MarketplaceProduct[]>([]);
+  const [recommendedSize, setRecommendedSize] = useState("");
   const [measurements, setMeasurements] = useState<Measurements>(defaultMeasurements);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
@@ -87,11 +160,7 @@ export function UploadGenerator() {
         setPrompt(latest.prompt);
         setSavedSourcePath(latest.sourceImagePath ?? null);
 
-        if (latest.mode === "photo" && latest.sourceUrl) {
-          setPhotoPreview(latest.sourceUrl);
-        }
-
-        if (latest.mode === "mannequin" && latest.measurements) {
+        if (latest.measurements) {
           setMeasurements({
             height: String(latest.measurements.height ?? defaultMeasurements.height),
             chest: String(latest.measurements.chest ?? defaultMeasurements.chest),
@@ -99,6 +168,10 @@ export function UploadGenerator() {
             hips: String(latest.measurements.hips ?? defaultMeasurements.hips),
             inseam: String(latest.measurements.inseam ?? defaultMeasurements.inseam)
           });
+        }
+
+        if (latest.mode === "photo" && latest.sourceUrl) {
+          setPhotoPreview(latest.sourceUrl);
         }
       } finally {
         setHydrating(false);
@@ -132,6 +205,13 @@ export function UploadGenerator() {
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} · ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
   const resultIsRemote = Boolean(result?.resultUrl && !result.resultUrl.startsWith("/"));
   const previewIsRemote = Boolean(photoPreview && !photoPreview.startsWith("blob:") && !photoPreview.startsWith("/"));
+  const hasRecommendationInputs = Boolean(
+    (photoFile || savedSourcePath || photoPreview) &&
+      measurements.height &&
+      measurements.chest &&
+      measurements.waist &&
+      measurements.hips
+  );
 
   function openFilePicker() {
     fileInputRef.current?.click();
@@ -161,8 +241,63 @@ export function UploadGenerator() {
     setPhotoPreview(previewUrl);
     setSavedSourcePath(null);
     setResult(null);
+    setRecommendations([]);
+    setRecommendationError("");
+    setRecommendedSize("");
     setError("");
     trackEvent("upload_started", { mode: "photo", fileType: nextFile.type, size: nextFile.size });
+  }
+
+  async function fetchRecommendations() {
+    if (!hasRecommendationInputs) {
+      setRecommendationError(localizedMarketplaceCopy.recommendationsHint);
+      return;
+    }
+
+    setRecommending(true);
+    setRecommendationError("");
+
+    try {
+      const response = await fetch("/api/recommend-products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          preset: selected,
+          gender,
+          sourceImagePath: savedSourcePath,
+          measurements: Object.fromEntries(
+            Object.entries(measurements).map(([key, value]) => [key, Number(value)])
+          )
+        })
+      });
+
+      const data = (await response.json()) as {
+        recommendedSize?: string;
+        products?: MarketplaceProduct[];
+        error?: string;
+      };
+
+      if (!response.ok || !Array.isArray(data.products)) {
+        throw new Error(data.error || localizedMarketplaceCopy.marketplaceError);
+      }
+
+      setRecommendations(data.products);
+      setRecommendedSize(data.recommendedSize || "");
+      trackEvent("marketplace_recommendations_loaded", {
+        preset: selected,
+        count: data.products.length,
+        size: data.recommendedSize || ""
+      });
+    } catch (nextError) {
+      setRecommendationError(
+        nextError instanceof Error ? nextError.message : localizedMarketplaceCopy.marketplaceError
+      );
+      setRecommendations([]);
+      setRecommendedSize("");
+    } finally {
+      setRecommending(false);
+    }
   }
 
   async function handleGenerate() {
@@ -186,6 +321,10 @@ export function UploadGenerator() {
       payload.set("gender", gender);
       payload.set("prompt", prompt);
       payload.set("preset", selected);
+      payload.set(
+        "measurements",
+        JSON.stringify(Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)])))
+      );
 
       if (mode === "photo" && photoFile) {
         payload.set("file", photoFile);
@@ -193,15 +332,6 @@ export function UploadGenerator() {
 
       if (mode === "photo" && !photoFile && savedSourcePath) {
         payload.set("existingSourcePath", savedSourcePath);
-      }
-
-      if (mode === "mannequin") {
-        payload.set(
-          "measurements",
-          JSON.stringify(
-            Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)]))
-          )
-        );
       }
 
       const response = await fetch("/api/generate", {
@@ -230,6 +360,10 @@ export function UploadGenerator() {
         gender: data.gender,
         tookMs: data.tookMs
       });
+
+      if (data.mode === "photo" && data.sourceImagePath) {
+        await fetchRecommendations();
+      }
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t("upload.generationFailed"));
       setProgress(0);
@@ -328,7 +462,7 @@ export function UploadGenerator() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-slate-950 dark:text-white">
-                    {photoFile?.name || "Saved photo"}
+                    {photoFile?.name || localizedMarketplaceCopy.savedPhoto}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-300">
                     {hydrating ? "Checking your saved upload..." : t("upload.formats")}
@@ -372,8 +506,8 @@ export function UploadGenerator() {
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("upload.mannequinTitle")}</p>
-                  <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{t("upload.mannequinCopy")}</p>
+                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.fitTitle}</p>
+                  <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitCopy}</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {measurementFields.map((field) => (
@@ -401,11 +535,47 @@ export function UploadGenerator() {
                     </label>
                   ))}
                 </div>
-                <p className="text-xs leading-6 text-slate-500 dark:text-slate-300">{t("upload.mannequinHint")}</p>
+                <p className="text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
               </div>
             </div>
           </div>
         )}
+
+        {mode === "photo" ? (
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+            <div className="mb-3">
+              <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.fitTitle}</p>
+              <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitCopy}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {measurementFields.map((field) => (
+                <label key={field.key} className="space-y-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
+                    {field.label}
+                  </span>
+                  <div className="flex items-center rounded-[1rem] border border-slate-200 bg-white px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
+                    <Ruler className="mr-2 size-4 text-slate-400" />
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      value={measurements[field.key]}
+                      onChange={(event) =>
+                        setMeasurements((current) => ({
+                          ...current,
+                          [field.key]: event.target.value
+                        }))
+                      }
+                      className="w-full bg-transparent text-sm outline-none"
+                    />
+                    <span className="text-xs text-slate-400">{t("upload.measurementUnit")}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <p className="mt-3 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           {safePresets.map((preset) => (
@@ -544,6 +714,86 @@ export function UploadGenerator() {
             </div>
           </div>
         ) : null}
+
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.recommendationsTitle}</p>
+              <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsCopy}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchRecommendations()}
+              disabled={!hasRecommendationInputs || recommending}
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {recommending ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
+              {recommending ? localizedMarketplaceCopy.recommendationsLoading : localizedMarketplaceCopy.recommendationsButton}
+            </button>
+          </div>
+
+          {recommendedSize ? (
+            <div className="mb-4 inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold text-accent">
+              {localizedMarketplaceCopy.recommendedSize}: {recommendedSize}
+            </div>
+          ) : null}
+
+          {recommendationError ? (
+            <p className="mb-4 text-sm font-medium text-rose-500">{recommendationError}</p>
+          ) : null}
+
+          {!recommendations.length && !recommendationError ? (
+            <p className="text-sm text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsHint}</p>
+          ) : null}
+
+          {recommendations.length ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {recommendations.map((product) => (
+                <article
+                  key={product.id}
+                  className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/40"
+                >
+                  <div className="relative aspect-[4/5] bg-white dark:bg-slate-950/60">
+                    {product.image.startsWith("/") ? (
+                      <Image src={product.image} alt={product.title} fill className="object-cover" />
+                    ) : (
+                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{product.title}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">{product.marketplace}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                        {formatCurrency(product.price, product.currency)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
+                        {localizedMarketplaceCopy.recommendedSize}: {product.recommendedSize}
+                      </span>
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+                        {localizedMarketplaceCopy.fitScore}: {product.totalFitScore}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.autoSource}</p>
+                    <a
+                      href={product.affiliateUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      <ExternalLink className="size-4" />
+                      {localizedMarketplaceCopy.openProduct}
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

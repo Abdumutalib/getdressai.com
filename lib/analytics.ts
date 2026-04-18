@@ -13,6 +13,7 @@ export type AnalyticsEvent =
   | "upload_started"
   | "generation_started"
   | "generation_completed"
+  | "marketplace_recommendations_loaded"
   | "checkout_opened"
   | "purchase_completed"
   | "referral_shared"
