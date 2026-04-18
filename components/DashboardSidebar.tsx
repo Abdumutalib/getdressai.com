@@ -37,7 +37,8 @@ export function DashboardSidebar() {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-[1.25rem] px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10",
-                active && "bg-slate-100 text-slate-950 dark:bg-white/10 dark:text-white"
+                !active && "surface-soft",
+                active && "bg-accentSoft text-accent dark:bg-white/10 dark:text-white"
               )}
             >
               <Icon className="size-4" />

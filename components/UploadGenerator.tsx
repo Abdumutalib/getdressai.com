@@ -700,7 +700,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
                         {field.label}
                       </span>
-                      <div className="flex items-center rounded-[1rem] border border-slate-200 bg-white px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
+                      <div className="surface-soft flex items-center rounded-[1rem] px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
                         <Ruler className="mr-2 size-4 text-slate-400" />
                         <input
                           type="number"
@@ -738,7 +738,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
                     {field.label}
                   </span>
-                  <div className="flex items-center rounded-[1rem] border border-slate-200 bg-white px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
+                  <div className="surface-soft flex items-center rounded-[1rem] px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
                     <Ruler className="mr-2 size-4 text-slate-400" />
                     <input
                       type="number"
