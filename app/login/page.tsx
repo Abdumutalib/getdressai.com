@@ -24,6 +24,7 @@ export default function LoginPage() {
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
   const [savedPinEmail, setSavedPinEmail] = useState("");
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState("");
   const [pinLogin, setPinLogin] = useState("");
   const [pinSessionReady, setPinSessionReady] = useState(false);
   const [passwordFallback, setPasswordFallback] = useState(false);
@@ -157,10 +158,12 @@ export default function LoginPage() {
           return;
         }
 
-        setMessage(t("login.signupPending"));
+        setPendingVerificationEmail(email);
+        setMessage(pinEnabled ? t("login.signupPendingWithPin") : t("login.signupPending"));
         setAuthMode("login");
         setPin("");
         setPinConfirm("");
+        setPinEnabled(false);
         setBusy(false);
         return;
       }
@@ -175,6 +178,7 @@ export default function LoginPage() {
       }
 
       await savePinIfNeeded(email, data.session);
+      setPendingVerificationEmail("");
       router.push("/dashboard");
       router.refresh();
     } catch (nextError) {
@@ -261,6 +265,7 @@ export default function LoginPage() {
     setSavedPinEmail("");
     setPinSessionReady(false);
     setPasswordFallback(false);
+    setPendingVerificationEmail("");
     resetFormFields();
     setMessage(t("login.pinRemoved"));
     setError("");
@@ -452,6 +457,14 @@ export default function LoginPage() {
             {message ? <p className="text-sm font-medium text-emerald-600">{message}</p> : null}
             {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
           </form>
+
+          {pendingVerificationEmail ? (
+            <div className="mt-6 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+              <p className="font-semibold">{t("login.verifyTitle")}</p>
+              <p className="mt-1">{t("login.verifyCopy")}</p>
+              <p className="mt-2 font-medium">{pendingVerificationEmail}</p>
+            </div>
+          ) : null}
 
           <div className="mt-6 text-sm text-slate-500 dark:text-slate-300">
             <Link href="/reset-password" className="font-medium text-accent transition hover:opacity-80">
