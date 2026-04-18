@@ -10,9 +10,9 @@ export function StatsCards() {
   const safeStats = Array.isArray(stats) ? stats : [];
 
   return (
-    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-2 sm:grid-cols-2">
       {safeStats.map((stat, index) => (
-        <div key={stat.label} className="glass-panel rounded-[1.25rem] px-3 py-2.5">
+        <div key={stat.label} className="rounded-[1rem] border border-slate-200/70 bg-white/75 px-3 py-2 shadow-soft dark:border-white/10 dark:bg-white/5">
           <div className="flex items-start justify-between gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
               {stat.label}
@@ -21,8 +21,8 @@ export function StatsCards() {
               +12%
             </span>
           </div>
-          <p className="mt-2 text-xl font-semibold leading-none text-slate-950 dark:text-white">{values[index]}</p>
-          <p className="mt-1.5 line-clamp-2 text-[11px] leading-4 text-slate-600 dark:text-slate-300">{stat.note}</p>
+          <p className="mt-1.5 text-base font-semibold leading-none text-slate-950 dark:text-white">{values[index]}</p>
+          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-600 dark:text-slate-300">{stat.note}</p>
         </div>
       ))}
     </div>

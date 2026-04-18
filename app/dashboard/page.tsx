@@ -106,14 +106,21 @@ export default function DashboardPage() {
       <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
         <DashboardSidebar />
         <div className="space-y-6">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("dashboard.eyebrow")}</p>
-            <h1 className="section-title">{t("dashboard.title")}</h1>
-          </div>
+          <div className="grid gap-4 xl:grid-cols-[1fr_320px] xl:items-start">
+            <div className="space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("dashboard.eyebrow")}</p>
+              <h1 className="section-title">{t("dashboard.title")}</h1>
+            </div>
 
-          <Suspense fallback={<DashboardSkeleton />}>
-            <StatsCards />
-          </Suspense>
+            <div className="xl:justify-self-end">
+              <div className="mb-2 text-right text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                Quiet overview
+              </div>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <StatsCards />
+              </Suspense>
+            </div>
+          </div>
 
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <UploadGenerator />
