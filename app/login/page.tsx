@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [pinSessionReady, setPinSessionReady] = useState(false);
   const [passwordFallback, setPasswordFallback] = useState(false);
   const pinInputsRef = useRef<Array<HTMLInputElement | null>>([]);
+  const nextPath = searchParams.get("next") || "/dashboard";
 
   useEffect(() => {
     const record = readPinAuthRecord();
@@ -135,6 +136,16 @@ export default function LoginPage() {
     }
   }
 
+  function completeAuthRedirect() {
+    if (typeof window !== "undefined") {
+      window.location.assign(nextPath);
+      return;
+    }
+
+    router.push(nextPath);
+    router.refresh();
+  }
+
   async function savePinIfNeeded(nextEmail: string, session: Awaited<ReturnType<NonNullable<typeof supabase>["auth"]["getSession"]>>["data"]["session"]) {
     if (!pinEnabled) {
       return;
@@ -228,8 +239,7 @@ export default function LoginPage() {
           }
 
           setMessage(t("login.signupSuccess"));
-          router.push("/dashboard");
-          router.refresh();
+          completeAuthRedirect();
           return;
         }
       }
@@ -265,8 +275,7 @@ export default function LoginPage() {
       } = await supabase.auth.getSession();
 
       await savePinIfNeeded(email, session);
-      router.push("/dashboard");
-      router.refresh();
+      completeAuthRedirect();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t("login.genericError"));
       setAuthBusy(false);
@@ -294,8 +303,7 @@ export default function LoginPage() {
         throw sessionError;
       }
 
-      router.push("/dashboard");
-      router.refresh();
+      completeAuthRedirect();
     } catch (nextError) {
       const errorMessage = nextError instanceof Error ? nextError.message : "";
 
