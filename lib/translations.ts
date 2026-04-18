@@ -256,7 +256,10 @@ export const translations = {
     login: {
       eyebrow: "Login",
       title: "Sign in to GetDressAI",
-      copy: "Use your email and password. You can also save a PIN for quick access on this device.",
+      copy: "Enter your email and password.",
+      signupTitle: "Create your account",
+      signupCopy: "Enter email, password, and a simple PIN.",
+      passwordTitle: "Use your password",
       email: "Email",
       password: "Password",
       button: "Continue",
@@ -846,7 +849,10 @@ export const translations = {
     login: {
       eyebrow: "Kirish",
       title: "GetDressAI ga kiring",
-      copy: "Email va parol bilan kiring. Shu qurilmada tez kirish uchun PIN ham saqlashingiz mumkin.",
+      copy: "Email va parolni kiriting.",
+      signupTitle: "Hisob yarating",
+      signupCopy: "Email, parol va oddiy PIN kiriting.",
+      passwordTitle: "Parol bilan kiring",
       email: "Email",
       password: "Parol",
       button: "Davom etish",

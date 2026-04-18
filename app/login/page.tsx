@@ -49,6 +49,14 @@ export default function LoginPage() {
     setError("");
   }
 
+  function switchMode(nextMode: AuthMode) {
+    setAuthMode(nextMode);
+    setPasswordFallback(false);
+    resetFormFields();
+    resetFeedback();
+    setPinEnabled(nextMode === "signup");
+  }
+
   function resetFormFields() {
     setEmail("");
     setPassword("");
@@ -361,9 +369,19 @@ export default function LoginPage() {
         <div className="glass-panel rounded-[2rem] p-8">
           <div className="space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("login.eyebrow")}</p>
-            <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">{t("login.title")}</h1>
+            <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">
+              {passwordFallback
+                ? t("login.passwordTitle")
+                : authMode === "signup"
+                  ? t("login.signupTitle")
+                  : t("login.title")}
+            </h1>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              {passwordFallback ? t("login.pinPasswordFallback") : t("login.copy")}
+              {passwordFallback
+                ? t("login.pinPasswordFallback")
+                : authMode === "signup"
+                  ? t("login.signupCopy")
+                  : t("login.copy")}
             </p>
           </div>
 
@@ -371,12 +389,7 @@ export default function LoginPage() {
           <div className="mt-6 flex gap-2 rounded-full bg-slate-100 p-1 dark:bg-white/5">
             <button
               type="button"
-              onClick={() => {
-                setAuthMode("login");
-                setPasswordFallback(false);
-                resetFormFields();
-                resetFeedback();
-              }}
+              onClick={() => switchMode("login")}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
                 authMode === "login" ? "bg-white text-slate-950 shadow-soft dark:bg-white dark:text-slate-950" : "text-slate-600 dark:text-slate-300"
               }`}
@@ -385,12 +398,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setAuthMode("signup");
-                setPasswordFallback(false);
-                resetFormFields();
-                resetFeedback();
-              }}
+              onClick={() => switchMode("signup")}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
                 authMode === "signup" ? "bg-white text-slate-950 shadow-soft dark:bg-white dark:text-slate-950" : "text-slate-600 dark:text-slate-300"
               }`}
@@ -423,17 +431,19 @@ export default function LoginPage() {
               className="w-full rounded-[1.25rem] border border-slate-200 px-4 py-3 outline-none focus:border-accent dark:border-white/10 dark:bg-white/5"
             />
 
-            <label className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5">
-              <input
-                type="checkbox"
-                checked={pinEnabled}
-                onChange={(event) => setPinEnabled(event.target.checked)}
-                className="mt-1"
-              />
-              <span className="text-slate-700 dark:text-slate-200">
-                {passwordFallback ? t("login.pinReset") : t("login.pinEnable")}
-              </span>
-            </label>
+            {authMode === "signup" || passwordFallback ? (
+              <label className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5">
+                <input
+                  type="checkbox"
+                  checked={pinEnabled}
+                  onChange={(event) => setPinEnabled(event.target.checked)}
+                  className="mt-1"
+                />
+                <span className="text-slate-700 dark:text-slate-200">
+                  {passwordFallback ? t("login.pinReset") : t("login.pinEnable")}
+                </span>
+              </label>
+            ) : null}
 
             {pinEnabled ? (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -462,17 +472,19 @@ export default function LoginPage() {
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={sendResetLink}
-                className="text-sm font-medium text-accent transition hover:opacity-80"
-                disabled={busy}
-              >
-                {busy ? t("login.sending") : t("login.forgotPassword")}
-              </button>
-              <span className="text-xs text-slate-500 dark:text-slate-300">{t("login.resetHint")}</span>
-            </div>
+            {authMode === "login" || passwordFallback ? (
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={sendResetLink}
+                  className="text-sm font-medium text-accent transition hover:opacity-80"
+                  disabled={busy}
+                >
+                  {busy ? t("login.sending") : t("login.forgotPassword")}
+                </button>
+                <span className="text-xs text-slate-500 dark:text-slate-300">{t("login.resetHint")}</span>
+              </div>
+            ) : null}
 
             <button type="submit" className="w-full rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white">
               {busy ? t("login.sending") : authMode === "signup" ? t("login.signupButton") : t("login.button")}
