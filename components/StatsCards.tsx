@@ -7,7 +7,7 @@ const values = ["28", "142", "$380", "19.2%"];
 export function StatsCards() {
   const { tm } = useLanguage();
   const stats = tm<{ label: string; note: string }[]>("dashboard.stats");
-  const safeStats = Array.isArray(stats) ? stats : [];
+  const safeStats = Array.isArray(stats) ? stats.slice(0, 1) : [];
 
   return (
     <div className="grid gap-2 sm:grid-cols-2">
