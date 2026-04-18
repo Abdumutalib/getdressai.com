@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { LoaderCircle, Ruler, Share2, UploadCloud, Wand2 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -50,11 +50,22 @@ export function UploadGenerator() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [measurements, setMeasurements] = useState<Measurements>(defaultMeasurements);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setSelected(safePresets[0] ?? "Luxury");
     setPrompt(t("upload.defaultPrompt"));
   }, [language, safePresets, t]);
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
 
   const measurementFields = useMemo(
     () => [
@@ -79,7 +90,43 @@ export function UploadGenerator() {
 
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} • ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
 
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextFile = event.target.files?.[0];
+
+    if (!nextFile) {
+      return;
+    }
+
+    const isValidType = ["image/jpeg", "image/png", "image/webp"].includes(nextFile.type);
+    const maxSize = 10 * 1024 * 1024;
+
+    if (!isValidType || nextFile.size > maxSize) {
+      setError(t("upload.formats"));
+      return;
+    }
+
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+
+    const previewUrl = URL.createObjectURL(nextFile);
+    setPhotoFile(nextFile);
+    setPhotoPreview(previewUrl);
+    setResult(null);
+    setError("");
+    trackEvent("upload_started", { mode: "photo", fileType: nextFile.type, size: nextFile.size });
+  }
+
   async function handleGenerate() {
+    if (mode === "photo" && !photoFile) {
+      setError(t("upload.dropPhoto"));
+      return;
+    }
+
     setGenerating(true);
     setProgress(12);
     setError("");
@@ -95,7 +142,7 @@ export function UploadGenerator() {
         gender,
         prompt,
         preset: selected,
-        imagePath: mode === "photo" ? "/uploads/mock-user-photo.webp" : undefined,
+        imagePath: mode === "photo" ? photoFile?.name || "uploaded-photo" : undefined,
         measurements:
           mode === "mannequin"
             ? Object.fromEntries(
@@ -204,10 +251,39 @@ export function UploadGenerator() {
         </div>
 
         {mode === "photo" ? (
-          <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-white/10 dark:bg-white/5">
-            <UploadCloud className="mx-auto size-8 text-slate-500" />
-            <p className="mt-4 text-sm font-medium text-slate-950 dark:text-white">{t("upload.dropPhoto")}</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("upload.formats")}</p>
+          <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-center dark:border-white/10 dark:bg-white/5">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+            {photoPreview ? (
+              <div className="space-y-4">
+                <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/60">
+                  <Image src={photoPreview} alt="Uploaded photo preview" fill className="object-cover" unoptimized />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-950 dark:text-white">{photoFile?.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">{t("upload.formats")}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
+                >
+                  <UploadCloud className="size-4" />
+                  {t("upload.modePhoto")}
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={openFilePicker} className="block w-full">
+                <UploadCloud className="mx-auto size-8 text-slate-500" />
+                <p className="mt-4 text-sm font-medium text-slate-950 dark:text-white">{t("upload.dropPhoto")}</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("upload.formats")}</p>
+              </button>
+            )}
           </div>
         ) : (
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
