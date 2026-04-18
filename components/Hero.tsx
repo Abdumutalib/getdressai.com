@@ -69,21 +69,21 @@ export function Hero() {
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 size-5 text-emerald-500" />
               <div>
-                <p className="text-sm font-semibold text-slate-950 dark:text-white">Private secure uploads</p>
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("hero.trustUploadTitle")}</p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustUploadCopy")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Zap className="mt-0.5 size-5 text-amber-500" />
               <div>
-                <p className="text-sm font-semibold text-slate-950 dark:text-white">Fast results</p>
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("hero.trustFastTitle")}</p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustFastCopy")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Sparkles className="mt-0.5 size-5 text-accent" />
               <div>
-                <p className="text-sm font-semibold text-slate-950 dark:text-white">Loved worldwide</p>
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("hero.trustLovedTitle")}</p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustLovedCopy")}</p>
               </div>
             </div>

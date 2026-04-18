@@ -31,6 +31,9 @@ export const translations = {
       private: "Private",
       secureUploads: "Secure signed uploads",
       fastOutput: "Fast output pipeline",
+      trustUploadTitle: "Private secure uploads",
+      trustFastTitle: "Fast results",
+      trustLovedTitle: "Loved worldwide",
       trustUploadCopy: "Signed URLs and guarded asset access.",
       trustFastCopy: "Built for fast feedback and repeat usage.",
       trustLovedCopy: "Creators, stylists, and shoppers in 190+ countries."
@@ -322,7 +325,10 @@ export const translations = {
       generatedLooks: "Сгенерированных образов",
       private: "Приватно",
       secureUploads: "Защищенные загрузки",
-      fastOutput: "Быстрый рендер"
+      fastOutput: "Быстрый рендер",
+      trustUploadTitle: "\u041f\u0440\u0438\u0432\u0430\u0442\u043d\u044b\u0435 \u0437\u0430\u0449\u0438\u0449\u0435\u043d\u043d\u044b\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438",
+      trustFastTitle: "\u0411\u044b\u0441\u0442\u0440\u044b\u0435 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u044b",
+      trustLovedTitle: "\u041b\u044e\u0431\u044f\u0442 \u043f\u043e \u0432\u0441\u0435\u043c\u0443 \u043c\u0438\u0440\u0443"
     },
     trust: {
       generations: "AI-генераций доставлено",
@@ -600,7 +606,10 @@ export const translations = {
       generatedLooks: "Yaratilgan look'lar",
       private: "Maxfiy",
       secureUploads: "Himoyalangan yuklashlar",
-      fastOutput: "Tez natija pipeline"
+      fastOutput: "Tez natija pipeline",
+      trustUploadTitle: "Maxfiy himoyalangan yuklashlar",
+      trustFastTitle: "Tez natijalar",
+      trustLovedTitle: "Butun dunyoda sevib ishlatiladi"
     },
     trust: {
       generations: "Yetkazilgan AI generatsiyalar",
