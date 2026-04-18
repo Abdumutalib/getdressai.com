@@ -18,6 +18,8 @@ type Measurements = {
 };
 
 type GenerateResponse = {
+  id: string;
+  createdAt: string;
   mode: GeneratorMode;
   gender: GenderOption;
   prompt: string;
@@ -90,7 +92,8 @@ export function UploadGenerator() {
     [t]
   );
 
-  const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} • ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
+  const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} · ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
+  const resultIsRemote = Boolean(result?.resultUrl && !result.resultUrl.startsWith("/"));
 
   function openFilePicker() {
     fileInputRef.current?.click();
@@ -139,24 +142,28 @@ export function UploadGenerator() {
     });
 
     try {
-      const payload = {
-        mode,
-        gender,
-        prompt,
-        preset: selected,
-        imagePath: mode === "photo" ? photoFile?.name || "uploaded-photo" : undefined,
-        measurements:
-          mode === "mannequin"
-            ? Object.fromEntries(
-                Object.entries(measurements).map(([key, value]) => [key, Number(value)])
-              )
-            : undefined
-      };
+      const payload = new FormData();
+      payload.set("mode", mode);
+      payload.set("gender", gender);
+      payload.set("prompt", prompt);
+      payload.set("preset", selected);
+
+      if (mode === "photo" && photoFile) {
+        payload.set("file", photoFile);
+      }
+
+      if (mode === "mannequin") {
+        payload.set(
+          "measurements",
+          JSON.stringify(
+            Object.fromEntries(Object.entries(measurements).map(([key, value]) => [key, Number(value)]))
+          )
+        );
+      }
 
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: payload
       });
       setProgress(68);
 
@@ -168,6 +175,7 @@ export function UploadGenerator() {
 
       setResult(data);
       setProgress(100);
+      window.dispatchEvent(new CustomEvent("getdressai:generation-saved"));
       trackEvent("generation_completed", {
         mode: data.mode,
         preset: data.preset,
@@ -444,7 +452,11 @@ export function UploadGenerator() {
             </div>
             <div className="grid gap-5 md:grid-cols-[220px_1fr] md:items-center">
               <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/60">
-                <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" />
+                {resultIsRemote ? (
+                  <img src={result.resultUrl} alt={result.preset} className="h-full w-full object-cover" />
+                ) : (
+                  <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" />
+                )}
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
@@ -463,12 +475,14 @@ export function UploadGenerator() {
                     <Share2 className="size-4" />
                     {t("upload.shareButton")}
                   </button>
-                  <button
-                    type="button"
+                  <a
+                    href={result.resultUrl}
+                    target="_blank"
+                    rel="noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
                   >
                     {t("upload.downloadHd")}
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
