@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { createSupabaseServerClient } from "@/lib/supabase";
 
 const requestSchema = z.object({
   mode: z.enum(["photo", "mannequin"]).default("photo"),
@@ -37,8 +38,17 @@ function checkRateLimit(key: string) {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user?.id) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const ip = request.headers.get("x-forwarded-for") || "anonymous";
-    if (!checkRateLimit(ip)) {
+    if (!checkRateLimit(`${user.id}:${ip}`)) {
       return NextResponse.json({ error: "Too many requests." }, { status: 429 });
     }
 

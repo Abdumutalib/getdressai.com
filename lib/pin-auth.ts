@@ -3,11 +3,13 @@
 import type { Session } from "@supabase/supabase-js";
 
 const PIN_STORAGE_KEY = "getdressai-pin-auth";
+const PIN_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
 type PinSessionPayload = {
   email: string;
   accessToken: string;
   refreshToken: string;
+  expiresAt: number;
 };
 
 type PinAuthRecord = {
@@ -101,7 +103,8 @@ export async function savePinAuthRecord(email: string, pin: string, session: Ses
   const payload: PinSessionPayload = {
     email,
     accessToken: session.access_token,
-    refreshToken: session.refresh_token
+    refreshToken: session.refresh_token,
+    expiresAt: Date.now() + PIN_SESSION_TTL_MS
   };
 
   const encrypted = await crypto.subtle.encrypt(
@@ -135,8 +138,17 @@ export async function verifyPinAuthRecord(pin: string) {
     );
     const payload = JSON.parse(new TextDecoder().decode(decrypted)) as PinSessionPayload;
 
+    if (!payload.expiresAt || payload.expiresAt < Date.now()) {
+      clearPinAuthRecord();
+      throw new Error("Saved PIN login expired.");
+    }
+
     return payload;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "Saved PIN login expired.") {
+      throw error;
+    }
+
     throw new Error("Incorrect PIN code.");
   }
 }

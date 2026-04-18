@@ -185,7 +185,15 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : t("login.pinLoginError"));
+      if (nextError instanceof Error && nextError.message === "Saved PIN login expired.") {
+        setSavedPinEmail("");
+        setPinSessionReady(false);
+        setPasswordFallback(false);
+        setPinLogin("");
+        setError(t("login.pinExpired"));
+      } else {
+        setError(nextError instanceof Error ? nextError.message : t("login.pinLoginError"));
+      }
       setBusy(false);
     }
   }

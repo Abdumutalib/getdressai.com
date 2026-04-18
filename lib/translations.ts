@@ -291,6 +291,7 @@ export const translations = {
       pinRemove: "Clear saved login",
       pinRemoved: "Saved login was removed from this device.",
       pinLoginError: "PIN login failed. Please try again.",
+      pinExpired: "Saved PIN login expired. Please sign in again.",
       pinSessionMissing: "Please sign in with your password once on this device before using PIN.",
       pinReady: "PIN access is ready on this device.",
       pinNeedsPassword: "Sign in with your password once on this device to activate PIN access."
@@ -584,6 +585,7 @@ export const translations = {
       pinRemove: "Очистить сохраненный вход",
       pinRemoved: "Сохраненный вход удален с этого устройства.",
       pinLoginError: "Не удалось войти по PIN. Попробуйте еще раз.",
+      pinExpired: "Сохраненный PIN-вход истек. Войдите снова.",
       pinSessionMissing: "Сначала один раз войдите с паролем на этом устройстве, чтобы PIN начал работать.",
       pinReady: "PIN-вход готов на этом устройстве.",
       pinNeedsPassword: "Один раз войдите с паролем на этом устройстве, чтобы активировать PIN-вход."
@@ -877,6 +879,7 @@ export const translations = {
       pinRemove: "Saqlangan kirishni tozalash",
       pinRemoved: "Saqlangan kirish shu qurilmadan o'chirildi.",
       pinLoginError: "PIN bilan kirib bo'lmadi. Yana urinib ko'ring.",
+      pinExpired: "Saqlangan PIN kirish muddati tugadi. Qaytadan kiring.",
       pinSessionMissing: "Avval shu qurilmada bir marta parol bilan kiring, keyin PIN ishlaydi.",
       pinReady: "PIN kirish shu qurilmada tayyor.",
       pinNeedsPassword: "PIN kirishni yoqish uchun shu qurilmada bir marta parol bilan kiring."
