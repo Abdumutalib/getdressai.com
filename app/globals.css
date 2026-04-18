@@ -60,11 +60,11 @@ body::selection {
 }
 
 .btn-muted {
-  @apply border border-[#D8DEFF] bg-[#F5F7FF] text-[#4B56C5] transition hover:bg-[#E9EDFF] active:scale-[0.99];
+  @apply border border-[#D7DDFE] bg-gradient-to-br from-[#F6F3FF] to-[#EEF4FF] text-[#4B56C5] transition hover:from-[#EFEAFF] hover:to-[#E4EEFF] active:scale-[0.99];
 }
 
 .surface-soft {
-  @apply border border-[#E6EAFE] bg-[#F8FAFF];
+  @apply border border-[#E4E3FF] bg-gradient-to-br from-[#FCF7FF] to-[#F1F6FF];
 }
 
 .dark .premium-ring {
