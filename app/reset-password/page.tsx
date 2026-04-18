@@ -141,9 +141,6 @@ export default function ResetPasswordPage() {
           </button>
           {message ? <p className="text-sm font-medium text-emerald-600">{message}</p> : null}
           {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
-          {!hasRecoverySession && !error ? (
-            <p className="text-sm text-slate-500 dark:text-slate-300">{t("resetPassword.missingSession")}</p>
-          ) : null}
         </form>
       </div>
     </main>

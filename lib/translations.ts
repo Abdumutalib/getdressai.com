@@ -301,7 +301,7 @@ export const translations = {
       button: "Update password",
       saving: "Updating...",
       success: "Password updated.",
-      missingSession: "Open this page from the email link first.",
+      missingSession: "Request a new reset link and try again.",
       mismatch: "Passwords do not match.",
       minLength: "Password must be at least 8 characters."
     },
@@ -591,7 +591,7 @@ export const translations = {
       button: "Обновить пароль",
       saving: "Обновление...",
       success: "Пароль обновлен.",
-      missingSession: "Сначала откройте эту страницу по ссылке из письма.",
+      missingSession: "Запросите новую ссылку для сброса и попробуйте снова.",
       mismatch: "Пароли не совпадают.",
       minLength: "Пароль должен содержать минимум 8 символов."
     },
@@ -881,7 +881,7 @@ export const translations = {
       button: "Parolni yangilash",
       saving: "Yangilanmoqda...",
       success: "Parol yangilandi.",
-      missingSession: "Avval emaildagi havola orqali kiring.",
+      missingSession: "Yangi tiklash havolasini so'rab, yana urinib ko'ring.",
       mismatch: "Parollar mos emas.",
       minLength: "Parol kamida 8 ta belgidan iborat bo'lishi kerak."
     },
@@ -1143,7 +1143,7 @@ export const translations = {
       button: "Şifreyi güncelle",
       saving: "Güncelleniyor...",
       success: "Şifre güncellendi.",
-      missingSession: "Önce e-postadaki bağlantıdan bu sayfayı açın.",
+      missingSession: "Yeni sıfırlama bağlantısı isteyip tekrar deneyin.",
       mismatch: "Şifreler eşleşmiyor.",
       minLength: "Şifre en az 8 karakter olmalı."
     },
@@ -1405,7 +1405,7 @@ export const translations = {
       button: "Actualizar contraseña",
       saving: "Actualizando...",
       success: "Contraseña actualizada.",
-      missingSession: "Abre esta página desde el enlace del email.",
+      missingSession: "Solicita un nuevo enlace de restablecimiento y vuelve a intentarlo.",
       mismatch: "Las contraseñas no coinciden.",
       minLength: "La contraseña debe tener al menos 8 caracteres."
     },
@@ -1667,7 +1667,7 @@ export const translations = {
       button: "Mettre à jour le mot de passe",
       saving: "Mise à jour...",
       success: "Mot de passe mis à jour.",
-      missingSession: "Ouvrez d'abord cette page depuis le lien email.",
+      missingSession: "Demandez un nouveau lien de réinitialisation puis réessayez.",
       mismatch: "Les mots de passe ne correspondent pas.",
       minLength: "Le mot de passe doit contenir au moins 8 caractères."
     },
@@ -1929,7 +1929,7 @@ export const translations = {
       button: "Passwort aktualisieren",
       saving: "Wird aktualisiert...",
       success: "Passwort aktualisiert.",
-      missingSession: "Öffne diese Seite zuerst über den E-Mail-Link.",
+      missingSession: "Fordere einen neuen Zurücksetzen-Link an und versuche es erneut.",
       mismatch: "Die Passwörter stimmen nicht überein.",
       minLength: "Das Passwort muss mindestens 8 Zeichen lang sein."
     },
@@ -2191,7 +2191,7 @@ export const translations = {
       button: "تحديث كلمة المرور",
       saving: "جارٍ التحديث...",
       success: "تم تحديث كلمة المرور.",
-      missingSession: "افتح هذه الصفحة أولًا من رابط البريد.",
+      missingSession: "اطلب رابط إعادة تعيين جديدًا ثم حاول مرة أخرى.",
       mismatch: "كلمتا المرور غير متطابقتين.",
       minLength: "يجب أن تكون كلمة المرور 8 أحرف على الأقل."
     },
