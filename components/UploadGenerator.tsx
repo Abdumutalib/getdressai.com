@@ -29,6 +29,8 @@ type GenerateResponse = {
   tookMs: number;
 };
 
+const exampleSlugs = ["luxury", "streetwear", "wedding", "office", "gym", "anime", "celebrity", "casual"] as const;
+
 const defaultMeasurements: Measurements = {
   height: "170",
   chest: "92",
@@ -359,6 +361,39 @@ export function UploadGenerator() {
               {preset}
             </button>
           ))}
+        </div>
+
+        <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div>
+            <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("examples.eyebrow")}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("examples.title")}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {exampleSlugs.map((slug, index) => {
+              const presetLabel = safePresets[index] ?? slug;
+              const active = selected === presetLabel;
+
+              return (
+                <button
+                  key={slug}
+                  type="button"
+                  onClick={() => setSelected(presetLabel)}
+                  className={`overflow-hidden rounded-[1.25rem] border text-left transition ${
+                    active
+                      ? "border-ink shadow-soft"
+                      : "border-slate-200 hover:border-slate-300 dark:border-white/10 dark:hover:border-white/20"
+                  }`}
+                >
+                  <div className="relative aspect-[4/5] bg-slate-50 dark:bg-slate-950/60">
+                    <Image src={`/examples/${slug}.svg`} alt={presetLabel} fill className="object-cover" />
+                  </div>
+                  <div className="px-3 py-3">
+                    <p className="text-sm font-semibold text-slate-950 dark:text-white">{presetLabel}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <textarea

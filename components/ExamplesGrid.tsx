@@ -6,7 +6,9 @@ import { useLanguage } from "@/components/LanguageProvider";
 const examples = ["luxury", "streetwear", "wedding", "office", "gym", "anime", "celebrity", "casual"];
 
 export function ExamplesGrid() {
-  const { t } = useLanguage();
+  const { t, tm } = useLanguage();
+  const labels = tm<string[]>("upload.presets");
+  const safeLabels = Array.isArray(labels) ? labels : [];
 
   return (
     <section className="section-shell py-24" id="examples">
@@ -23,8 +25,10 @@ export function ExamplesGrid() {
               <Image src={`/examples/${example}.svg`} alt={`${example} AI outfit example`} fill className="object-cover" />
             </div>
             <div className="px-2 pb-2 pt-4">
-              <p className="text-lg font-semibold capitalize text-slate-950 dark:text-white">{example}</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t("examples.note").replace("{example}", example)}</p>
+              <p className="text-lg font-semibold text-slate-950 dark:text-white">{safeLabels[index] ?? example}</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                {t("examples.note").replace("{example}", safeLabels[index] ?? example)}
+              </p>
             </div>
           </div>
         ))}
