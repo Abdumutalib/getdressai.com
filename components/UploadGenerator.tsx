@@ -442,6 +442,86 @@ export function UploadGenerator() {
           </div>
         </div>
 
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.recommendationsTitle}</p>
+              <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsCopy}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchRecommendations()}
+              disabled={!hasRecommendationInputs || recommending}
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {recommending ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
+              {recommending ? localizedMarketplaceCopy.recommendationsLoading : localizedMarketplaceCopy.recommendationsButton}
+            </button>
+          </div>
+
+          {recommendedSize ? (
+            <div className="mb-4 inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold text-accent">
+              {localizedMarketplaceCopy.recommendedSize}: {recommendedSize}
+            </div>
+          ) : null}
+
+          {recommendationError ? (
+            <p className="mb-4 text-sm font-medium text-rose-500">{recommendationError}</p>
+          ) : null}
+
+          {!recommendations.length && !recommendationError ? (
+            <p className="text-sm text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsHint}</p>
+          ) : null}
+
+          {recommendations.length ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {recommendations.map((product) => (
+                <article
+                  key={product.id}
+                  className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/40"
+                >
+                  <div className="relative aspect-[4/5] bg-white dark:bg-slate-950/60">
+                    {product.image.startsWith("/") ? (
+                      <Image src={product.image} alt={product.title} fill className="object-cover" />
+                    ) : (
+                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{product.title}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">{product.marketplace}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                        {formatCurrency(product.price, product.currency)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
+                        {localizedMarketplaceCopy.recommendedSize}: {product.recommendedSize}
+                      </span>
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+                        {localizedMarketplaceCopy.fitScore}: {product.totalFitScore}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.autoSource}</p>
+                    <a
+                      href={product.affiliateUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      <ExternalLink className="size-4" />
+                      {localizedMarketplaceCopy.openProduct}
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
         {mode === "photo" ? (
           <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-center dark:border-white/10 dark:bg-white/5">
             <input
@@ -576,86 +656,6 @@ export function UploadGenerator() {
             <p className="mt-3 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
           </div>
         ) : null}
-
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.recommendationsTitle}</p>
-              <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsCopy}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void fetchRecommendations()}
-              disabled={!hasRecommendationInputs || recommending}
-              className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {recommending ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
-              {recommending ? localizedMarketplaceCopy.recommendationsLoading : localizedMarketplaceCopy.recommendationsButton}
-            </button>
-          </div>
-
-          {recommendedSize ? (
-            <div className="mb-4 inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold text-accent">
-              {localizedMarketplaceCopy.recommendedSize}: {recommendedSize}
-            </div>
-          ) : null}
-
-          {recommendationError ? (
-            <p className="mb-4 text-sm font-medium text-rose-500">{recommendationError}</p>
-          ) : null}
-
-          {!recommendations.length && !recommendationError ? (
-            <p className="text-sm text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsHint}</p>
-          ) : null}
-
-          {recommendations.length ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {recommendations.map((product) => (
-                <article
-                  key={product.id}
-                  className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/40"
-                >
-                  <div className="relative aspect-[4/5] bg-white dark:bg-slate-950/60">
-                    {product.image.startsWith("/") ? (
-                      <Image src={product.image} alt={product.title} fill className="object-cover" />
-                    ) : (
-                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="space-y-3 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{product.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">{product.marketplace}</p>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
-                        {formatCurrency(product.price, product.currency)}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
-                        {localizedMarketplaceCopy.recommendedSize}: {product.recommendedSize}
-                      </span>
-                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
-                        {localizedMarketplaceCopy.fitScore}: {product.totalFitScore}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.autoSource}</p>
-                    <a
-                      href={product.affiliateUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      <ExternalLink className="size-4" />
-                      {localizedMarketplaceCopy.openProduct}
-                    </a>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : null}
-        </div>
 
         <div className="flex flex-wrap gap-2">
           {safePresets.map((preset) => (
