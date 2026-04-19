@@ -7,10 +7,10 @@ import {
   createSignedAssetUrls,
   ensureGenerationBucket,
   getGenerationBucket,
-  readPresetTemplate,
   uploadGenerationAsset
 } from "@/lib/generation-storage";
 import { upsertUserGeneratorPreferences } from "@/lib/user-preferences";
+import { aiProvider } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
 
@@ -193,9 +193,18 @@ export async function POST(request: Request) {
     const admin = createSupabaseAdmin();
     await ensureGenerationBucket(admin);
 
-    const presetTemplate = await readPresetTemplate(parsed.preset);
-    const resultImagePath = buildStoragePath(authResult.id, "results", parsed.preset, "svg");
-    await uploadGenerationAsset(admin, resultImagePath, presetTemplate, "image/svg+xml");
+    const generation = await aiProvider.generateTryOn({
+      image: sourceImagePath,
+      mode: parsed.mode,
+      style: parsed.preset,
+      gender: parsed.gender,
+      prompt: parsed.prompt,
+      clothingRequest: parsed.clothingRequest ?? null,
+      measurements: parsed.measurements ?? null
+    });
+
+    const resultImagePath = buildStoragePath(authResult.id, "results", parsed.preset, generation.extension);
+    await uploadGenerationAsset(admin, resultImagePath, generation.buffer, generation.contentType);
 
     const { data: inserted, error: insertError } = await admin
       .from("user_generations")
@@ -211,7 +220,7 @@ export async function POST(request: Request) {
         result_image_path: resultImagePath,
         measurements: parsed.measurements ?? null,
         watermark: true,
-        took_ms: 12130
+        took_ms: generation.tookMs
       })
       .select("id, created_at")
       .single();
@@ -243,13 +252,10 @@ export async function POST(request: Request) {
       sourceUrl,
       sourceImagePath,
       resultUrl,
-      summary:
-        parsed.mode === "mannequin"
-          ? `Virtual mannequin generated for ${parsed.clothingRequest || parsed.preset}.`
-          : `Photo-based try-on generated for ${parsed.clothingRequest || parsed.preset}.`,
+      summary: generation.summary,
       measurements: parsed.measurements ?? null,
       watermark: true,
-      tookMs: 12130
+      tookMs: generation.tookMs
     });
   } catch (error) {
     return NextResponse.json(
