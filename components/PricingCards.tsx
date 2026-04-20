@@ -17,7 +17,7 @@ type CycleCopy = {
   yearlyHint: string;
   yearlyPlan: string;
   monthlyPlan: string;
-  perYear: string;
+  perMonth: string;
   saveLabel: string;
   yearlyWas: string;
 };
@@ -30,7 +30,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "Annual billing is selected by default for better value.",
     yearlyPlan: "Billed yearly",
     monthlyPlan: "Billed monthly",
-    perYear: "/ year",
+    perMonth: "/ month",
     saveLabel: "Save 15%",
     yearlyWas: "Regular yearly price",
   },
@@ -41,7 +41,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "По умолчанию выбрана годовая подписка как более выгодная.",
     yearlyPlan: "Списывается раз в год",
     monthlyPlan: "Списывается раз в месяц",
-    perYear: "/ год",
+    perMonth: "/ месяц",
     saveLabel: "Скидка 15%",
     yearlyWas: "Обычная цена за год",
   },
@@ -52,7 +52,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "Ko'proq foyda uchun default holatda yillik obuna tanlangan.",
     yearlyPlan: "Yiliga bir marta yechiladi",
     monthlyPlan: "Oyiga bir marta yechiladi",
-    perYear: "/ yil",
+    perMonth: "/ oy",
     saveLabel: "15% chegirma",
     yearlyWas: "Oddiy yillik narx",
   },
@@ -63,7 +63,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "Daha iyi deger icin varsayilan olarak yillik abonelik secildi.",
     yearlyPlan: "Yilda bir kez faturalandirilir",
     monthlyPlan: "Ayda bir kez faturalandirilir",
-    perYear: "/ yil",
+    perMonth: "/ ay",
     saveLabel: "%15 indirim",
     yearlyWas: "Normal yillik fiyat",
   },
@@ -74,7 +74,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "La suscripcion anual viene seleccionada por defecto por mejor valor.",
     yearlyPlan: "Se cobra una vez al ano",
     monthlyPlan: "Se cobra una vez al mes",
-    perYear: "/ ano",
+    perMonth: "/ mes",
     saveLabel: "15% de descuento",
     yearlyWas: "Precio anual normal",
   },
@@ -85,7 +85,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "La facturation annuelle est selectionnee par defaut pour une meilleure valeur.",
     yearlyPlan: "Facture une fois par an",
     monthlyPlan: "Facture une fois par mois",
-    perYear: "/ an",
+    perMonth: "/ mois",
     saveLabel: "-15%",
     yearlyWas: "Prix annuel normal",
   },
@@ -96,7 +96,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "Jahrliche Abrechnung ist standardmassig vorausgewahlt fur mehr Wert.",
     yearlyPlan: "Wird jahrlich abgerechnet",
     monthlyPlan: "Wird monatlich abgerechnet",
-    perYear: "/ Jahr",
+    perMonth: "/ Monat",
     saveLabel: "15% Rabatt",
     yearlyWas: "Normaler Jahrespreis",
   },
@@ -107,7 +107,7 @@ const cycleCopy: Record<string, CycleCopy> = {
     yearlyHint: "تم اختيار الاشتراك السنوي افتراضيا لانه افضل قيمة.",
     yearlyPlan: "تتم الفوترة مرة كل سنة",
     monthlyPlan: "تتم الفوترة مرة كل شهر",
-    perYear: "/ سنة",
+    perMonth: "/ شهر",
     saveLabel: "خصم 15%",
     yearlyWas: "السعر السنوي العادي",
   },
@@ -228,9 +228,9 @@ export function PricingCards() {
         {plans.map((plan) => {
           const monthlyPrice = plan.price;
           const regularYearlyPrice = monthlyPrice * 12;
-          const discountedYearlyPrice = Math.round(regularYearlyPrice * 0.85);
-          const shownPrice = billingCycle === "yearly" ? discountedYearlyPrice : monthlyPrice;
-          const shownPeriod = billingCycle === "yearly" ? localizedCycleCopy.perYear : t("pricing.perMonth");
+          const discountedMonthlyPrice = Number((monthlyPrice * 0.85).toFixed(2));
+          const shownPrice = billingCycle === "yearly" ? discountedMonthlyPrice : monthlyPrice;
+          const shownPeriod = billingCycle === "yearly" ? localizedCycleCopy.perMonth : t("pricing.perMonth");
 
           return (
             <div
@@ -268,7 +268,7 @@ export function PricingCards() {
               {plan.plan !== "free" && billingCycle === "yearly" ? (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className={`text-sm line-through ${plan.highlight ? "text-white/70" : "text-slate-400 dark:text-slate-500"}`}>
-                    {formatCurrency(regularYearlyPrice)}
+                    {formatCurrency(monthlyPrice)}
                   </span>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${plan.highlight ? "bg-white/15 text-white" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
                     {localizedCycleCopy.saveLabel}
