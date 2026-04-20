@@ -916,32 +916,6 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           </div>
         </div>
 
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-          <div className="space-y-2">
-            <p className="text-lg font-semibold text-slate-950 dark:text-white">
-              {localizedMarketplaceCopy.clothingLabel}
-            </p>
-            <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
-              {localizedMarketplaceCopy.clothingHint}
-            </p>
-            <p className="text-sm font-medium leading-6 text-accent">
-              {localizedClothingFieldCopy.aiHint}
-            </p>
-            <div className="surface-soft rounded-[1.2rem] p-3">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                {localizedClothingFieldCopy.label}
-              </label>
-              <input
-                type="text"
-                value={clothingRequest}
-                onChange={(event) => setClothingRequest(event.target.value)}
-                placeholder={localizedClothingFieldCopy.placeholder}
-                className="w-full rounded-[1rem] border border-[#D8DEFF] bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-950/60"
-              />
-            </div>
-          </div>
-        </div>
-
         {mode === "photo" ? (
           <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-center dark:border-white/10 dark:bg-white/5">
             <input
@@ -1190,6 +1164,32 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
             <p className="mt-3 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
           </div>
         ) : null}
+
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+          <div className="space-y-3">
+            <p className="text-xl font-semibold text-slate-950 dark:text-white">
+              {localizedMarketplaceCopy.clothingLabel}
+            </p>
+            <p className="text-base leading-8 text-slate-600 dark:text-slate-300">
+              {localizedMarketplaceCopy.clothingHint}
+            </p>
+            <p className="text-base font-medium leading-7 text-accent">
+              {localizedClothingFieldCopy.aiHint}
+            </p>
+            <div className="surface-soft rounded-[1.3rem] p-4">
+              <label className="mb-3 block text-sm font-semibold uppercase tracking-[0.14em] text-accent">
+                {localizedClothingFieldCopy.label}
+              </label>
+              <textarea
+                rows={4}
+                value={clothingRequest}
+                onChange={(event) => setClothingRequest(event.target.value)}
+                placeholder={localizedClothingFieldCopy.placeholder}
+                className="min-h-[140px] w-full resize-y rounded-[1.1rem] border border-[#D8DEFF] bg-white px-5 py-4 text-base leading-7 outline-none placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-950/60"
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           {safePresets.map((preset) => (
