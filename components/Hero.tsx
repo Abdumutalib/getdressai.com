@@ -11,14 +11,14 @@ export function Hero() {
   const { t, language } = useLanguage();
   const marketingCopy = {
     en: {
-      kicker: "Result-first outfit try-on",
-      title: "See how the right outfit looks on you before you buy it.",
+      kicker: "Global styling intelligence",
+      title: "The world’s best stylists are now working for you.",
       copy:
-        "GetDressAI matches clothes to your photo, body shape, and style so the first screen sells the outcome, not the tool.",
-      primaryCta: "Try it free",
+        "GetDressAI analyzes millions of looks and trends to create an outfit that fits your body shape, photo, and taste. One photo and you step into the center of global style.",
+      primaryCta: "Create my ideal look",
       secondaryCta: "See how it works",
-      proof: "No stylist needed",
-      proofSub: "Upload once, get a cleaner answer fast.",
+      proof: "World-class taste, instantly matched",
+      proofSub: "One photo. A sharper answer in seconds.",
       bullets: [
         "Upload one photo and preview a better look in seconds.",
         "See size-aware outfit ideas before spending money.",
@@ -39,14 +39,14 @@ export function Hero() {
       floatingCopy: "Let the hero show the before/after promise. The generator can come after the sale is made.",
     },
     ru: {
-      kicker: "Примерка, которая продает результат",
-      title: "Сразу покажите, как подходящий образ выглядит именно на вас.",
+      kicker: "Глобальный интеллект стиля",
+      title: "Лучшие стилисты мира теперь работают для вас.",
       copy:
-        "GetDressAI подбирает одежду под фото, фигуру и стиль, поэтому первый экран должен продавать итог, а не выглядеть как панель инструмента.",
-      primaryCta: "Попробовать бесплатно",
+        "GetDressAI анализирует миллионы образов и трендов, чтобы собрать стиль, который подходит именно вашей фигуре, фото и вкусу. Одно фото и вы уже в центре глобальной моды.",
+      primaryCta: "Создать мой идеальный образ",
       secondaryCta: "Как это работает",
-      proof: "Без стилиста и догадок",
-      proofSub: "Одно фото и понятный результат за секунды.",
+      proof: "Сильный вкус, подобранный мгновенно",
+      proofSub: "Одно фото и точный результат за секунды.",
       bullets: [
         "Загрузите одно фото и сразу увидите более сильный образ.",
         "Сначала поймите, подходит ли стиль вашей фигуре, а потом тратьте деньги.",
@@ -67,14 +67,14 @@ export function Hero() {
       floatingCopy: "Hero должен продавать обещание до и после. Сам генератор лучше показывать уже после появления интереса.",
     },
     uz: {
-      kicker: "Натижани сотадиган try-on",
-      title: "Аввал кийим сизда қандай кўринишини кўрсатинг, кейин сотиб олинг.",
+      kicker: "Глобал услуб интеллекти",
+      title: "Бутун дунё стилистлари энди сизнинг хизматингизда.",
       copy:
-        "GetDressAI кийимни фото, қомат ва услубга мослайди. Шунинг учун биринчи экран инструмент эмас, натижани сотиши керак.",
-      primaryCta: "Бепул синаб кўриш",
+        "GetDressAI миллионлаб услублар ва трендларни таҳлил қилиб, айнан сизнинг қоматингиз, суратиңиз ва дидингизга мос образ яратади. Битта сурат ва сиз глобал мода марказидасиз.",
+      primaryCta: "Идеал образимни ярат",
       secondaryCta: "Қандай ишлайди",
-      proof: "Стилистсиз ҳам аниқроқ танлов",
-      proofSub: "Битта фото ва бир неча сонияда тушунарли жавоб.",
+      proof: "Дунё даражасидаги дид, сизга мосланган ҳолда",
+      proofSub: "Битта сурат ва сонияларда аниқ жавоб.",
       bullets: [
         "Битта фото юкланг ва дарров яхшироқ образни кўринг.",
         "Пул сарфлашдан олдин услуб қоматингизга мосми-йўқми билиб олинг.",
@@ -129,7 +129,7 @@ export function Hero() {
 
           <div className="flex flex-col gap-4 sm:flex-row">
             <Link
-              href="#demo"
+              href="#studio"
               onClick={() => trackEvent("cta_clicked", { location: "hero_primary" })}
               className="btn-primary inline-flex items-center justify-center rounded-full px-6 py-4 text-sm font-semibold"
             >
