@@ -375,6 +375,14 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       measurements.hips
   );
 
+  function updateMeasurement(field: keyof Measurements, rawValue: string) {
+    const sanitized = rawValue.replace(/[^\d]/g, "");
+    setMeasurements((current) => ({
+      ...current,
+      [field]: sanitized
+    }));
+  }
+
   function openFilePicker() {
     fileInputRef.current?.click();
   }
@@ -883,16 +891,12 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                       <div className="surface-soft flex items-center rounded-[1rem] px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
                         <Ruler className="mr-2 size-4 text-slate-400" />
                         <input
-                          type="number"
+                          type="text"
                           inputMode="numeric"
-                          min="0"
+                          pattern="[0-9]*"
+                          autoComplete="off"
                           value={measurements[field.key]}
-                          onChange={(event) =>
-                            setMeasurements((current) => ({
-                              ...current,
-                              [field.key]: event.target.value
-                            }))
-                          }
+                          onChange={(event) => updateMeasurement(field.key, event.target.value)}
                           className="w-full bg-transparent text-sm outline-none"
                         />
                         <span className="text-xs text-slate-400">{t("upload.measurementUnit")}</span>
@@ -921,16 +925,12 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <div className="surface-soft flex items-center rounded-[1rem] px-3 py-3 dark:border-white/10 dark:bg-slate-950/60">
                     <Ruler className="mr-2 size-4 text-slate-400" />
                     <input
-                      type="number"
+                      type="text"
                       inputMode="numeric"
-                      min="0"
+                      pattern="[0-9]*"
+                      autoComplete="off"
                       value={measurements[field.key]}
-                      onChange={(event) =>
-                        setMeasurements((current) => ({
-                          ...current,
-                          [field.key]: event.target.value
-                        }))
-                      }
+                      onChange={(event) => updateMeasurement(field.key, event.target.value)}
                       className="w-full bg-transparent text-sm outline-none"
                     />
                     <span className="text-xs text-slate-400">{t("upload.measurementUnit")}</span>

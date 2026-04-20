@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CreditCard, Gift, History, Settings, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import { marketingImages } from "@/lib/marketing-images";
 
 const items = [
-  { href: "/dashboard", icon: Sparkles },
+  { href: "/dashboard#generate", icon: Sparkles },
   { href: "/dashboard#history", icon: History },
   { href: "/pricing", icon: CreditCard },
   { href: "/referrals", icon: Gift },
@@ -19,8 +20,19 @@ const items = [
 export function DashboardSidebar() {
   const { tm } = useLanguage();
   const pathname = usePathname();
+  const [hash, setHash] = useState("");
   const labels = tm<string[]>("dashboard.sidebar");
   const safeLabels = Array.isArray(labels) ? labels : ["Generate", "History", "Billing", "Referrals", "Settings"];
+
+  useEffect(() => {
+    const updateHash = () => {
+      setHash(typeof window !== "undefined" ? window.location.hash : "");
+    };
+
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, []);
 
   return (
     <aside className="space-y-4">
@@ -30,8 +42,10 @@ export function DashboardSidebar() {
       <nav className="glass-panel rounded-[2rem] p-4 space-y-2">
         {items.map((item, index) => {
           const Icon = item.icon;
-          const active =
-            item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href.split("#")[0]);
+          const [basePath, itemHash = ""] = item.href.split("#");
+          const active = itemHash
+            ? pathname === basePath && (hash === `#${itemHash}` || (itemHash === "generate" && !hash))
+            : pathname === item.href;
           return (
             <Link
               key={item.href}

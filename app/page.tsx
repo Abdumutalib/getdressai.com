@@ -7,6 +7,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { HowItWorks } from "@/components/HowItWorks";
 import { useLanguage } from "@/components/LanguageProvider";
 
+const UploadGenerator = dynamic(() => import("@/components/UploadGenerator").then((module) => module.UploadGenerator));
 const ExamplesGrid = dynamic(() => import("@/components/ExamplesGrid").then((module) => module.ExamplesGrid));
 const Testimonials = dynamic(() => import("@/components/Testimonials").then((module) => module.Testimonials));
 const PricingCards = dynamic(() => import("@/components/PricingCards").then((module) => module.PricingCards));
@@ -76,12 +77,38 @@ function ReferralLoop() {
 }
 
 export default function HomePage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const demoCopy = {
+    en: {
+      eyebrow: "Live demo",
+      title: "Try the product before you think about pricing.",
+      copy: "Upload a photo, set your fit details, and see how GetDressAI turns interest into a confident buying decision.",
+    },
+    ru: {
+      eyebrow: "Живая демо-версия",
+      title: "Сначала попробуйте продукт, потом думайте о тарифе.",
+      copy: "Загрузите фото, укажите параметры фигуры и сразу посмотрите, как GetDressAI помогает принять более уверенное решение о покупке.",
+    },
+    uz: {
+      eyebrow: "Жонли демо",
+      title: "Аввал маҳсулотни синаб кўринг, кейин тарифни ўйланг.",
+      copy: "Фото юкланг, қомат ўлчамларини киритинг ва GetDressAI қизиқишни қандай ишончли харид қарорига айлантиришини кўринг.",
+    },
+  } as const;
+  const localizedDemoCopy = demoCopy[language as keyof typeof demoCopy] ?? demoCopy.en;
 
   return (
     <main>
       <Hero />
       <TrustBadges />
+      <section id="demo" className="section-shell py-24">
+        <div className="mb-12 max-w-2xl space-y-4">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{localizedDemoCopy.eyebrow}</p>
+          <h2 className="section-title">{localizedDemoCopy.title}</h2>
+          <p className="section-copy">{localizedDemoCopy.copy}</p>
+        </div>
+        <UploadGenerator skipInitialLoad />
+      </section>
       <HowItWorks />
       <ExamplesGrid />
       <WhyUs />

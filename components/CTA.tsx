@@ -17,7 +17,7 @@ export function CTA() {
           </div>
           <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
             <Link
-              href="/login"
+              href="/#demo"
               className="inline-flex items-center justify-center rounded-full bg-white px-6 py-4 text-sm font-semibold text-slate-950"
             >
               {t("navbar.tryFree")}

@@ -23,7 +23,7 @@ export function Footer() {
           <Link href="/examples" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
             {t("navbar.examples")}
           </Link>
-          <Link href="/dashboard" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+          <Link href="/login?next=/dashboard" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
             {t("footer.dashboard")}
           </Link>
         </div>

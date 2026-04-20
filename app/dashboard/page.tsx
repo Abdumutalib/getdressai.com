@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
@@ -102,12 +103,35 @@ export default function DashboardPage() {
     return locales[language] ?? "en-US";
   }, [language]);
 
+  const dashboardCopy = {
+    en: {
+      settingsTitle: "Workspace settings",
+      settingsCopy: "Use this area to keep your workflow stable: generate looks, review saved results, and open billing or referrals from the sidebar.",
+      settingsPrimary: "Open pricing",
+      settingsSecondary: "Manage login",
+    },
+    ru: {
+      settingsTitle: "Настройки рабочего пространства",
+      settingsCopy: "Здесь все ключевые действия собраны в одном месте: генерация образов, просмотр сохраненных результатов и быстрый переход к тарифам или рефералам.",
+      settingsPrimary: "Открыть тарифы",
+      settingsSecondary: "Управление входом",
+    },
+    uz: {
+      settingsTitle: "Иш майдони созламалари",
+      settingsCopy: "Асосий ҳаракатлар шу ерда жамланган: образ яратиш, сақланган натижаларни кўриш ва sidebar орқали тариф ёки referral'га ўтиш.",
+      settingsPrimary: "Тарифларни очиш",
+      settingsSecondary: "Киришни бошқариш",
+    },
+  } as const;
+
+  const localizedDashboardCopy = dashboardCopy[language as keyof typeof dashboardCopy] ?? dashboardCopy.en;
+
   return (
     <main className="section-shell py-16">
       <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
         <DashboardSidebar />
         <div className="space-y-6">
-          <div className="grid gap-4 xl:grid-cols-[1fr_320px] xl:items-start">
+          <div id="generate" className="grid scroll-mt-28 gap-4 xl:grid-cols-[1fr_320px] xl:items-start">
             <div className="space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("dashboard.eyebrow")}</p>
               <h1 className="section-title">{t("dashboard.title")}</h1>
@@ -125,7 +149,7 @@ export default function DashboardPage() {
 
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <UploadGenerator />
-            <div className="glass-panel rounded-[2rem] p-6">
+            <div id="history" className="glass-panel scroll-mt-28 rounded-[2rem] p-6">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-950 dark:text-white">{t("dashboard.recentResults")}</h2>
@@ -191,6 +215,23 @@ export default function DashboardPage() {
                   {t("dashboard.emptySavedLooks")}
                 </div>
               )}
+            </div>
+          </div>
+
+          <div id="settings" className="glass-panel scroll-mt-28 rounded-[2rem] p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl space-y-2">
+                <h2 className="text-xl font-semibold text-slate-950 dark:text-white">{localizedDashboardCopy.settingsTitle}</h2>
+                <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">{localizedDashboardCopy.settingsCopy}</p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href="/pricing" className="btn-primary inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">
+                  {localizedDashboardCopy.settingsPrimary}
+                </Link>
+                <Link href="/login?next=/dashboard" className="btn-muted inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">
+                  {localizedDashboardCopy.settingsSecondary}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
