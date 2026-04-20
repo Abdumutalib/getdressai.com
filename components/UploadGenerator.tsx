@@ -441,6 +441,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   );
 
   const normalizedPreferredSize = preferredSize.trim().toUpperCase();
+  const isApplyingPresetSizeRef = useRef(false);
 
   function updateMeasurement(field: keyof Measurements, rawValue: string) {
     const sanitized = rawValue.replace(/[^\d]/g, "");
@@ -459,6 +460,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     updatePreferredSize(nextSize);
     const nextMeasurements = sizeMeasurementMap[gender][nextSize as (typeof sizeOptions)[number]];
     if (nextMeasurements) {
+      isApplyingPresetSizeRef.current = true;
       setMeasurements(nextMeasurements);
     }
   }
@@ -470,9 +472,48 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
 
     const nextMeasurements = sizeMeasurementMap[gender][normalizedPreferredSize as (typeof sizeOptions)[number]];
     if (nextMeasurements) {
+      isApplyingPresetSizeRef.current = true;
       setMeasurements(nextMeasurements);
     }
   }, [gender, normalizedPreferredSize]);
+
+  useEffect(() => {
+    if (isApplyingPresetSizeRef.current) {
+      isApplyingPresetSizeRef.current = false;
+      return;
+    }
+
+    const chest = Number(measurements.chest);
+    const waist = Number(measurements.waist);
+    const hips = Number(measurements.hips);
+
+    if (![chest, waist, hips].every((value) => Number.isFinite(value) && value > 0)) {
+      return;
+    }
+
+    const inferredSize = (() => {
+      const dominant = Math.max(chest, waist, hips);
+
+      if (gender === "male") {
+        if (dominant < 90) return "S";
+        if (dominant < 98) return "M";
+        if (dominant < 106) return "L";
+        if (dominant < 114) return "XL";
+        return "XXL";
+      }
+
+      if (dominant < 86) return "XS";
+      if (dominant < 94) return "S";
+      if (dominant < 102) return "M";
+      if (dominant < 110) return "L";
+      if (dominant < 118) return "XL";
+      return "XXL";
+    })();
+
+    if (preferredSize !== inferredSize) {
+      setPreferredSize(inferredSize);
+    }
+  }, [gender, measurements, preferredSize]);
 
   function openFilePicker() {
     fileInputRef.current?.click();
