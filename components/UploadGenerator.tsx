@@ -427,6 +427,35 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     () => sizeOptions.map((size) => ({ value: size, label: size })),
     []
   );
+  const mannequinModel = useMemo(() => {
+    const height = Number(measurements.height) || 170;
+    const chest = Number(measurements.chest) || 92;
+    const waist = Number(measurements.waist) || 74;
+    const hips = Number(measurements.hips) || 98;
+
+    const heightScale = Math.min(Math.max((height - 150) / 50, 0), 1);
+    const chestScale = Math.min(Math.max((chest - 80) / 60, 0), 1);
+    const waistScale = Math.min(Math.max((waist - 60) / 60, 0), 1);
+    const hipsScale = Math.min(Math.max((hips - 85) / 65, 0), 1);
+
+    const shoulderWidth = gender === "male" ? 76 + chestScale * 18 : gender === "female" ? 66 + chestScale * 16 : 72 + chestScale * 17;
+    const torsoHeight = 90 + heightScale * 18;
+    const waistWidth = gender === "male" ? 56 + waistScale * 18 : 48 + waistScale * 16;
+    const hipWidth = gender === "male" ? 72 + hipsScale * 20 : 76 + hipsScale * 22;
+    const armHeight = 54 + heightScale * 12;
+    const legHeight = 76 + heightScale * 16;
+    const headSize = gender === "male" ? 36 : 34;
+
+    return {
+      headSize,
+      shoulderWidth,
+      torsoHeight,
+      waistWidth,
+      hipWidth,
+      armHeight,
+      legHeight,
+    };
+  }, [gender, measurements]);
 
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} · ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
   const resultIsRemote = Boolean(result?.resultUrl && !result.resultUrl.startsWith("/"));
@@ -1000,13 +1029,61 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               <div className="rounded-[1.25rem] bg-white p-4 shadow-soft dark:bg-slate-950/60">
                 <div className="flex h-full min-h-56 items-end justify-center rounded-[1rem] bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.08),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_55%)]">
                   <div className="relative flex h-48 w-28 items-center justify-center">
-                    <div className="absolute top-0 size-10 rounded-full border-4 border-slate-300 dark:border-slate-600" />
-                    <div className="absolute top-10 h-20 w-16 rounded-t-[2rem] rounded-b-[1rem] border-4 border-slate-300 dark:border-slate-600" />
-                    <div className="absolute top-[4.6rem] left-0 h-16 w-4 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    <div className="absolute top-[4.6rem] right-0 h-16 w-4 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    <div className="absolute bottom-0 left-[2.2rem] h-20 w-4 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    <div className="absolute bottom-0 right-[2.2rem] h-20 w-4 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    <div className="absolute top-[3.8rem] h-24 w-20 rounded-[1.5rem] bg-gradient-to-b from-slate-900 via-slate-700 to-slate-500 opacity-90" />
+                    <div
+                      className="absolute top-0 rounded-full border-4 border-slate-300 dark:border-slate-600"
+                      style={{ width: `${mannequinModel.headSize}px`, height: `${mannequinModel.headSize}px` }}
+                    />
+                    <div
+                      className="absolute top-10 rounded-t-[2rem] rounded-b-[1rem] border-4 border-slate-300 dark:border-slate-600"
+                      style={{
+                        height: `${mannequinModel.torsoHeight}px`,
+                        width: `${mannequinModel.shoulderWidth}px`,
+                      }}
+                    />
+                    <div
+                      className="absolute rounded-full bg-slate-300 dark:bg-slate-600"
+                      style={{
+                        top: "4.6rem",
+                        left: `${Math.max(0, 42 - mannequinModel.shoulderWidth / 2)}px`,
+                        height: `${mannequinModel.armHeight}px`,
+                        width: "4px",
+                      }}
+                    />
+                    <div
+                      className="absolute rounded-full bg-slate-300 dark:bg-slate-600"
+                      style={{
+                        top: "4.6rem",
+                        right: `${Math.max(0, 42 - mannequinModel.shoulderWidth / 2)}px`,
+                        height: `${mannequinModel.armHeight}px`,
+                        width: "4px",
+                      }}
+                    />
+                    <div
+                      className="absolute rounded-full bg-slate-300 dark:bg-slate-600"
+                      style={{
+                        bottom: 0,
+                        left: `${Math.max(8, 56 - mannequinModel.hipWidth / 3)}px`,
+                        height: `${mannequinModel.legHeight}px`,
+                        width: "4px",
+                      }}
+                    />
+                    <div
+                      className="absolute rounded-full bg-slate-300 dark:bg-slate-600"
+                      style={{
+                        bottom: 0,
+                        right: `${Math.max(8, 56 - mannequinModel.hipWidth / 3)}px`,
+                        height: `${mannequinModel.legHeight}px`,
+                        width: "4px",
+                      }}
+                    />
+                    <div
+                      className="absolute top-[3.8rem] rounded-[1.5rem] bg-gradient-to-b from-slate-900 via-slate-700 to-slate-500 opacity-90"
+                      style={{
+                        height: `${mannequinModel.torsoHeight + 4}px`,
+                        width: `${mannequinModel.hipWidth}px`,
+                        clipPath: `polygon(${Math.max(0, 50 - mannequinModel.shoulderWidth / (mannequinModel.hipWidth * 2) * 100)}% 0%, ${Math.min(100, 50 + mannequinModel.shoulderWidth / (mannequinModel.hipWidth * 2) * 100)}% 0%, ${Math.min(100, 50 + mannequinModel.hipWidth / mannequinModel.hipWidth * 50)}% 100%, ${Math.max(0, 50 - mannequinModel.hipWidth / mannequinModel.hipWidth * 50)}% 100%)`,
+                      }}
+                    />
                   </div>
                 </div>
                 <p className="mt-4 text-sm font-semibold text-slate-950 dark:text-white">{t("upload.mannequinTitle")}</p>
