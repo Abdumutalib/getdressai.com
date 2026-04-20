@@ -11,6 +11,7 @@ import {
   genderCopy as translatedGenderCopy,
   marketplaceCopy as translatedMarketplaceCopy
 } from "@/lib/generator-copy";
+import { getPresetMarketingImage } from "@/lib/marketing-images";
 import { formatCurrency } from "@/lib/utils";
 
 type GeneratorMode = "photo" | "mannequin";
@@ -983,7 +984,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   }`}
                 >
                   <div className="relative aspect-[4/5] bg-slate-50 dark:bg-slate-950/60">
-                    <Image src={`/examples/${slug}.svg`} alt={presetLabel} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
+                    <Image src={getPresetMarketingImage(slug)} alt={presetLabel} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                   </div>
                   <div className="px-3 py-3">
                     <p className="text-sm font-semibold text-slate-950 dark:text-white">{presetLabel}</p>

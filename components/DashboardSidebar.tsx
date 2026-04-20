@@ -6,6 +6,7 @@ import { CreditCard, Gift, History, Settings, Sparkles } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
+import { marketingImages } from "@/lib/marketing-images";
 
 const items = [
   { href: "/dashboard", icon: Sparkles },
@@ -24,7 +25,7 @@ export function DashboardSidebar() {
   return (
     <aside className="space-y-4">
       <div className="overflow-hidden rounded-[2rem]">
-        <BeforeAfterSlider beforeSrc="/examples/before.svg" afterSrc="/examples/luxury.svg" />
+        <BeforeAfterSlider beforeSrc={marketingImages.before} afterSrc={marketingImages.luxury} />
       </div>
       <nav className="glass-panel rounded-[2rem] p-4 space-y-2">
         {items.map((item, index) => {

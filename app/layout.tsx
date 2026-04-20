@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import "@/app/globals.css";
 import { absoluteUrl } from "@/lib/utils";
 import { supportedLanguages, type SupportedLanguage } from "@/lib/translations";
+import { marketingImages } from "@/lib/marketing-images";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
     siteName: "GetDressAI",
     images: [
       {
-        url: absoluteUrl("/hero-demo.webp"),
+        url: marketingImages.heroDemo,
         width: 1200,
         height: 630,
         alt: "GetDressAI hero demo"
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GetDressAI",
     description: "Try Any Outfit on Your Photo in Seconds",
-    images: [absoluteUrl("/hero-demo.webp")]
+    images: [marketingImages.heroDemo]
   },
   alternates: {
     canonical: absoluteUrl("/")

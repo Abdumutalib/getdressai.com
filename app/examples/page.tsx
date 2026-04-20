@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { ExamplesGrid } from "@/components/ExamplesGrid";
 import { useLanguage } from "@/components/LanguageProvider";
+import { marketingImages } from "@/lib/marketing-images";
 
 const qualityExamples = [
-  { id: 1, src: "/hero-demo.webp", label: "Яхши сифат", status: "v" },
-  { id: 2, src: "/examples/before.svg", label: "Паст сифат", status: "x" }
+  { id: 1, src: marketingImages.heroDemo, label: "High quality", status: "v" },
+  { id: 2, src: marketingImages.before, label: "Low quality", status: "x" }
 ] as const;
 
 export default function ExamplesPage() {

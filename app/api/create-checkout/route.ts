@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase";
 
 const schema = z.object({
   plan: z.enum(["starter", "popular", "pro", "credits"]),
+  billingCycle: z.enum(["yearly", "monthly"]).optional(),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional()
 });
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
 
     const data = await createPaddleCheckout({
       plan: body.plan,
+      billingCycle: body.billingCycle ?? "yearly",
       email: user.email,
       userId: user.id,
       successUrl: ensureSameOriginUrl(body.successUrl, "/dashboard?checkout=success"),

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseAdmin, createSupabaseRequestClient } from "@/lib/supabase";
+import {
+  createSupabaseAdmin,
+  createSupabaseRequestClient,
+  isSupabaseAdminConfigured,
+  isSupabaseAuthConfigured
+} from "@/lib/supabase";
 import {
   buildStoragePath,
   createSignedAssetUrl,
@@ -9,7 +14,7 @@ import {
   getGenerationBucket,
   uploadGenerationAsset
 } from "@/lib/generation-storage";
-import { upsertUserGeneratorPreferences } from "@/lib/user-preferences";
+import { listGuestGenerations, saveGuestGeneration } from "@/lib/guest-generation-store";
 import { aiProvider } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
@@ -76,6 +81,10 @@ function parseMeasurements(raw: FormDataEntryValue | null) {
 }
 
 async function requireUser(request: Request) {
+  if (!isSupabaseAuthConfigured()) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const supabase = await createSupabaseRequestClient(request);
   const {
     data: { user }
@@ -95,12 +104,41 @@ async function requireUser(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const authResult = await requireUser(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ items: [] });
     }
 
+    const guestKey = request.headers.get("x-forwarded-for") || "anonymous";
     const admin = createSupabaseAdmin();
+    const authResult = await requireUser(request);
+    if (authResult instanceof NextResponse) {
+      const guestRows = await listGuestGenerations(admin, guestKey);
+      const storagePaths = guestRows.flatMap((row) => [row.resultImagePath, row.sourceImagePath].filter(Boolean) as string[]);
+      const signedUrls = storagePaths.length ? await createSignedAssetUrls(admin, storagePaths) : [];
+      const signedByPath = new Map<string, string>();
+
+      storagePaths.forEach((storagePath, index) => {
+        signedByPath.set(storagePath, signedUrls[index] ?? "");
+      });
+
+      return NextResponse.json({
+        items: guestRows.map((row) => ({
+          id: row.id,
+          mode: row.mode,
+          gender: row.gender,
+          prompt: row.prompt,
+          preset: row.preset,
+          sourceUrl: row.sourceImagePath ? signedByPath.get(row.sourceImagePath) ?? "" : "",
+          sourceImagePath: row.sourceImagePath,
+          resultUrl: signedByPath.get(row.resultImagePath) ?? "",
+          measurements: row.measurements,
+          createdAt: row.createdAt,
+          watermark: row.watermark,
+          tookMs: row.tookMs
+        }))
+      });
+    }
+
     const { data, error } = await admin
       .from("user_generations")
       .select("id, mode, gender, prompt, preset, source_image_path, result_image_path, measurements, watermark, took_ms, created_at")
@@ -147,10 +185,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const authResult = await requireUser(request);
-    if (authResult instanceof NextResponse) {
-      return authResult;
+    const guestUserId = "guest-user";
+    const guestKey = request.headers.get("x-forwarded-for") || "anonymous";
+    if (!checkRateLimit(`guest:${guestKey}`)) {
+      return NextResponse.json({ error: "Too many requests." }, { status: 429 });
     }
+
+    const generationOwnerId = guestUserId;
+    const isGuest = true;
 
     const formData = await request.formData();
     const parsed = bodySchema.parse({
@@ -168,13 +210,17 @@ export async function POST(request: Request) {
 
     if (photo instanceof File) {
       const extension = photo.name.split(".").pop() || "jpg";
-      sourceImagePath = buildStoragePath(authResult.id, "uploads", photo.name, extension);
+      sourceImagePath = buildStoragePath(generationOwnerId, "uploads", photo.name, extension);
       const sourceBuffer = Buffer.from(await photo.arrayBuffer());
+
+      if (!isSupabaseAdminConfigured()) {
+        return NextResponse.json({ error: "Photo uploads require Supabase storage configuration." }, { status: 503 });
+      }
 
       const admin = createSupabaseAdmin();
       await ensureGenerationBucket(admin);
       await uploadGenerationAsset(admin, sourceImagePath, sourceBuffer, photo.type || "application/octet-stream");
-    } else if (parsed.mode === "photo" && parsed.existingSourcePath?.startsWith(`${authResult.id}/uploads/`)) {
+    } else if (parsed.mode === "photo" && parsed.existingSourcePath?.startsWith(`${generationOwnerId}/uploads/`)) {
       sourceImagePath = parsed.existingSourcePath;
     } else if (parsed.mode === "photo") {
       return NextResponse.json({ error: "Please upload a photo first." }, { status: 400 });
@@ -190,6 +236,10 @@ export async function POST(request: Request) {
       }
     }
 
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ error: "Image generation storage is not configured yet." }, { status: 503 });
+    }
+
     const admin = createSupabaseAdmin();
     await ensureGenerationBucket(admin);
 
@@ -203,40 +253,26 @@ export async function POST(request: Request) {
       measurements: parsed.measurements ?? null
     });
 
-    const resultImagePath = buildStoragePath(authResult.id, "results", parsed.preset, generation.extension);
+    const resultImagePath = buildStoragePath(generationOwnerId, "results", parsed.preset, generation.extension);
     await uploadGenerationAsset(admin, resultImagePath, generation.buffer, generation.contentType);
 
-    const { data: inserted, error: insertError } = await admin
-      .from("user_generations")
-      .insert({
-        user_id: authResult.id,
-        mode: parsed.mode,
-        gender: parsed.gender,
-        prompt: parsed.prompt,
-        preset: parsed.preset,
-        source_bucket: getGenerationBucket(),
-        source_image_path: sourceImagePath,
-        result_bucket: getGenerationBucket(),
-        result_image_path: resultImagePath,
-        measurements: parsed.measurements ?? null,
-        watermark: true,
-        took_ms: generation.tookMs
-      })
-      .select("id, created_at")
-      .single();
+    let inserted: { id: string; created_at: string } = {
+      id: crypto.randomUUID(),
+      created_at: new Date().toISOString()
+    };
 
-    if (insertError) {
-      throw insertError;
-    }
-
-    await upsertUserGeneratorPreferences(admin, authResult.id, {
+    await saveGuestGeneration(admin, guestKey, {
+      id: inserted.id,
       mode: parsed.mode,
       gender: parsed.gender,
-      preset: parsed.preset,
       prompt: parsed.prompt,
-      clothingRequest: parsed.clothingRequest ?? null,
+      preset: parsed.preset,
+      sourceImagePath,
+      resultImagePath,
       measurements: parsed.measurements ?? null,
-      sourceImagePath
+      watermark: true,
+      tookMs: generation.tookMs,
+      createdAt: inserted.created_at
     });
 
     const resultUrl = await createSignedAssetUrl(admin, resultImagePath);
@@ -254,7 +290,8 @@ export async function POST(request: Request) {
       resultUrl,
       summary: generation.summary,
       measurements: parsed.measurements ?? null,
-      watermark: true,
+      watermark: isGuest,
+      guest: isGuest,
       tookMs: generation.tookMs
     });
   } catch (error) {

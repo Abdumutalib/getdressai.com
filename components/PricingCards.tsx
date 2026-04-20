@@ -9,13 +9,81 @@ import { trackEvent } from "@/lib/analytics";
 import { createBrowserSafeSupabase } from "@/lib/supabase-browser";
 
 export function PricingCards() {
-  const { t, tm } = useLanguage();
+  const { language, t, tm } = useLanguage();
   const router = useRouter();
   const supabase = useMemo(() => createBrowserSafeSupabase(), []);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [billingCycle, setBillingCycle] = useState<"yearly" | "monthly">("yearly");
   const localizedPlans = tm<{ name: string; subtitle: string; features: string[]; cta: string }[]>("pricing.plans");
   const safeLocalizedPlans = Array.isArray(localizedPlans) ? localizedPlans : [];
+  const cycleCopy = {
+    en: {
+      yearly: "Yearly",
+      monthly: "Monthly",
+      yearlyBadge: "Yearly first",
+      yearlyHint: "Annual billing is selected by default for better value.",
+      yearlyPlan: "Billed yearly",
+      monthlyPlan: "Billed monthly"
+    },
+    ru: {
+      yearly: "Годовая",
+      monthly: "Месячная",
+      yearlyBadge: "Сначала годовая",
+      yearlyHint: "По умолчанию выбрана годовая подписка как более выгодная.",
+      yearlyPlan: "Списывается раз в год",
+      monthlyPlan: "Списывается раз в месяц"
+    },
+    uz: {
+      yearly: "Yillik",
+      monthly: "Oylik",
+      yearlyBadge: "Yillik ustuvor",
+      yearlyHint: "Ko'proq foyda uchun default holatda yillik obuna tanlangan.",
+      yearlyPlan: "Yiliga bir marta yechiladi",
+      monthlyPlan: "Oyiga bir marta yechiladi"
+    },
+    tr: {
+      yearly: "Yillik",
+      monthly: "Aylik",
+      yearlyBadge: "Yillik once",
+      yearlyHint: "Daha iyi deger icin varsayilan olarak yillik abonelik secildi.",
+      yearlyPlan: "Yilda bir kez faturalandirilir",
+      monthlyPlan: "Ayda bir kez faturalandirilir"
+    },
+    es: {
+      yearly: "Anual",
+      monthly: "Mensual",
+      yearlyBadge: "Anual primero",
+      yearlyHint: "La suscripcion anual viene seleccionada por defecto por mejor valor.",
+      yearlyPlan: "Se cobra una vez al ano",
+      monthlyPlan: "Se cobra una vez al mes"
+    },
+    fr: {
+      yearly: "Annuel",
+      monthly: "Mensuel",
+      yearlyBadge: "Annuel d'abord",
+      yearlyHint: "La facturation annuelle est selectionnee par defaut pour une meilleure valeur.",
+      yearlyPlan: "Facture une fois par an",
+      monthlyPlan: "Facture une fois par mois"
+    },
+    de: {
+      yearly: "Jahrlich",
+      monthly: "Monatlich",
+      yearlyBadge: "Jahrlich zuerst",
+      yearlyHint: "Jahrliche Abrechnung ist standardmassig vorausgewahlt fur mehr Wert.",
+      yearlyPlan: "Wird jahrlich abgerechnet",
+      monthlyPlan: "Wird monatlich abgerechnet"
+    },
+    ar: {
+      yearly: "سنوي",
+      monthly: "شهري",
+      yearlyBadge: "السنوي اولا",
+      yearlyHint: "تم اختيار الاشتراك السنوي افتراضيا لانه افضل قيمة.",
+      yearlyPlan: "تتم الفوترة مرة كل سنة",
+      monthlyPlan: "تتم الفوترة مرة كل شهر"
+    }
+  } as const;
+  const localizedCycleCopy = cycleCopy[language] || cycleCopy.en;
   const plans = safeLocalizedPlans.map((plan, index) => ({
     ...plan,
     price: [0, 9, 19, 49][index],
@@ -57,6 +125,7 @@ export function PricingCards() {
         },
         body: JSON.stringify({
           plan,
+          billingCycle,
           email: user.email,
           userId: user.id,
           successUrl: `${window.location.origin}/dashboard?checkout=success`,
@@ -94,6 +163,27 @@ export function PricingCards() {
       <div className="mb-12 max-w-2xl space-y-4">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("pricing.eyebrow")}</p>
         <h2 className="section-title">{t("pricing.title")}</h2>
+        <div className="inline-flex rounded-full border border-slate-200 bg-white/80 p-1 shadow-soft dark:border-white/10 dark:bg-white/5">
+          <button
+            type="button"
+            onClick={() => setBillingCycle("yearly")}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              billingCycle === "yearly" ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950" : "text-slate-500 dark:text-slate-300"
+            }`}
+          >
+            {localizedCycleCopy.yearly}
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingCycle("monthly")}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              billingCycle === "monthly" ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950" : "text-slate-500 dark:text-slate-300"
+            }`}
+          >
+            {localizedCycleCopy.monthly}
+          </button>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-300">{localizedCycleCopy.yearlyHint}</p>
       </div>
       <div className="grid gap-6 xl:grid-cols-4">
         {plans.map((plan) => (
@@ -105,7 +195,7 @@ export function PricingCards() {
           >
             {plan.highlight ? (
               <div className="mb-4 inline-flex rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
-                {t("pricing.bestValue")}
+                {billingCycle === "yearly" ? localizedCycleCopy.yearlyBadge : t("pricing.bestValue")}
               </div>
             ) : null}
             <div className="flex items-center justify-between gap-3">
@@ -129,6 +219,11 @@ export function PricingCards() {
                 {t("pricing.perMonth")}
               </span>
             </div>
+            {plan.plan !== "free" ? (
+              <p className={`mt-2 text-xs font-medium uppercase tracking-[0.16em] ${plan.highlight ? "text-white/70" : "text-slate-500 dark:text-slate-300"}`}>
+                {billingCycle === "yearly" ? localizedCycleCopy.yearlyPlan : localizedCycleCopy.monthlyPlan}
+              </p>
+            ) : null}
 
             <ul className="mt-8 space-y-3 text-sm">
               {plan.features.map((feature) => (

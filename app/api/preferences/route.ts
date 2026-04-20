@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseAdmin, createSupabaseRequestClient } from "@/lib/supabase";
+import {
+  createSupabaseAdmin,
+  createSupabaseRequestClient,
+  isSupabaseAdminConfigured,
+  isSupabaseAuthConfigured
+} from "@/lib/supabase";
 import {
   buildStoragePath,
   createSignedAssetUrl,
@@ -35,6 +40,10 @@ const jsonSchema = z.object({
 });
 
 async function requireUser(request: Request) {
+  if (!isSupabaseAuthConfigured()) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const supabase = await createSupabaseRequestClient(request);
   const {
     data: { user }
@@ -49,6 +58,10 @@ async function requireUser(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ item: null });
+    }
+
     const authResult = await requireUser(request);
     if (authResult instanceof NextResponse) {
       return authResult;
@@ -85,6 +98,10 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ error: "Preferences storage is not configured yet." }, { status: 503 });
+    }
+
     const authResult = await requireUser(request);
     if (authResult instanceof NextResponse) {
       return authResult;
@@ -130,6 +147,10 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ error: "Photo uploads require Supabase storage configuration." }, { status: 503 });
+    }
+
     const authResult = await requireUser(request);
     if (authResult instanceof NextResponse) {
       return authResult;

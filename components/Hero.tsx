@@ -7,6 +7,7 @@ import { ArrowRight, PlayCircle, ShieldCheck, Sparkles, Zap } from "lucide-react
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
+import { marketingImages } from "@/lib/marketing-images";
 
 const UploadGenerator = dynamic(
   () => import("@/components/UploadGenerator").then((module) => module.UploadGenerator),
@@ -138,7 +139,7 @@ export function Hero() {
         </div>
 
         <div className="grid gap-6">
-          <BeforeAfterSlider beforeSrc="/examples/before.svg" afterSrc="/examples/luxury.svg" />
+          <BeforeAfterSlider beforeSrc={marketingImages.before} afterSrc={marketingImages.luxury} />
           {showGenerator ? <UploadGenerator skipInitialLoad /> : null}
         </div>
       </div>

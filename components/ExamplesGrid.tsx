@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useLanguage } from "@/components/LanguageProvider";
+import { getPresetMarketingImage } from "@/lib/marketing-images";
 
 const examples = ["luxury", "streetwear", "wedding", "office", "gym", "anime", "celebrity", "casual"];
 
@@ -22,7 +23,7 @@ export function ExamplesGrid() {
         {examples.map((example, index) => (
           <div key={example} className="glass-panel mb-4 break-inside-avoid overflow-hidden rounded-[2rem] p-3">
             <div className={`relative overflow-hidden rounded-[1.5rem] ${index % 3 === 0 ? "aspect-[4/5]" : "aspect-square"}`}>
-              <Image src={`/examples/${example}.svg`} alt={`${example} AI outfit example`} fill className="object-cover" />
+              <Image src={getPresetMarketingImage(example)} alt={`${example} AI outfit example`} fill className="object-cover" />
             </div>
             <div className="px-2 pb-2 pt-4">
               <p className="text-lg font-semibold text-slate-950 dark:text-white">{safeLabels[index] ?? example}</p>

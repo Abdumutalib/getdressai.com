@@ -3,8 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "").trim();
 const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
 
+function hasConfiguredValue(value: string) {
+  if (!value) {
+    return false;
+  }
+
+  return !/(your-|your_|placeholder|example)/i.test(value);
+}
+
 export function createBrowserSafeSupabase() {
-  if (!url || !anonKey) {
+  if (!hasConfiguredValue(url) || !hasConfiguredValue(anonKey)) {
     return null;
   }
 

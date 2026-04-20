@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { isSupabaseAuthConfigured } from "@/lib/supabase";
 
 const schema = z.object({
   email: z.string().email(),
@@ -11,7 +12,7 @@ const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL ||
 const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
 
 function createSupabaseAnonClient() {
-  if (!url || !anonKey) {
+  if (!isSupabaseAuthConfigured()) {
     throw new Error("Supabase auth is not configured.");
   }
 
@@ -25,6 +26,10 @@ function createSupabaseAnonClient() {
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseAuthConfigured()) {
+      return NextResponse.json({ error: "Supabase login is not configured yet." }, { status: 503 });
+    }
+
     const body = schema.parse(await request.json());
     const anon = createSupabaseAnonClient();
     const { data, error } = await anon.auth.signInWithPassword({

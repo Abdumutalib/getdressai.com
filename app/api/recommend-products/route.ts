@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseRequestClient } from "@/lib/supabase";
+import { createSupabaseRequestClient, isSupabaseAuthConfigured } from "@/lib/supabase";
 import { parseClothingIntent } from "@/lib/clothing-intent";
 import {
   buildFallbackRecommendations,
@@ -27,6 +27,10 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseAuthConfigured()) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const supabase = await createSupabaseRequestClient(request);
     const {
       data: { user }
