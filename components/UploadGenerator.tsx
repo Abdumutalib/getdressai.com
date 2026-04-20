@@ -90,6 +90,41 @@ const defaultMeasurements: Measurements = {
   inseam: "78"
 };
 
+const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"] as const;
+
+const sizeMeasurementMap: Record<GenderOption, Record<(typeof sizeOptions)[number], Measurements>> = {
+  female: {
+    XS: { height: "160", chest: "82", waist: "62", hips: "88", inseam: "74" },
+    S: { height: "164", chest: "86", waist: "66", hips: "92", inseam: "76" },
+    M: { height: "168", chest: "92", waist: "72", hips: "98", inseam: "78" },
+    L: { height: "170", chest: "98", waist: "78", hips: "104", inseam: "79" },
+    XL: { height: "172", chest: "106", waist: "86", hips: "112", inseam: "80" },
+    XXL: { height: "174", chest: "114", waist: "94", hips: "120", inseam: "81" },
+    "3XL": { height: "176", chest: "122", waist: "102", hips: "128", inseam: "82" },
+    "4XL": { height: "178", chest: "130", waist: "110", hips: "136", inseam: "83" },
+  },
+  male: {
+    XS: { height: "168", chest: "86", waist: "72", hips: "88", inseam: "77" },
+    S: { height: "172", chest: "92", waist: "78", hips: "94", inseam: "79" },
+    M: { height: "176", chest: "98", waist: "84", hips: "100", inseam: "81" },
+    L: { height: "180", chest: "106", waist: "92", hips: "108", inseam: "83" },
+    XL: { height: "184", chest: "114", waist: "100", hips: "116", inseam: "84" },
+    XXL: { height: "186", chest: "122", waist: "108", hips: "124", inseam: "85" },
+    "3XL": { height: "188", chest: "130", waist: "116", hips: "132", inseam: "86" },
+    "4XL": { height: "190", chest: "138", waist: "124", hips: "140", inseam: "87" },
+  },
+  unisex: {
+    XS: { height: "164", chest: "84", waist: "68", hips: "90", inseam: "75" },
+    S: { height: "168", chest: "90", waist: "74", hips: "96", inseam: "77" },
+    M: { height: "172", chest: "96", waist: "80", hips: "102", inseam: "79" },
+    L: { height: "176", chest: "104", waist: "88", hips: "110", inseam: "81" },
+    XL: { height: "180", chest: "112", waist: "96", hips: "118", inseam: "83" },
+    XXL: { height: "184", chest: "120", waist: "104", hips: "126", inseam: "84" },
+    "3XL": { height: "186", chest: "128", waist: "112", hips: "134", inseam: "85" },
+    "4XL": { height: "188", chest: "136", waist: "120", hips: "142", inseam: "86" },
+  },
+};
+
 const marketplaceCopy = {
   en: {
     fitTitle: "Size and fit",
@@ -388,6 +423,10 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       ] as const),
     [t]
   );
+  const localizedSizeOptions = useMemo(
+    () => sizeOptions.map((size) => ({ value: size, label: size })),
+    []
+  );
 
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} · ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
   const resultIsRemote = Boolean(result?.resultUrl && !result.resultUrl.startsWith("/"));
@@ -415,6 +454,25 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     const sanitized = rawValue.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 8);
     setPreferredSize(sanitized);
   }
+
+  function applyPreferredSize(nextSize: string) {
+    updatePreferredSize(nextSize);
+    const nextMeasurements = sizeMeasurementMap[gender][nextSize as (typeof sizeOptions)[number]];
+    if (nextMeasurements) {
+      setMeasurements(nextMeasurements);
+    }
+  }
+
+  useEffect(() => {
+    if (!normalizedPreferredSize) {
+      return;
+    }
+
+    const nextMeasurements = sizeMeasurementMap[gender][normalizedPreferredSize as (typeof sizeOptions)[number]];
+    if (nextMeasurements) {
+      setMeasurements(nextMeasurements);
+    }
+  }, [gender, normalizedPreferredSize]);
 
   function openFilePicker() {
     fileInputRef.current?.click();
@@ -923,13 +981,18 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
                     {localizedKnownSizeCopy.label}
                   </p>
-                  <input
-                    type="text"
+                  <select
                     value={preferredSize}
-                    onChange={(event) => updatePreferredSize(event.target.value)}
-                    placeholder={localizedKnownSizeCopy.placeholder}
-                    className="mt-2 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                  />
+                    onChange={(event) => applyPreferredSize(event.target.value)}
+                    className="mt-2 w-full bg-transparent text-sm outline-none"
+                  >
+                    <option value="">{localizedKnownSizeCopy.placeholder}</option>
+                    {localizedSizeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{localizedKnownSizeCopy.hint}</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -970,13 +1033,18 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
                 {localizedKnownSizeCopy.label}
               </p>
-              <input
-                type="text"
+              <select
                 value={preferredSize}
-                onChange={(event) => updatePreferredSize(event.target.value)}
-                placeholder={localizedKnownSizeCopy.placeholder}
-                className="mt-2 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              />
+                onChange={(event) => applyPreferredSize(event.target.value)}
+                className="mt-2 w-full bg-transparent text-sm outline-none"
+              >
+                <option value="">{localizedKnownSizeCopy.placeholder}</option>
+                {localizedSizeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{localizedKnownSizeCopy.hint}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
