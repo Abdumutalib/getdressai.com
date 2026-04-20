@@ -12,15 +12,18 @@ const schema = z.object({
   prompt: z.string().min(3).max(400),
   preset: z.string().min(2).max(80),
   clothingRequest: z.string().max(160).optional(),
+  preferredSize: z.string().max(8).optional(),
   gender: z.enum(["female", "male", "unisex"]),
   sourceImagePath: z.string().min(1),
-  measurements: z.object({
-    height: z.coerce.number().min(120).max(230),
-    chest: z.coerce.number().min(60).max(180),
-    waist: z.coerce.number().min(45).max(160),
-    hips: z.coerce.number().min(65).max(190),
-    inseam: z.coerce.number().min(50).max(120).optional()
-  })
+  measurements: z
+    .object({
+      height: z.coerce.number().min(120).max(230).optional(),
+      chest: z.coerce.number().min(60).max(180).optional(),
+      waist: z.coerce.number().min(45).max(160).optional(),
+      hips: z.coerce.number().min(65).max(190).optional(),
+      inseam: z.coerce.number().min(50).max(120).optional()
+    })
+    .optional()
 });
 
 export const runtime = "nodejs";
@@ -45,11 +48,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This photo does not belong to the current user." }, { status: 403 });
     }
 
-    const recommendedSize = inferRecommendedSize({
+    const hasMeasurementSize =
+      typeof body.measurements?.chest === "number" &&
+      typeof body.measurements?.waist === "number" &&
+      typeof body.measurements?.hips === "number";
+    const preferredSize = body.preferredSize?.trim().toUpperCase();
+
+    if (!preferredSize && !hasMeasurementSize) {
+      return NextResponse.json(
+        { error: "Please provide your measurements or a known clothing size." },
+        { status: 400 }
+      );
+    }
+
+    const recommendedSize = preferredSize || inferRecommendedSize({
       gender: body.gender,
-      chest: body.measurements.chest,
-      waist: body.measurements.waist,
-      hips: body.measurements.hips
+      chest: body.measurements!.chest!,
+      waist: body.measurements!.waist!,
+      hips: body.measurements!.hips!
     });
     const intent = parseClothingIntent(body.clothingRequest?.trim() || body.preset, body.preset);
 
@@ -60,7 +76,7 @@ export async function POST(request: Request) {
       style: body.preset,
       size: recommendedSize,
       measurements: {
-        ...body.measurements,
+        ...(body.measurements ?? {}),
         recommendedSize
       },
       sources: ["amazon", "ebay", "aliexpress"],

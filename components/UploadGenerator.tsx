@@ -55,6 +55,12 @@ type PreferencesResponse = {
   error?: string;
 };
 
+type KnownSizeCopy = {
+  label: string;
+  placeholder: string;
+  hint: string;
+};
+
 type MarketplaceProduct = {
   id: string;
   title: string;
@@ -193,6 +199,24 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const localizedMarketplaceCopy = translatedMarketplaceCopy[language] ?? translatedMarketplaceCopy.en;
   const localizedGenderCopy = translatedGenderCopy[language] ?? translatedGenderCopy.en;
   const localizedClothingFieldCopy = translatedClothingFieldCopy[language] ?? translatedClothingFieldCopy.en;
+  const knownSizeCopy: Record<string, KnownSizeCopy> = {
+    en: {
+      label: "Known clothing size",
+      placeholder: "For example: XXL",
+      hint: "If you already know your usual size, you can enter it here.",
+    },
+    ru: {
+      label: "Готовый размер",
+      placeholder: "Например: XXL",
+      hint: "Если вы уже знаете свой обычный размер, укажите его здесь.",
+    },
+    uz: {
+      label: "Tayyor razmer",
+      placeholder: "Masalan: XXL",
+      hint: "Agar odatda qaysi razmer kiyishingizni bilsangiz, shu yerga yozishingiz mumkin.",
+    },
+  };
+  const localizedKnownSizeCopy = knownSizeCopy[language] ?? knownSizeCopy.en;
   const presets = tm<string[]>("upload.presets");
   const safePresets = Array.isArray(presets) ? presets : [];
   const [mode, setMode] = useState<GeneratorMode>("photo");
@@ -200,6 +224,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const [selected, setSelected] = useState(safePresets[0] ?? "Luxury");
   const [prompt, setPrompt] = useState(t("upload.defaultPrompt"));
   const [clothingRequest, setClothingRequest] = useState("");
+  const [preferredSize, setPreferredSize] = useState("");
   const [generating, setGenerating] = useState(false);
   const [hydrating, setHydrating] = useState(true);
   const [recommending, setRecommending] = useState(false);
@@ -369,11 +394,14 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const previewIsRemote = Boolean(photoPreview && !photoPreview.startsWith("blob:") && !photoPreview.startsWith("/"));
   const hasRecommendationInputs = Boolean(
     (photoFile || savedSourcePath || photoPreview) &&
-      measurements.height &&
-      measurements.chest &&
-      measurements.waist &&
-      measurements.hips
+      (preferredSize.trim() ||
+        (measurements.height &&
+          measurements.chest &&
+          measurements.waist &&
+          measurements.hips))
   );
+
+  const normalizedPreferredSize = preferredSize.trim().toUpperCase();
 
   function updateMeasurement(field: keyof Measurements, rawValue: string) {
     const sanitized = rawValue.replace(/[^\d]/g, "");
@@ -381,6 +409,11 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       ...current,
       [field]: sanitized
     }));
+  }
+
+  function updatePreferredSize(rawValue: string) {
+    const sanitized = rawValue.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 8);
+    setPreferredSize(sanitized);
   }
 
   function openFilePicker() {
@@ -470,7 +503,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           preset: selected,
           gender,
           sourceImagePath: savedSourcePath,
-          measurements: serializeMeasurements()
+          measurements: serializeMeasurements(),
+          preferredSize: normalizedPreferredSize || undefined
         })
       });
 
@@ -532,6 +566,9 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         "measurements",
         JSON.stringify(serializeMeasurements())
       );
+      if (normalizedPreferredSize) {
+        payload.set("preferredSize", normalizedPreferredSize);
+      }
 
       if (mode === "photo" && photoFile) {
         payload.set("file", photoFile);
@@ -882,6 +919,19 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.fitTitle}</p>
                   <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitCopy}</p>
                 </div>
+                <div className="rounded-[1rem] border border-slate-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-slate-950/60">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
+                    {localizedKnownSizeCopy.label}
+                  </p>
+                  <input
+                    type="text"
+                    value={preferredSize}
+                    onChange={(event) => updatePreferredSize(event.target.value)}
+                    placeholder={localizedKnownSizeCopy.placeholder}
+                    className="mt-2 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                  />
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{localizedKnownSizeCopy.hint}</p>
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {measurementFields.map((field) => (
                     <label key={field.key} className="space-y-2">
@@ -915,6 +965,19 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
             <div className="mb-3">
               <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.fitTitle}</p>
               <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitCopy}</p>
+            </div>
+            <div className="mb-4 rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-slate-950/40">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
+                {localizedKnownSizeCopy.label}
+              </p>
+              <input
+                type="text"
+                value={preferredSize}
+                onChange={(event) => updatePreferredSize(event.target.value)}
+                placeholder={localizedKnownSizeCopy.placeholder}
+                className="mt-2 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+              />
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{localizedKnownSizeCopy.hint}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               {measurementFields.map((field) => (

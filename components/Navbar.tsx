@@ -79,7 +79,7 @@ export function Navbar() {
             {dark ? <SunMedium className="size-4" /> : <MoonStar className="size-4" />}
           </button>
           <Link
-            href="/#demo"
+            href="/#studio"
             className="btn-primary hidden rounded-full px-5 py-3 text-sm font-semibold md:inline-flex"
           >
             {t("navbar.tryFree")}
@@ -109,7 +109,7 @@ export function Navbar() {
             </Link>
           ))}
           <Link
-            href="/#demo"
+            href="/#studio"
             className="btn-primary rounded-2xl px-4 py-3 text-center text-sm font-semibold"
             onClick={() => setOpen(false)}
           >

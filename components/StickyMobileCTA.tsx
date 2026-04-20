@@ -11,7 +11,7 @@ export function StickyMobileCTA() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-4 py-3 shadow-2xl backdrop-blur md:hidden dark:border-white/10 dark:bg-slate-950/95">
       <Link
-        href="/login"
+        href="/#studio"
         onClick={() => trackEvent("cta_clicked", { location: "sticky_mobile_cta" })}
         className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-4 text-sm font-semibold"
       >

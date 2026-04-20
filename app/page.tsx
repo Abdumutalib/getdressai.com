@@ -78,34 +78,34 @@ function ReferralLoop() {
 
 export default function HomePage() {
   const { t, language } = useLanguage();
-  const demoCopy = {
+  const studioCopy = {
     en: {
-      eyebrow: "Live demo",
-      title: "Try the product before you think about pricing.",
-      copy: "Upload a photo, set your fit details, and see how GetDressAI turns interest into a confident buying decision.",
+      eyebrow: "AI fitting studio",
+      title: "Start with your photo, fit details, and a real styling preview.",
+      copy: "This is the interactive studio inside GetDressAI: upload once, shape the fit, and see a buying decision with more confidence.",
     },
     ru: {
-      eyebrow: "Живая демо-версия",
-      title: "Сначала попробуйте продукт, потом думайте о тарифе.",
-      copy: "Загрузите фото, укажите параметры фигуры и сразу посмотрите, как GetDressAI помогает принять более уверенное решение о покупке.",
+      eyebrow: "AI fitting studio",
+      title: "Начните с фото, параметров фигуры и реального превью образа.",
+      copy: "Это интерактивная студия внутри GetDressAI: загрузите фото, настройте посадку и принимайте решение о покупке увереннее.",
     },
     uz: {
-      eyebrow: "Жонли демо",
-      title: "Аввал маҳсулотни синаб кўринг, кейин тарифни ўйланг.",
-      copy: "Фото юкланг, қомат ўлчамларини киритинг ва GetDressAI қизиқишни қандай ишончли харид қарорига айлантиришини кўринг.",
+      eyebrow: "AI fitting studio",
+      title: "Фото, қомат ўлчами ва реал preview билан бошланг.",
+      copy: "Бу GetDressAI ичидаги interactive studio: фото юкланг, moslikni sozlang ва харид қарорига ишонч билан яқинлашинг.",
     },
   } as const;
-  const localizedDemoCopy = demoCopy[language as keyof typeof demoCopy] ?? demoCopy.en;
+  const localizedStudioCopy = studioCopy[language as keyof typeof studioCopy] ?? studioCopy.en;
 
   return (
     <main>
       <Hero />
       <TrustBadges />
-      <section id="demo" className="section-shell py-24">
+      <section id="studio" className="section-shell py-24">
         <div className="mb-12 max-w-2xl space-y-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{localizedDemoCopy.eyebrow}</p>
-          <h2 className="section-title">{localizedDemoCopy.title}</h2>
-          <p className="section-copy">{localizedDemoCopy.copy}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{localizedStudioCopy.eyebrow}</p>
+          <h2 className="section-title">{localizedStudioCopy.title}</h2>
+          <p className="section-copy">{localizedStudioCopy.copy}</p>
         </div>
         <UploadGenerator skipInitialLoad />
       </section>

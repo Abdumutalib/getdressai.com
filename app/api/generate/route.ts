@@ -24,6 +24,7 @@ const bodySchema = z.object({
   gender: z.enum(["female", "male", "unisex"]).default("female"),
   prompt: z.string().min(5).max(400),
   clothingRequest: z.string().max(160).optional(),
+  preferredSize: z.string().max(8).optional(),
   preset: z.string().min(2).max(80).default("Custom"),
   existingSourcePath: z.string().min(1).optional(),
   measurements: z
@@ -200,6 +201,7 @@ export async function POST(request: Request) {
       gender: formData.get("gender"),
       prompt: formData.get("prompt"),
       clothingRequest: formData.get("clothingRequest"),
+      preferredSize: formData.get("preferredSize"),
       preset: formData.get("preset"),
       existingSourcePath: formData.get("existingSourcePath"),
       measurements: parseMeasurements(formData.get("measurements"))
@@ -249,7 +251,7 @@ export async function POST(request: Request) {
       style: parsed.preset,
       gender: parsed.gender,
       prompt: parsed.prompt,
-      clothingRequest: parsed.clothingRequest ?? null,
+      clothingRequest: [parsed.clothingRequest, parsed.preferredSize].filter(Boolean).join(" | size: ") || null,
       measurements: parsed.measurements ?? null
     });
 
