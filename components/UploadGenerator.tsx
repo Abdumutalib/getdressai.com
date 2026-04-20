@@ -237,17 +237,17 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const knownSizeCopy: Record<string, KnownSizeCopy> = {
     en: {
       label: "Known clothing size",
-      placeholder: "For example: XXL",
+      placeholder: "Select size",
       hint: "If you already know your usual size, you can enter it here.",
     },
     ru: {
       label: "Готовый размер",
-      placeholder: "Например: XXL",
+      placeholder: "Выберите размер",
       hint: "Если вы уже знаете свой обычный размер, укажите его здесь.",
     },
     uz: {
       label: "Tayyor razmer",
-      placeholder: "Masalan: XXL",
+      placeholder: "Razmerni tanlang",
       hint: "Agar odatda qaysi razmer kiyishingizni bilsangiz, shu yerga yozishingiz mumkin.",
     },
   };
@@ -984,7 +984,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <select
                     value={preferredSize}
                     onChange={(event) => applyPreferredSize(event.target.value)}
-                    className="mt-2 w-full bg-transparent text-sm outline-none"
+                    className="mt-2 w-full rounded-[1rem] border border-[#D8DEFF] bg-slate-50 px-4 py-4 text-base font-semibold text-slate-900 outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-900/60 dark:text-white"
                   >
                     <option value="">{localizedKnownSizeCopy.placeholder}</option>
                     {localizedSizeOptions.map((option) => (
@@ -1036,7 +1036,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               <select
                 value={preferredSize}
                 onChange={(event) => applyPreferredSize(event.target.value)}
-                className="mt-2 w-full bg-transparent text-sm outline-none"
+                className="mt-2 w-full rounded-[1rem] border border-[#D8DEFF] bg-white px-4 py-4 text-base font-semibold text-slate-900 outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-slate-900/60 dark:text-white"
               >
                 <option value="">{localizedKnownSizeCopy.placeholder}</option>
                 {localizedSizeOptions.map((option) => (
