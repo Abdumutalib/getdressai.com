@@ -918,13 +918,13 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
 
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-950 dark:text-white">
+            <p className="text-lg font-semibold text-slate-950 dark:text-white">
               {localizedMarketplaceCopy.clothingLabel}
             </p>
-            <p className="text-xs leading-6 text-slate-500 dark:text-slate-300">
+            <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
               {localizedMarketplaceCopy.clothingHint}
             </p>
-            <p className="text-[11px] leading-5 text-accent">
+            <p className="text-sm font-medium leading-6 text-accent">
               {localizedClothingFieldCopy.aiHint}
             </p>
             <div className="surface-soft rounded-[1.2rem] p-3">
