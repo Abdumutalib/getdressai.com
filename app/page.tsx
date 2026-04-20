@@ -76,6 +76,85 @@ function ReferralLoop() {
   );
 }
 
+function LandingProof() {
+  const { language } = useLanguage();
+  const proofCopy = {
+    en: {
+      eyebrow: "Why people trust the result",
+      title: "What people want to know before they try it",
+      bullets: [
+        "Upload one photo and preview a better look in seconds.",
+        "See whether the style fits your body shape before you spend money.",
+        "Get marketplace-ready matches instead of random inspiration.",
+      ],
+      questions: [
+        "Will this style suit me?",
+        "Will the size look right on my body shape?",
+        "Can I find similar clothes right after the preview?",
+      ],
+    },
+    ru: {
+      eyebrow: "Почему результату доверяют",
+      title: "Что человек хочет понять до примерки",
+      bullets: [
+        "Загрузите одно фото и сразу увидите более сильный образ.",
+        "Поймите, подходит ли стиль вашей фигуре, прежде чем тратить деньги.",
+        "Получайте похожие товары из маркетплейсов вместо случайных идей.",
+      ],
+      questions: [
+        "Подойдет ли мне этот стиль?",
+        "Будет ли размер смотреться правильно на моей фигуре?",
+        "Смогу ли я сразу найти похожую одежду?",
+      ],
+    },
+    uz: {
+      eyebrow: "Нега бу натижа ишонч уйғотади",
+      title: "Фойдаланувчи билиши керак бўлган асосий жавоблар",
+      bullets: [
+        "Битта фото юкланг ва дарров яхшироқ образни кўринг.",
+        "Пул сарфлашдан олдин услуб қоматингизга мосми-йўқми билиб олинг.",
+        "Тасодифий илҳом эмас, маркетплейсдан мос вариантларни олинг.",
+      ],
+      questions: [
+        "Бу услуб менга ярашадими?",
+        "Ўлчам қоматимда тўғри кўринадиими?",
+        "Шунга ўхшаш кийимни дарров топа оламанми?",
+      ],
+    },
+  } as const;
+  const copy = proofCopy[language as keyof typeof proofCopy] ?? proofCopy.en;
+
+  return (
+    <section className="section-shell py-24">
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft dark:border-white/10 dark:bg-white/5">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{copy.eyebrow}</p>
+          <h2 className="mt-4 text-3xl font-semibold text-slate-950 dark:text-white">{copy.title}</h2>
+          <div className="mt-6 grid gap-3">
+            {copy.bullets.map((item) => (
+              <div key={item} className="rounded-[1.25rem] bg-slate-50 px-4 py-4 text-sm text-slate-700 dark:bg-slate-900/60 dark:text-slate-200">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft dark:border-white/10 dark:bg-white/5">
+          <div className="grid gap-3">
+            {copy.questions.map((item, index) => (
+              <div key={item} className="flex items-center gap-3 rounded-[1.25rem] bg-slate-50 px-4 py-4 dark:bg-slate-900/60">
+                <div className="flex size-9 items-center justify-center rounded-full bg-accentSoft text-sm font-semibold text-accent">
+                  {index + 1}
+                </div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const { t, language } = useLanguage();
   const studioCopy = {
@@ -100,7 +179,6 @@ export default function HomePage() {
   return (
     <main>
       <Hero />
-      <TrustBadges />
       <section id="studio" className="section-shell py-24">
         <div className="mb-12 max-w-2xl space-y-4">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{localizedStudioCopy.eyebrow}</p>
@@ -116,6 +194,8 @@ export default function HomePage() {
       <PricingCards />
       <ReferralLoop />
       <FAQ />
+      <LandingProof />
+      <TrustBadges />
       <CTA />
       <section className="section-shell pb-24">
         <div className="rounded-[2rem] border border-slate-200 bg-slate-50 px-8 py-10 text-center dark:border-white/10 dark:bg-white/5">

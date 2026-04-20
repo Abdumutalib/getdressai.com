@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, PlayCircle, ShieldCheck, Sparkles, Stars, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, PlayCircle, Sparkles, Stars } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -146,85 +146,11 @@ export function Hero() {
             </Link>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {copy.socialProof.map((item) => (
-              <div
-                key={item}
-                className="rounded-full border border-slate-200/80 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-600 shadow-soft dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="glass-panel rounded-[1.75rem] px-5 py-4">
-              <p className="text-2xl font-semibold text-slate-950 dark:text-white">100K+</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{copy.statOne}</p>
-            </div>
-            <div className="glass-panel rounded-[1.75rem] px-5 py-4">
-              <p className="text-2xl font-semibold text-slate-950 dark:text-white">12 sec</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{copy.statTwo}</p>
-            </div>
-            <div className="glass-panel rounded-[1.75rem] px-5 py-4">
-              <p className="text-2xl font-semibold text-slate-950 dark:text-white">{t("hero.private")}</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{copy.statThree}</p>
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-slate-200/80 bg-white/85 p-5 shadow-soft dark:border-white/10 dark:bg-white/5">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">{copy.previewTitle}</p>
-            <div className="mt-4 grid gap-3">
-              {copy.bullets.map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-[1.25rem] bg-slate-50/90 px-4 py-3 dark:bg-white/5">
-                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" />
-                  <p className="text-sm text-slate-700 dark:text-slate-200">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="grid gap-6">
-          <div className="relative">
+          <div>
             <BeforeAfterSlider beforeSrc={marketingImages.before} afterSrc={marketingImages.luxury} />
-            <div className="absolute -bottom-5 left-5 right-5 rounded-[1.75rem] border border-white/70 bg-white/92 p-5 shadow-soft backdrop-blur dark:border-white/10 dark:bg-slate-950/85">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{copy.floatingLabel}</p>
-                  <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{copy.floatingTitle}</h3>
-                </div>
-                <ShieldCheck className="size-6 shrink-0 text-emerald-500" />
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{copy.floatingCopy}</p>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-3 rounded-[2rem] border border-slate-200/80 bg-white/90 p-5 shadow-soft dark:border-white/10 dark:bg-white/5">
-            {copy.previewItems.map((item, index) => (
-              <div key={item} className="flex items-center gap-3 rounded-[1.25rem] bg-slate-50 px-4 py-3 dark:bg-slate-900/60">
-                <div className="flex size-8 items-center justify-center rounded-full bg-accentSoft text-sm font-semibold text-accent">
-                  {index + 1}
-                </div>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{item}</p>
-              </div>
-            ))}
-            <div className="grid gap-3 pt-2 sm:grid-cols-2">
-              <div className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200/80 px-4 py-3 dark:border-white/10">
-                <Zap className="mt-0.5 size-5 shrink-0 text-amber-500" />
-                <div>
-                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("hero.trustFastTitle")}</p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustFastCopy")}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200/80 px-4 py-3 dark:border-white/10">
-                <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-500" />
-                <div>
-                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("hero.trustUploadTitle")}</p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{t("hero.trustUploadCopy")}</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
