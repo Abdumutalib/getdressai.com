@@ -7,7 +7,7 @@
 | Папка | Рол |
 |--------|-----|
 | `getdressai/` | Статик веб + `npm run dev` (порт 8787), маркетплейс прокси, `public/premium.html` |
-| `dressai-api/` | Express API (auth, Stripe, Paddle webhook, OpenAI, Supabase service) |
+| `dressai-api/` | Express API (auth, Paddle webhook, OpenAI, Supabase service) |
 | `mobile/` | Expo илова (DressAI) |
 | `scripts/` | `verify-services.mjs`, publish ёрдамчилари |
 | `.github/workflows/` | CI |
@@ -28,6 +28,12 @@ npm run dev:web
 
 ```bash
 npm run verify
+```
+
+Live lokal servis tekshiruvi uchun:
+
+```bash
+npm run verify:live
 ```
 
 ## Deploy

@@ -35,6 +35,9 @@ export function Footer() {
           <Link href="/terms" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
             Terms
           </Link>
+          <Link href="/refund-policy" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+            Refund Policy
+          </Link>
           <Link href="/admin" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
             Admin
           </Link>
