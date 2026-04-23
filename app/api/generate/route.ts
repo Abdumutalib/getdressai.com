@@ -11,7 +11,6 @@ import {
   createSignedAssetUrl,
   createSignedAssetUrls,
   ensureGenerationBucket,
-  getGenerationBucket,
   uploadGenerationAsset
 } from "@/lib/generation-storage";
 import { listGuestGenerations, saveGuestGeneration } from "@/lib/guest-generation-store";
@@ -79,6 +78,18 @@ function parseMeasurements(raw: FormDataEntryValue | null) {
   } catch {
     return undefined;
   }
+}
+
+function getErrorStatus(error: unknown) {
+  if (typeof error === "object" && error && "status" in error && typeof error.status === "number") {
+    return error.status;
+  }
+
+  if (typeof error === "object" && error && "statusCode" in error && typeof error.statusCode === "number") {
+    return error.statusCode;
+  }
+
+  return 500;
 }
 
 async function requireUser(request: Request) {
@@ -186,14 +197,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const guestUserId = "guest-user";
     const guestKey = request.headers.get("x-forwarded-for") || "anonymous";
-    if (!checkRateLimit(`guest:${guestKey}`)) {
+    const authResult = await requireUser(request);
+    const isGuest = authResult instanceof NextResponse;
+    const generationOwnerId = isGuest ? "guest-user" : authResult.id;
+    const rateLimitKey = isGuest ? `guest:${guestKey}` : `user:${generationOwnerId}`;
+    if (!checkRateLimit(rateLimitKey)) {
       return NextResponse.json({ error: "Too many requests." }, { status: 429 });
     }
-
-    const generationOwnerId = guestUserId;
-    const isGuest = true;
 
     const formData = await request.formData();
     const parsed = bodySchema.parse({
@@ -222,7 +233,10 @@ export async function POST(request: Request) {
       const admin = createSupabaseAdmin();
       await ensureGenerationBucket(admin);
       await uploadGenerationAsset(admin, sourceImagePath, sourceBuffer, photo.type || "application/octet-stream");
-    } else if (parsed.mode === "photo" && parsed.existingSourcePath?.startsWith(`${generationOwnerId}/uploads/`)) {
+    } else if (
+      parsed.mode === "photo" &&
+      parsed.existingSourcePath?.startsWith(`${generationOwnerId}/uploads/`)
+    ) {
       sourceImagePath = parsed.existingSourcePath;
     } else if (parsed.mode === "photo") {
       return NextResponse.json({ error: "Please upload a photo first." }, { status: 400 });
@@ -244,9 +258,12 @@ export async function POST(request: Request) {
 
     const admin = createSupabaseAdmin();
     await ensureGenerationBucket(admin);
+    const sourceImageUrl =
+      parsed.mode === "photo" && sourceImagePath ? await createSignedAssetUrl(admin, sourceImagePath, 15 * 60) : null;
 
     const generation = await aiProvider.generateTryOn({
       image: sourceImagePath,
+      imageUrl: sourceImageUrl,
       mode: parsed.mode,
       style: parsed.preset,
       gender: parsed.gender,
@@ -258,24 +275,51 @@ export async function POST(request: Request) {
     const resultImagePath = buildStoragePath(generationOwnerId, "results", parsed.preset, generation.extension);
     await uploadGenerationAsset(admin, resultImagePath, generation.buffer, generation.contentType);
 
-    let inserted: { id: string; created_at: string } = {
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString()
-    };
+    let inserted: { id: string; created_at: string };
 
-    await saveGuestGeneration(admin, guestKey, {
-      id: inserted.id,
-      mode: parsed.mode,
-      gender: parsed.gender,
-      prompt: parsed.prompt,
-      preset: parsed.preset,
-      sourceImagePath,
-      resultImagePath,
-      measurements: parsed.measurements ?? null,
-      watermark: true,
-      tookMs: generation.tookMs,
-      createdAt: inserted.created_at
-    });
+    if (isGuest) {
+      inserted = {
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString()
+      };
+
+      await saveGuestGeneration(admin, guestKey, {
+        id: inserted.id,
+        mode: parsed.mode,
+        gender: parsed.gender,
+        prompt: parsed.prompt,
+        preset: parsed.preset,
+        sourceImagePath,
+        resultImagePath,
+        measurements: parsed.measurements ?? null,
+        watermark: true,
+        tookMs: generation.tookMs,
+        createdAt: inserted.created_at
+      });
+    } else {
+      const { data, error } = await admin
+        .from("user_generations")
+        .insert({
+          user_id: generationOwnerId,
+          mode: parsed.mode,
+          gender: parsed.gender,
+          prompt: parsed.prompt,
+          preset: parsed.preset,
+          source_image_path: sourceImagePath,
+          result_image_path: resultImagePath,
+          measurements: parsed.measurements ?? null,
+          watermark: false,
+          took_ms: generation.tookMs
+        })
+        .select("id, created_at")
+        .single<{ id: string; created_at: string }>();
+
+      if (error || !data) {
+        throw error ?? new Error("Could not save generation history.");
+      }
+
+      inserted = data;
+    }
 
     const resultUrl = await createSignedAssetUrl(admin, resultImagePath);
     const sourceUrl = sourceImagePath ? await createSignedAssetUrl(admin, sourceImagePath) : "";
@@ -299,7 +343,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Generation failed." },
-      { status: 400 }
+      { status: getErrorStatus(error) }
     );
   }
 }

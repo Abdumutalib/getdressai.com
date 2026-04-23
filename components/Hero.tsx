@@ -99,27 +99,31 @@ export function Hero() {
   const copy = marketingCopy[language as keyof typeof marketingCopy] ?? marketingCopy.en;
 
   return (
-    <section className="relative overflow-hidden bg-hero-radial py-16 sm:py-24">
-      <div className="absolute inset-x-0 top-0 z-10 border-b border-accent/15 bg-accentSoft/80 backdrop-blur">
-        <div className="section-shell flex min-h-12 items-center justify-center gap-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-accent sm:text-sm">
+    <section className="hero-pattern relative overflow-hidden pb-20 pt-28 sm:pb-24 sm:pt-32 lg:pb-28 lg:pt-40">
+      <div className="absolute left-[-4rem] top-10 h-72 w-72 rounded-full bg-fuchsia-300/35 blur-3xl" />
+      <div className="absolute right-[-3rem] top-6 h-72 w-72 rounded-full bg-indigo-300/35 blur-3xl" />
+      <div className="absolute bottom-0 left-1/4 h-64 w-64 rounded-full bg-pink-300/25 blur-3xl" />
+
+      <div className="absolute inset-x-0 top-0 z-10 border-b border-fuchsia-100/60 bg-white/55 backdrop-blur-xl">
+        <div className="section-shell flex min-h-12 items-center justify-center gap-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-700 sm:text-sm">
           <Sparkles className="size-4" />
           {t("hero.founderDrop")}
         </div>
       </div>
-      <div className="grid-overlay absolute inset-0 opacity-60" />
+      <div className="grid-overlay absolute inset-0 opacity-40" />
       <div className="section-shell relative grid gap-14 pt-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
-        <div className="space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/15 bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+        <div className="reveal-fade max-w-2xl space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-100 bg-fuchsia-50/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-700">
             <Stars className="size-4" />
             {copy.kicker}
           </div>
           <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">{t("hero.badge")}</p>
-            <h1 className="max-w-5xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-fuchsia-700">{t("hero.badge")}</p>
+            <h1 className="font-[var(--font-heading)] max-w-5xl text-5xl font-extrabold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
               {copy.title}
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">{copy.copy}</p>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-soft dark:bg-white/10 dark:text-slate-200">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-2 text-sm font-medium text-slate-700 shadow-soft">
               <CheckCircle2 className="size-4 text-emerald-500" />
               {copy.proof}
               <span className="text-slate-400 dark:text-slate-500">|</span>
@@ -131,7 +135,7 @@ export function Hero() {
             <Link
               href="#studio"
               onClick={() => trackEvent("cta_clicked", { location: "hero_primary" })}
-              className="btn-primary inline-flex items-center justify-center rounded-full px-6 py-4 text-sm font-semibold"
+              className="bg-gradient-brand inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/25 transition hover:-translate-y-1"
             >
               {copy.primaryCta}
               <ArrowRight className="ml-2 size-4" />
@@ -139,18 +143,41 @@ export function Hero() {
             <Link
               href="#how-it-works"
               onClick={() => trackEvent("view_examples_clicked", { location: "hero_secondary" })}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-4 text-sm font-semibold text-slate-900 dark:border-white/15 dark:text-white"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-4 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50"
             >
               <PlayCircle className="mr-2 size-4" />
               {copy.secondaryCta}
             </Link>
           </div>
 
+          <div className="flex items-center gap-4 text-sm text-slate-500">
+            <div className="flex -space-x-2">
+              <div className="h-9 w-9 rounded-full border-2 border-white bg-[url('/examples/before.svg')] bg-cover bg-center" />
+              <div className="h-9 w-9 rounded-full border-2 border-white bg-[url('/examples/luxury.svg')] bg-cover bg-center" />
+              <div className="h-9 w-9 rounded-full border-2 border-white bg-[url('/examples/streetwear.svg')] bg-cover bg-center" />
+            </div>
+            <p>
+              Joined by <span className="font-semibold text-slate-900">10,000+</span> fashion lovers
+            </p>
+          </div>
+
         </div>
 
-        <div className="grid gap-6">
-          <div>
+        <div className="reveal-fade grid gap-6 lg:ml-auto">
+          <div className="relative mx-auto w-full max-w-md">
+            <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-r from-fuchsia-400/20 to-indigo-400/20 blur-xl" />
             <BeforeAfterSlider beforeSrc={marketingImages.before} afterSrc={marketingImages.luxury} />
+            <div className="absolute -bottom-5 -left-5 rounded-[1.5rem] bg-white px-4 py-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <CheckCircle2 className="size-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Processing Time</p>
+                  <p className="text-sm font-bold text-slate-900">Under 5 seconds</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

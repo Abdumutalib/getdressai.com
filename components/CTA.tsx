@@ -7,8 +7,10 @@ export function CTA() {
   const { t } = useLanguage();
 
   return (
-    <section className="section-shell py-24">
-      <div className="overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-accent to-[#847DFF] px-8 py-14 text-white shadow-glow sm:px-12">
+    <section className="py-20">
+      <div className="section-shell">
+        <div className="bg-gradient-brand relative overflow-hidden rounded-[2.5rem] px-8 py-16 text-white shadow-glow sm:px-12">
+          <div className="absolute right-0 top-0 h-80 w-80 translate-x-1/3 -translate-y-1/3 rounded-full bg-white/20 blur-3xl" />
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="space-y-5">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/60">{t("cta.eyebrow")}</p>
@@ -29,6 +31,7 @@ export function CTA() {
               {t("cta.unlock")}
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </section>

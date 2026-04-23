@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import { cookies } from "next/headers";
 import { LanguageProvider } from "@/components/LanguageProvider";
@@ -10,9 +10,16 @@ import { absoluteUrl } from "@/lib/utils";
 import { supportedLanguages, type SupportedLanguage } from "@/lib/translations";
 import { marketingImages } from "@/lib/marketing-images";
 
-const inter = Inter({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  display: "swap"
+  display: "swap",
+  variable: "--font-body"
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-heading"
 });
 
 export const metadata: Metadata = {
@@ -83,7 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={lang} suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${plusJakarta.variable} ${outfit.variable}`}>
         <LanguageProvider initialLanguage={lang}>
           <Navbar />
           {children}

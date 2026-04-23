@@ -4,6 +4,8 @@
 
 :root {
   color-scheme: light;
+  --brand-start: 192 38 211;
+  --brand-end: 79 70 229;
 }
 
 html {
@@ -11,7 +13,12 @@ html {
 }
 
 body {
-  @apply bg-white text-slate-950 antialiased;
+  font-family: var(--font-body), sans-serif;
+  @apply bg-slate-50 text-slate-950 antialiased;
+  background-image:
+    radial-gradient(circle at top, rgba(216, 180, 254, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(165, 180, 252, 0.2), transparent 24%),
+    linear-gradient(180deg, #f8fafc 0%, #ffffff 32%, #f8fafc 100%);
 }
 
 .dark body {
@@ -29,8 +36,25 @@ body::selection {
   background-size: 44px 44px;
 }
 
+.hero-pattern {
+  background-color: #f8fafc;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.3) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, rgb(var(--brand-start)), rgb(var(--brand-end)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-gradient-brand {
+  background-image: linear-gradient(135deg, rgb(var(--brand-start)), rgb(var(--brand-end)));
+}
+
 .glass-panel {
-  @apply border border-white/60 bg-white/70 backdrop-blur-xl shadow-soft dark:border-white/10 dark:bg-white/5;
+  @apply border border-white/70 bg-white/70 backdrop-blur-xl shadow-soft dark:border-white/10 dark:bg-white/5;
 }
 
 .section-shell {
@@ -38,7 +62,8 @@ body::selection {
 }
 
 .section-title {
-  @apply text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl dark:text-white;
+  font-family: var(--font-heading), sans-serif;
+  @apply text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl dark:text-white;
 }
 
 .section-copy {
@@ -65,6 +90,51 @@ body::selection {
 
 .surface-soft {
   @apply border border-[#DEDDFE] bg-gradient-to-br from-[#FBF1FF] via-[#FAF4FF] to-[#EDF5FF];
+}
+
+.marketing-card {
+  @apply rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_24px_70px_-36px_rgba(15,23,42,0.28)];
+}
+
+.reveal-fade {
+  animation: reveal-fade 0.8s cubic-bezier(0.5, 0, 0, 1) both;
+}
+
+.marquee-track {
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-track-reverse {
+  animation: marquee-reverse 32s linear infinite;
+}
+
+@keyframes reveal-fade {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .dark .premium-ring {

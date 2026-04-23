@@ -8,10 +8,13 @@ export function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="border-t border-slate-200 bg-white py-14 dark:border-white/10 dark:bg-slate-950">
+    <footer className="border-t border-slate-200 bg-white pb-8 pt-16 dark:border-white/10 dark:bg-slate-950">
       <div className="section-shell grid gap-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div className="space-y-4">
-          <p className="text-lg font-semibold text-slate-950 dark:text-white">GetDressAI</p>
+          <div className="flex items-center gap-3">
+            <span className="bg-gradient-brand flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-lg shadow-fuchsia-500/20">AI</span>
+            <p className="font-[var(--font-heading)] text-xl font-bold text-slate-950 dark:text-white">GetDressAI</p>
+          </div>
           <p className="max-w-md text-sm leading-7 text-slate-600 dark:text-slate-300">{t("footer.description")}</p>
           <LanguageSwitcher />
         </div>
@@ -50,6 +53,9 @@ export function Footer() {
           <p className="text-slate-600 dark:text-slate-300">support@getdressai.com</p>
           <p className="text-slate-600 dark:text-slate-300">{t("footer.copyright")}</p>
         </div>
+      </div>
+      <div className="section-shell mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400 dark:border-white/10">
+        Made with care for fashion-first AI experiences.
       </div>
     </footer>
   );

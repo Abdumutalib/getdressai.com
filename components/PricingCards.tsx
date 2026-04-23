@@ -199,10 +199,12 @@ export function PricingCards() {
 
   return (
     <section className="section-shell py-24" id="pricing">
-      <div className="mb-12 max-w-2xl space-y-4">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("pricing.eyebrow")}</p>
-        <h2 className="section-title">{t("pricing.title")}</h2>
-        <div className="inline-flex rounded-full border border-slate-200 bg-white/80 p-1 shadow-soft dark:border-white/10 dark:bg-white/5">
+      <div className="mb-12 text-center">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-fuchsia-700">{t("pricing.eyebrow")}</p>
+          <h2 className="section-title">{t("pricing.title")}</h2>
+        </div>
+        <div className="mt-8 inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-soft dark:border-white/10 dark:bg-white/5">
           <button
             type="button"
             onClick={() => setBillingCycle("yearly")}
@@ -224,7 +226,7 @@ export function PricingCards() {
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-300">{localizedCycleCopy.yearlyHint}</p>
       </div>
-      <div className="grid gap-6 xl:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-4">
         {plans.map((plan) => {
           const monthlyPrice = plan.price;
           const regularYearlyPrice = monthlyPrice * 12;
@@ -236,7 +238,7 @@ export function PricingCards() {
             <div
               key={plan.name}
               className={`rounded-[2rem] border p-8 shadow-soft ${
-                plan.highlight ? "border-accent bg-gradient-to-br from-accent to-[#847DFF] text-white" : "glass-panel text-slate-950 dark:text-white"
+                plan.highlight ? "border-slate-900 bg-slate-900 text-white shadow-2xl xl:-translate-y-4" : "marketing-card text-slate-950 dark:text-white"
               }`}
             >
               {plan.highlight ? (
@@ -270,7 +272,7 @@ export function PricingCards() {
                   <span className={`text-sm line-through ${plan.highlight ? "text-white/70" : "text-slate-400 dark:text-slate-500"}`}>
                     {formatCurrency(monthlyPrice)}
                   </span>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${plan.highlight ? "bg-white/15 text-white" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${plan.highlight ? "bg-white/15 text-white" : "bg-fuchsia-50 text-fuchsia-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
                     {localizedCycleCopy.saveLabel}
                   </span>
                 </div>
@@ -301,7 +303,7 @@ export function PricingCards() {
                 onClick={() => handlePlanClick(plan.plan as "free" | "starter" | "popular" | "pro")}
                 disabled={loadingPlan === plan.plan}
                 className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition ${
-                  plan.highlight ? "bg-white text-slate-950 hover:bg-white/90" : "btn-primary"
+                  plan.highlight ? "bg-gradient-brand text-white hover:opacity-95" : "bg-slate-100 text-slate-900 hover:bg-slate-200"
                 } ${loadingPlan === plan.plan ? "cursor-wait opacity-70" : ""}`}
               >
                 {loadingPlan === plan.plan ? t("pricing.loading") : plan.cta}

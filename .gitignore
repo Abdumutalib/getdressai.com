@@ -2,10 +2,14 @@ node_modules/
 **/node_modules/
 .env
 .env.local
+.env.production
+**/.env.production
 dressai-api/.env
 mobile/.env
 getdressai/.env
 *.log
+.next-dev.out
+.next-dev.err
 .DS_Store
 Thumbs.db
 dist/
@@ -22,3 +26,4 @@ auto-caption-video/*.mp4
 .next/
 out/
 *.tsbuildinfo
+reports/

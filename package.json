@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "env:agent": "node scripts/env-agent.mjs",
     "dev:web": "npm run dev --prefix getdressai",
     "dev:api": "npm run dev --prefix dressai-api",
     "verify": "npm run test --prefix getdressai && node --check dressai-api/server.js && node scripts/verify-services.mjs",
