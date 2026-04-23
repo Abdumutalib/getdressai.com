@@ -37,10 +37,10 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({ beforeSrc, af
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
           <div className="rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
-            Original
+            {t("slider.before")}
           </div>
           <div className="rounded-full bg-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-fuchsia-500/25">
-            AI Generated
+            {t("slider.after")}
           </div>
         </div>
 

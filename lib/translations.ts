@@ -20,6 +20,11 @@ export const translations = {
       growth: "Growth",
       dashboard: "Dashboard",
       referralProgram: "Referral program",
+      privacy: "Privacy",
+      terms: "Terms",
+      refundPolicy: "Refund policy",
+      admin: "Admin",
+      madeWithCare: "Made with care for fashion-first AI experiences.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -38,7 +43,11 @@ export const translations = {
       trustLovedTitle: "Loved worldwide",
       trustUploadCopy: "Your uploads stay protected.",
       trustFastCopy: "Get results in a few seconds.",
-      trustLovedCopy: "Used by people in 190+ countries."
+      trustLovedCopy: "Used by people in 190+ countries.",
+      socialJoinPrefix: "Joined by",
+      socialJoinSuffix: "fashion lovers",
+      processingLabel: "Processing time",
+      processingValue: "Under 5 seconds"
     },
     slider: {
       before: "Before",
@@ -363,6 +372,11 @@ export const translations = {
       growth: "Рост",
       dashboard: "Панель",
       referralProgram: "Реферальная программа",
+      privacy: "Конфиденциальность",
+      terms: "Условия",
+      refundPolicy: "Возврат средств",
+      admin: "Админ",
+      madeWithCare: "Сделано с заботой для AI-опыта в мире моды.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -381,7 +395,11 @@ export const translations = {
       trustLovedTitle: "Любят по всему миру",
       trustUploadCopy: "Ваши файлы остаются защищенными.",
       trustFastCopy: "Результат приходит за несколько секунд.",
-      trustLovedCopy: "Сервис используют в 190+ странах."
+      trustLovedCopy: "Сервис используют в 190+ странах.",
+      socialJoinPrefix: "С нами уже",
+      socialJoinSuffix: "любителей моды",
+      processingLabel: "Время обработки",
+      processingValue: "Меньше 5 секунд"
     },
     slider: {
       before: "До",
@@ -669,6 +687,11 @@ export const translations = {
       growth: "O'sish",
       dashboard: "Panel",
       referralProgram: "Referal dasturi",
+      privacy: "Maxfiylik",
+      terms: "Shartlar",
+      refundPolicy: "Pulni qaytarish",
+      admin: "Admin",
+      madeWithCare: "Moda uchun yaratilgan AI tajribasi uchun mehr bilan tayyorlandi.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -687,7 +710,11 @@ export const translations = {
       trustLovedTitle: "Butun dunyoda ishlatiladi",
       trustUploadCopy: "Yuklangan fayllaringiz himoyalanadi.",
       trustFastCopy: "Natija bir necha soniyada keladi.",
-      trustLovedCopy: "Servis 190+ mamlakatda ishlatiladi."
+      trustLovedCopy: "Servis 190+ mamlakatda ishlatiladi.",
+      socialJoinPrefix: "Biz bilan",
+      socialJoinSuffix: "moda ishqibozlari",
+      processingLabel: "Qayta ishlash vaqti",
+      processingValue: "5 soniyadan kam"
     },
     slider: {
       before: "Oldin",
@@ -979,6 +1006,11 @@ export const translations = {
       growth: "Büyüme",
       dashboard: "Panel",
       referralProgram: "Referans programı",
+      privacy: "Gizlilik",
+      terms: "Koşullar",
+      refundPolicy: "İade politikası",
+      admin: "Yönetici",
+      madeWithCare: "Moda odaklı yapay zeka deneyimi için özenle hazırlandı.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -997,7 +1029,11 @@ export const translations = {
       trustLovedTitle: "Dünya çapında seviliyor",
       trustUploadCopy: "Yüklemeleriniz korunur.",
       trustFastCopy: "Sonuçlar birkaç saniyede gelir.",
-      trustLovedCopy: "190+ ülkede kullanılıyor."
+      trustLovedCopy: "190+ ülkede kullanılıyor.",
+      socialJoinPrefix: "Bize katılan",
+      socialJoinSuffix: "moda sever",
+      processingLabel: "İşleme süresi",
+      processingValue: "5 saniyeden az"
     },
     slider: { before: "Önce", after: "Sonra", drag: "Sürükle" },
     trust: {
@@ -1252,6 +1288,11 @@ export const translations = {
       growth: "Crecimiento",
       dashboard: "Panel",
       referralProgram: "Programa de referidos",
+      privacy: "Privacidad",
+      terms: "Términos",
+      refundPolicy: "Reembolsos",
+      admin: "Admin",
+      madeWithCare: "Hecho con cuidado para experiencias de moda con IA.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -1270,7 +1311,11 @@ export const translations = {
       trustLovedTitle: "Usado en todo el mundo",
       trustUploadCopy: "Tus archivos se mantienen protegidos.",
       trustFastCopy: "El resultado llega en pocos segundos.",
-      trustLovedCopy: "Se usa en más de 190 países."
+      trustLovedCopy: "Se usa en más de 190 países.",
+      socialJoinPrefix: "Ya se unieron",
+      socialJoinSuffix: "amantes de la moda",
+      processingLabel: "Tiempo de proceso",
+      processingValue: "Menos de 5 segundos"
     },
     slider: { before: "Antes", after: "Después", drag: "Mover" },
     trust: {
@@ -1525,6 +1570,11 @@ export const translations = {
       growth: "Croissance",
       dashboard: "Tableau de bord",
       referralProgram: "Programme de parrainage",
+      privacy: "Confidentialité",
+      terms: "Conditions",
+      refundPolicy: "Remboursement",
+      admin: "Admin",
+      madeWithCare: "Conçu avec soin pour une expérience mode propulsée par l'IA.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -1543,7 +1593,11 @@ export const translations = {
       trustLovedTitle: "Aimé dans le monde entier",
       trustUploadCopy: "Vos fichiers restent protégés.",
       trustFastCopy: "Le résultat arrive en quelques secondes.",
-      trustLovedCopy: "Utilisé dans plus de 190 pays."
+      trustLovedCopy: "Utilisé dans plus de 190 pays.",
+      socialJoinPrefix: "Rejoint par",
+      socialJoinSuffix: "passionnés de mode",
+      processingLabel: "Temps de traitement",
+      processingValue: "Moins de 5 secondes"
     },
     slider: { before: "Avant", after: "Après", drag: "Glisser" },
     trust: {
@@ -1798,6 +1852,11 @@ export const translations = {
       growth: "Wachstum",
       dashboard: "Dashboard",
       referralProgram: "Empfehlungsprogramm",
+      privacy: "Datenschutz",
+      terms: "Bedingungen",
+      refundPolicy: "Rückerstattung",
+      admin: "Admin",
+      madeWithCare: "Mit Sorgfalt für modeorientierte KI-Erlebnisse entwickelt.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -1816,7 +1875,11 @@ export const translations = {
       trustLovedTitle: "Weltweit beliebt",
       trustUploadCopy: "Deine Uploads bleiben geschützt.",
       trustFastCopy: "Das Ergebnis kommt in wenigen Sekunden.",
-      trustLovedCopy: "Wird in über 190 Ländern genutzt."
+      trustLovedCopy: "Wird in über 190 Ländern genutzt.",
+      socialJoinPrefix: "Schon dabei:",
+      socialJoinSuffix: "Modefans",
+      processingLabel: "Verarbeitungszeit",
+      processingValue: "Unter 5 Sekunden"
     },
     slider: { before: "Vorher", after: "Nachher", drag: "Ziehen" },
     trust: {
@@ -2071,6 +2134,11 @@ export const translations = {
       growth: "النمو",
       dashboard: "لوحة التحكم",
       referralProgram: "برنامج الإحالة",
+      privacy: "الخصوصية",
+      terms: "الشروط",
+      refundPolicy: "سياسة الاسترداد",
+      admin: "المشرف",
+      madeWithCare: "صُمم بعناية لتجربة موضة مدعومة بالذكاء الاصطناعي.",
       copyright: "© 2026 GetDressAI"
     },
     hero: {
@@ -2089,7 +2157,11 @@ export const translations = {
       trustLovedTitle: "محبوب حول العالم",
       trustUploadCopy: "ملفاتك تبقى محمية.",
       trustFastCopy: "تحصل على النتيجة خلال ثوانٍ.",
-      trustLovedCopy: "يُستخدم في أكثر من 190 دولة."
+      trustLovedCopy: "يُستخدم في أكثر من 190 دولة.",
+      socialJoinPrefix: "انضم إلينا",
+      socialJoinSuffix: "من محبي الموضة",
+      processingLabel: "وقت المعالجة",
+      processingValue: "أقل من 5 ثوانٍ"
     },
     slider: { before: "قبل", after: "بعد", drag: "اسحب" },
     trust: {

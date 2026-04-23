@@ -33,16 +33,16 @@ export function Footer() {
         <div className="space-y-3 text-sm">
           <p className="font-medium text-slate-950 dark:text-white">{t("footer.company")}</p>
           <Link href="/privacy" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Privacy
+            {t("footer.privacy")}
           </Link>
           <Link href="/terms" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Terms
+            {t("footer.terms")}
           </Link>
           <Link href="/refund-policy" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Refund Policy
+            {t("footer.refundPolicy")}
           </Link>
           <Link href="/admin" className="block text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-            Admin
+            {t("footer.admin")}
           </Link>
         </div>
         <div className="space-y-3 text-sm">
@@ -55,7 +55,7 @@ export function Footer() {
         </div>
       </div>
       <div className="section-shell mt-12 border-t border-slate-200 pt-6 text-sm text-slate-400 dark:border-white/10">
-        Made with care for fashion-first AI experiences.
+        {t("footer.madeWithCare")}
       </div>
     </footer>
   );

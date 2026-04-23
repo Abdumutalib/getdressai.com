@@ -14,7 +14,7 @@ const schema = z.object({
   clothingRequest: z.string().max(160).optional(),
   preferredSize: z.string().max(8).optional(),
   gender: z.enum(["female", "male", "unisex"]),
-  sourceImagePath: z.string().min(1),
+  sourceImagePath: z.string().min(1).optional(),
   measurements: z
     .object({
       height: z.coerce.number().min(120).max(230).optional(),
@@ -28,23 +28,24 @@ const schema = z.object({
 
 export const runtime = "nodejs";
 
+async function getOptionalUserId(request: Request) {
+  if (!isSupabaseAuthConfigured()) {
+    return "";
+  }
+
+  const supabase = await createSupabaseRequestClient(request);
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  return user?.id ?? "";
+}
+
 export async function POST(request: Request) {
   try {
-    if (!isSupabaseAuthConfigured()) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
-
-    const supabase = await createSupabaseRequestClient(request);
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-
-    if (!user?.id) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
-
     const body = schema.parse(await request.json());
-    if (!body.sourceImagePath.startsWith(`${user.id}/uploads/`)) {
+    const userId = await getOptionalUserId(request);
+    if (body.sourceImagePath && userId && !body.sourceImagePath.startsWith(`${userId}/uploads/`)) {
       return NextResponse.json({ error: "This photo does not belong to the current user." }, { status: 403 });
     }
 

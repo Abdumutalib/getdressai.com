@@ -157,7 +157,7 @@ export function Hero() {
               <div className="h-9 w-9 rounded-full border-2 border-white bg-[url('/examples/streetwear.svg')] bg-cover bg-center" />
             </div>
             <p>
-              Joined by <span className="font-semibold text-slate-900">10,000+</span> fashion lovers
+              {t("hero.socialJoinPrefix")} <span className="font-semibold text-slate-900">10,000+</span> {t("hero.socialJoinSuffix")}
             </p>
           </div>
 
@@ -173,8 +173,8 @@ export function Hero() {
                   <CheckCircle2 className="size-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500">Processing Time</p>
-                  <p className="text-sm font-bold text-slate-900">Under 5 seconds</p>
+                  <p className="text-xs font-medium text-slate-500">{t("hero.processingLabel")}</p>
+                  <p className="text-sm font-bold text-slate-900">{t("hero.processingValue")}</p>
                 </div>
               </div>
             </div>
