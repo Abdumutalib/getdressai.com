@@ -107,6 +107,7 @@ for (const relPath of [
   "server.js",
   "simple-app.js",
   "simple.html",
+  "premium-visual-overlay.css",
   "style.css"
 ]) {
   copyFile(relPath);
