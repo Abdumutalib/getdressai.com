@@ -1,0 +1,52 @@
+<svg width="400" height="800" viewBox="0 0 400 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient for the plastic mannequin body -->
+  <defs>
+    <linearGradient id="bodyGradient" x1="200" y1="100" x2="200" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+    <radialGradient id="lighting" cx="200" cy="250" r="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="white" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Female Mannequin Body Path (Headless) -->
+  <path d="M200 120 
+           C215 120 225 125 230 135 
+           C245 140 270 150 285 170 
+           C300 190 305 220 305 250 
+           L305 400 
+           C305 420 295 440 280 450 
+           C270 460 270 480 270 500 
+           L270 750 
+           C270 770 260 780 240 780 
+           L220 780 
+           C205 780 200 770 200 750 
+           L200 520 
+           L200 750 
+           C200 770 195 780 180 780 
+           L160 780 
+           C140 780 130 770 130 750 
+           L130 500 
+           C130 480 130 460 120 450 
+           C105 440 95 420 95 400 
+           L95 250 
+           C95 220 100 190 115 170 
+           C130 150 155 140 170 135 
+           C175 125 185 120 200 120 Z" 
+        fill="url(#bodyGradient)" />
+  
+  <!-- Arms -->
+  <path d="M115 170 C100 180 80 210 80 260 L80 450 C80 470 90 480 100 480" stroke="#94A3B8" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <path d="M285 170 C300 180 320 210 320 260 L320 450 C320 470 310 480 300 480" stroke="#94A3B8" stroke-width="12" stroke-linecap="round" fill="none"/>
+
+  <!-- Underwear / Lingerie Shading (Subtle) -->
+  <path d="M125 350 Q200 370 275 350 L275 420 Q200 450 125 420 Z" fill="#94A3B8" fill-opacity="0.3"/>
+  <path d="M150 180 Q200 195 250 180 L255 240 Q200 255 145 240 Z" fill="#94A3B8" fill-opacity="0.2"/>
+
+  <!-- Lighting overlay -->
+  <path d="M200 120 C215 120 225 125 230 135 C245 140 270 150 285 170 C300 190 305 220 305 250 L305 400 C305 420 295 440 280 450 C270 460 270 480 270 500 L270 750 C270 770 260 780 240 780 L220 780 C205 780 200 770 200 750 L200 520 L200 750 C200 770 195 780 180 780 L160 780 C140 780 130 770 130 750 L130 500 C130 480 130 460 120 450 C105 440 95 420 95 400 L95 250 C95 220 100 190 115 170 C130 150 155 140 170 135 C175 125 185 120 200 120 Z" 
+        fill="url(#lighting)" />
+</svg>

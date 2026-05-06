@@ -1057,10 +1057,10 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                       className="relative h-full w-full"
                     >
                       <Image
-                        src={gender === "female" ? "/examples/before.png" : "/examples/streetwear.png"}
-                        alt="Realistic Mannequin"
+                        src="/examples/mannequin-realistic.svg"
+                        alt="Realistic Headless Mannequin"
                         fill
-                        className="object-contain opacity-90 transition-opacity hover:opacity-100"
+                        className="object-contain opacity-100"
                       />
                     </motion.div>
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-slate-900/50" />
