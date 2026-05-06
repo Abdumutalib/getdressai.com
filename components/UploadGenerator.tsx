@@ -483,6 +483,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     };
   }, [gender, measurements]);
 
+  const humanMask = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800'%3E%3Cpath d='M200 120 C215 120 225 125 230 135 C245 140 270 145 295 180 C315 210 320 250 320 300 L320 450 C320 480 300 500 280 520 L280 780 C280 800 260 800 240 800 L220 800 C205 800 200 790 200 760 L200 550 L200 760 C200 790 195 800 180 800 L160 800 C140 800 120 800 120 780 L120 520 C100 500 80 480 80 450 L80 300 C80 250 85 210 100 180 C125 145 155 140 170 135 C175 125 185 120 200 120 Z' fill='black' /%3E%3C/svg%3E")`;
+
   const mannequinScale = useMemo(() => {
     const size = preferredSize.trim().toUpperCase();
     switch (size) {
@@ -1057,10 +1059,18 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                       className="relative h-full w-full"
                     >
                       <Image
-                        src="/examples/mannequin-masked.svg"
+                        src="/examples/before.png"
                         alt="Realistic Headless Mannequin (No Background)"
                         fill
-                        className="object-contain transition-opacity"
+                        className="object-contain"
+                        style={{ 
+                          maskImage: humanMask, 
+                          WebkitMaskImage: humanMask,
+                          maskSize: 'contain',
+                          WebkitMaskSize: 'contain',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat'
+                        }}
                       />
                     </motion.div>
                   </div>
