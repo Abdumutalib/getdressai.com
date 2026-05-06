@@ -329,6 +329,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const hydratedInitialRef = useRef(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -336,6 +338,13 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       e.preventDefault();
       setDeferredPrompt(e);
     };
+    
+    if (typeof window !== "undefined") {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      setIsStandalone(standalone);
+      setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
+    }
+
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
@@ -1447,8 +1456,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           </div>
         ) : null}
 
-        {/* Floating PWA Install Button (Always visible if installable) */}
-        {deferredPrompt && (
+        {/* Floating PWA Install Button (Forced Visibility until installed) */}
+        {!isStandalone && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ 
@@ -1472,29 +1481,46 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white shadow-lg">
                     <Sparkles className="size-5 animate-pulse" />
                   </div>
-                  <div>
+                  <div className="max-w-[180px]">
                     <p className="text-sm font-black text-slate-900 dark:text-white">
-                      {language === "uz" ? "GetDressAI Иловасини ўрнатинг" : "Install GetDressAI App"}
+                      {language === "uz" ? "GetDressAI Иловаси" : "GetDressAI App"}
                     </p>
-                    <p className="text-[10px] font-medium text-slate-500">
-                      {language === "uz" ? "Тезкор ва қулай фойдаланиш учун" : "For faster & better experience"}
+                    <p className="text-[10px] font-medium leading-tight text-slate-500">
+                      {isIOS 
+                        ? (language === "uz" ? "Улашиш > Асосий экранга қўшиш" : "Click Share > Add to Home Screen")
+                        : (language === "uz" ? "Тезкор ва қулай фойдаланиш учун" : "For faster & better experience")
+                      }
                     </p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choiceResult: any) => {
-                      if (choiceResult.outcome === 'accepted') {
-                        setDeferredPrompt(null);
+                {!isIOS ? (
+                  <button 
+                    onClick={() => {
+                      if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult: any) => {
+                          if (choiceResult.outcome === 'accepted') {
+                            setDeferredPrompt(null);
+                            setIsStandalone(true);
+                          }
+                        });
+                      } else {
+                        // Fallback: If event didn't fire yet, show browser's own instruction or alert
+                        alert(language === "uz" 
+                          ? "Браузер менюсидан 'Ўрнатиш' тугмасини босинг" 
+                          : "Please use the 'Install' option in your browser menu");
                       }
-                    });
-                  }}
-                  className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shadow-lg shadow-accent/20"
-                >
-                  <Download className="size-3" />
-                  {language === "uz" ? "Ўрнатиш" : "Install"}
-                </button>
+                    }}
+                    className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shadow-lg shadow-accent/20"
+                  >
+                    <Download className="size-3" />
+                    {language === "uz" ? "Ўрнатиш" : "Install"}
+                  </button>
+                ) : (
+                  <div className="rounded-lg bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-600 dark:bg-white/10">
+                    {language === "uz" ? "iOS да" : "On iOS"}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
