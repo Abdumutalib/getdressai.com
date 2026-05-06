@@ -486,13 +486,13 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const mannequinScale = useMemo(() => {
     const size = preferredSize.trim().toUpperCase();
     switch (size) {
-      case "XS": return 0.85;
-      case "S": return 0.92;
-      case "M": return 1.0;
-      case "L": return 1.1;
-      case "XL": return 1.25;
-      case "XXL": return 1.4;
-      default: return 1.0;
+      case "XS": return { x: 0.84, y: 0.95 };
+      case "S": return { x: 0.92, y: 0.98 };
+      case "M": return { x: 1.0, y: 1.0 };
+      case "L": return { x: 1.12, y: 1.02 };
+      case "XL": return { x: 1.28, y: 1.05 };
+      case "XXL": return { x: 1.45, y: 1.08 };
+      default: return { x: 1.0, y: 1.0 };
     }
   }, [preferredSize]);
 
@@ -1049,10 +1049,10 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
             <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
               <div className="rounded-[1.25rem] bg-white p-4 shadow-soft dark:bg-slate-950/60">
-                <div className="flex h-full min-h-[350px] items-center justify-center rounded-[1rem] bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.08),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_55%)]">
-                  <div className="relative h-[300px] w-full overflow-hidden rounded-[1rem]">
+                <div className="flex h-full min-h-[350px] items-center justify-center rounded-[1rem] bg-slate-50/50 dark:bg-white/5">
+                  <div className="relative h-[300px] w-full">
                     <motion.div
-                      animate={{ scale: mannequinScale }}
+                      animate={{ scaleX: mannequinScale.x, scaleY: mannequinScale.y }}
                       transition={{ type: "spring", stiffness: 100, damping: 20 }}
                       className="relative h-full w-full"
                     >
@@ -1063,7 +1063,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                         className="object-contain opacity-90 transition-opacity hover:opacity-100"
                       />
                     </motion.div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent dark:from-slate-900/20" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-slate-900/50" />
                   </div>
                 </div>
                 <p className="mt-4 text-sm font-semibold text-slate-950 dark:text-white">{t("upload.mannequinTitle")}</p>
