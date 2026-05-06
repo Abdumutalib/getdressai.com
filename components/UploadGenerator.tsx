@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
+import { Camera, ExternalLink, Loader2, LoaderCircle, Ruler, Share2, ShoppingBag, Sparkles, UploadCloud, Wand2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -1114,7 +1114,25 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                     </label>
                   ))}
                 </div>
-                <p className="text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={generating}
+                  className="btn-primary mt-6 w-full rounded-2xl py-4 text-base font-bold shadow-lg shadow-fuchsia-500/25 transition hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {generating ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="size-5 animate-spin" />
+                      {t("upload.generating")}...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Sparkles className="size-5" />
+                      {t("upload.generate")}
+                    </span>
+                  )}
+                </button>
+                <p className="mt-3 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
               </div>
             </div>
           </div>
@@ -1166,6 +1184,24 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                 </label>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating}
+              className="btn-primary mt-6 w-full rounded-2xl py-4 text-base font-bold shadow-lg shadow-fuchsia-500/25 transition hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {generating ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="size-5 animate-spin" />
+                  {t("upload.generating")}...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <Sparkles className="size-5" />
+                  {t("upload.generate")}
+                </span>
+              )}
+            </button>
             <p className="mt-3 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.fitReady}</p>
           </div>
         ) : null}
