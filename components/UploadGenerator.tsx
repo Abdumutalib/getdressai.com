@@ -486,12 +486,12 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const mannequinScale = useMemo(() => {
     const size = preferredSize.trim().toUpperCase();
     switch (size) {
-      case "XS": return { x: 0.84, y: 0.95 };
-      case "S": return { x: 0.92, y: 0.98 };
+      case "XS": return { x: 0.80, y: 0.94 };
+      case "S": return { x: 0.90, y: 0.97 };
       case "M": return { x: 1.0, y: 1.0 };
-      case "L": return { x: 1.12, y: 1.02 };
-      case "XL": return { x: 1.28, y: 1.05 };
-      case "XXL": return { x: 1.45, y: 1.08 };
+      case "L": return { x: 1.15, y: 1.03 };
+      case "XL": return { x: 1.35, y: 1.06 };
+      case "XXL": return { x: 1.55, y: 1.10 };
       default: return { x: 1.0, y: 1.0 };
     }
   }, [preferredSize]);
@@ -1049,8 +1049,8 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
             <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
               <div className="rounded-[1.25rem] bg-white p-4 shadow-soft dark:bg-slate-950/60">
-                <div className="flex h-full min-h-[350px] items-center justify-center rounded-[1rem] bg-slate-50/50 dark:bg-white/5">
-                  <div className="relative h-[300px] w-full">
+                <div className="flex h-full min-h-[400px] items-center justify-center rounded-[1rem] bg-slate-50/30 dark:bg-white/5">
+                  <div className="relative h-[350px] w-full">
                     <motion.div
                       animate={{ scaleX: mannequinScale.x, scaleY: mannequinScale.y }}
                       transition={{ type: "spring", stiffness: 100, damping: 20 }}
