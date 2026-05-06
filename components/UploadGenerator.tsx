@@ -14,6 +14,11 @@ import {
 } from "@/lib/generator-copy";
 import { getPresetMarketingImage } from "@/lib/marketing-images";
 import { formatCurrency } from "@/lib/utils";
+import { 
+  buildFallbackRecommendations, 
+  inferRecommendedSize, 
+  type MarketplaceRecommendation 
+} from "@/lib/marketplace-recommendations";
 
 type GeneratorMode = "photo" | "mannequin";
 type GenderOption = "female" | "male" | "unisex";
@@ -291,6 +296,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const [recommending, setRecommending] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const [advancedMode, setAdvancedMode] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [recommendationError, setRecommendationError] = useState("");
   const [recommendations, setRecommendations] = useState<MarketplaceProduct[]>([]);
@@ -303,7 +309,17 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const hydratedInitialRef = useRef(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   useEffect(() => {
     setSelected(safePresets[0] ?? "Luxury");
@@ -741,6 +757,9 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       
       // Сифатни ошириш ва харажатни камайтириш учун фонни тозалаш флагини қўшамиз
       payload.set("removeBackground", "true");
+      if (advancedMode) {
+        payload.set("advancedPrecision", "true");
+      }
 
       if (mode === "photo" && photoFile) {
         payload.set("file", photoFile);
@@ -778,8 +797,9 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         tookMs: data.tookMs
       });
 
-      if (data.mode === "photo" && data.sourceImagePath) {
-        await fetchRecommendations();
+      if (hasRecommendationInputs) {
+        // Автоматик тарзда маркетплейслардан қидиришни бошлаймиз
+        void fetchRecommendations();
       }
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : t("upload.generationFailed"));
@@ -822,107 +842,6 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       className="glass-panel rounded-[2rem] p-6"
     >
       <div className="space-y-4">
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedMarketplaceCopy.recommendationsTitle}</p>
-              <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsCopy}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void fetchRecommendations()}
-              disabled={!hasRecommendationInputs || recommending}
-              className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {recommending ? <LoaderCircle className="size-4 animate-spin" /> : <ShoppingBag className="size-4" />}
-              {recommending ? localizedMarketplaceCopy.recommendationsLoading : localizedMarketplaceCopy.recommendationsButton}
-            </button>
-          </div>
-
-          {recommendedSize ? (
-            <div className="mb-4 inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold text-accent">
-              {localizedMarketplaceCopy.recommendedSize}: {recommendedSize}
-            </div>
-          ) : null}
-
-          {parsedIntent && (parsedIntent.category || parsedIntent.color || parsedIntent.material || parsedIntent.occasion) ? (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {[parsedIntent.category, parsedIntent.color, parsedIntent.material, parsedIntent.occasion]
-                .filter(Boolean)
-                .map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200"
-                  >
-                    {item}
-                  </span>
-                ))}
-            </div>
-          ) : null}
-
-          {recommendationError ? (
-            <p className="mb-4 text-sm font-medium text-rose-500">{recommendationError}</p>
-          ) : null}
-
-          {!recommendations.length && !recommendationError ? (
-            <p className="text-sm text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.recommendationsHint}</p>
-          ) : null}
-
-          {recommendations.length ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {recommendations.map((product) => (
-                <article
-                  key={product.id}
-                  className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/40"
-                >
-                  <div className="relative aspect-[4/5] bg-white dark:bg-slate-950/60">
-                    {product.image.startsWith("/") ? (
-                      <Image
-                        src={product.image}
-                        alt={product.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
-                    ) : (
-                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" loading="lazy" />
-                    )}
-                  </div>
-                  <div className="space-y-3 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{product.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">{product.marketplace}</p>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
-                        {formatCurrency(product.price, product.currency)}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
-                        {localizedMarketplaceCopy.recommendedSize}: {product.recommendedSize}
-                      </span>
-                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
-                        {localizedMarketplaceCopy.fitScore}: {product.totalFitScore}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">{localizedMarketplaceCopy.autoSource}</p>
-                    <a
-                      href={product.affiliateUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
-                    >
-                      <ExternalLink className="size-4" />
-                      {localizedMarketplaceCopy.openProduct}
-                    </a>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
         <div className="grid grid-cols-2 gap-2 rounded-[1.5rem] bg-slate-100 p-2 dark:bg-white/5">
           {([
             { value: "photo", label: t("upload.modePhoto") },
@@ -1328,55 +1247,213 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
 
         {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
 
-        {result ? (
-          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-soft dark:border-white/10 dark:bg-slate-950/60">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("upload.resultTitle")}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
-                  {result.mode === "mannequin" ? t("upload.resultModeMannequin") : t("upload.resultModePhoto")}
-                </p>
-              </div>
-              <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
-                {result.preset}
-              </span>
+        {/* Advanced Mode Toggle */}
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-white/10 dark:bg-white/5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-500/20 dark:text-fuchsia-400">
+              <Wand2 className="size-5" />
             </div>
-            <div className="grid gap-5 md:grid-cols-[220px_1fr] md:items-center">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-950/60">
-                {resultIsRemote ? (
-                  <img src={result.resultUrl} alt={result.preset} className="h-full w-full object-cover" loading="lazy" />
-                ) : (
-                  <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" sizes="220px" />
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {language === "uz" ? "Юқори аниқлик режими" : "High Precision Mode"}
+              </p>
+              <p className="text-xs text-slate-500">
+                {language === "uz" ? "Кийим деталларини 2 баравар яхшилайди" : "2x better detail and body accuracy"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setAdvancedMode(!advancedMode)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              advancedMode ? "bg-accent" : "bg-slate-200 dark:bg-white/10"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                advancedMode ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        {result ? (
+          <div className="space-y-6">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-slate-950/60">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{t("upload.resultTitle")}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+                    {result.mode === "mannequin" ? t("upload.resultModeMannequin") : t("upload.resultModePhoto")}
+                  </p>
+                </div>
+                <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
+                  {result.preset}
+                </span>
+              </div>
+              <div className="grid gap-6 md:grid-cols-[260px_1fr] md:items-center">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border-4 border-white shadow-xl dark:border-slate-800">
+                  {resultIsRemote ? (
+                    <img src={result.resultUrl} alt={result.preset} className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <Image src={result.resultUrl} alt={result.preset} fill className="object-cover" sizes="260px" />
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">
+                      {localizedGenderCopy.label}: {t(`upload.genderValue.${result.gender}`)}
+                    </span>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                      AI OPTIMIZED
+                    </span>
+                  </div>
+                  <p className="text-sm leading-8 text-slate-600 dark:text-slate-300">
+                    {result.mode === "mannequin" ? t("upload.resultSummaryMannequin") : t("upload.resultSummaryPhoto")}
+                  </p>
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={shareResult}
+                      className="btn-muted inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold"
+                    >
+                      <Share2 className="size-4" />
+                      {t("upload.shareButton")}
+                    </button>
+                    <a
+                      href={result.resultUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-primary inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-lg shadow-fuchsia-500/20"
+                    >
+                      {t("upload.downloadHd")}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Marketplace Automation UI */}
+              <div className="mt-8 border-t border-slate-100 pt-8 dark:border-white/5">
+                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="size-5 text-accent" />
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {language === "uz" ? "Ушбу образни сотиб олинг" : "Shop This Look"}
+                    </h3>
+                  </div>
+                  {recommendedSize && (
+                    <div className="inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-bold text-accent">
+                      {localizedMarketplaceCopy.recommendedSize}: {recommendedSize}
+                    </div>
+                  )}
+                </div>
+
+                {recommending && (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-48 animate-pulse rounded-2xl bg-slate-50 dark:bg-white/5" />
+                    ))}
+                  </div>
+                )}
+
+                {recommendations.length > 0 && !recommending && (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {recommendations.map((product) => (
+                      <a
+                        key={product.id}
+                        href={product.affiliateUrl}
+                        target="_blank"
+                        rel="nofollow noreferrer"
+                        className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 p-3 transition hover:border-accent hover:bg-white hover:shadow-soft dark:border-white/5 dark:bg-slate-900/40"
+                      >
+                        <div className="relative mb-3 aspect-square overflow-hidden rounded-xl bg-white">
+                          <Image src={product.image} alt={product.title} fill className="object-cover opacity-90 transition group-hover:scale-110 group-hover:opacity-100" />
+                          <div className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900 shadow-sm backdrop-blur">
+                            {product.marketplace.toUpperCase()}
+                          </div>
+                        </div>
+                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{product.title}</p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <p className="text-sm font-black text-accent">{formatCurrency(product.price, product.currency)}</p>
+                          <span className="text-[10px] font-bold text-emerald-600">
+                            {product.totalFitScore}% MATCH
+                          </span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-[10px] font-bold text-white transition hover:bg-accent dark:bg-white/10">
+                          {language === "uz" ? "Сотиб олиш" : "View Product"}
+                          <ExternalLink className="size-3" />
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+                
+                {!recommendations.length && !recommending && (
+                  <div className="rounded-2xl bg-slate-50 p-6 text-center dark:bg-white/5">
+                    <p className="text-sm text-slate-500">{localizedMarketplaceCopy.recommendationsHint}</p>
+                  </div>
                 )}
               </div>
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  {localizedGenderCopy.label}: {t(`upload.genderValue.${result.gender}`)}
-                </p>
-                <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
-                  {result.mode === "mannequin" ? t("upload.resultSummaryMannequin") : t("upload.resultSummaryPhoto")}
-                </p>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{result.tookMs} ms</p>
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={shareResult}
-                    className="btn-muted inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+            </div>
+
+            {/* Referral Viral Banner */}
+            <div className="rounded-[1.5rem] border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50 to-indigo-50 p-6 dark:border-fuchsia-500/20 dark:from-fuchsia-500/10 dark:to-indigo-500/10">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {language === "uz" ? "Дўстларингизни таклиф қилинг!" : "Invite Friends, Get Rewards!"}
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {language === "uz" 
+                      ? "Ҳар бир таклиф учун 5 та бепул генерацияга эга бўлинг." 
+                      : "Earn 5 free generations for every friend you invite."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 items-center rounded-xl bg-white px-4 text-xs font-bold text-slate-500 shadow-sm dark:bg-slate-900">
+                    getdressai.com/r/user_{Math.random().toString(36).substring(7)}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://getdressai.com/r/user_${Math.random().toString(36).substring(7)}`);
+                      alert(language === "uz" ? "Нусха олинди!" : "Copied!");
+                    }}
+                    className="btn-primary rounded-xl px-6 py-3 text-sm font-bold"
                   >
-                    <Share2 className="size-4" />
-                    {t("upload.shareButton")}
+                    {language === "uz" ? "Нусха олиш" : "Copy Link"}
                   </button>
-                  <a
-                    href={result.resultUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
-                  >
-                    {t("upload.downloadHd")}
-                  </a>
                 </div>
               </div>
             </div>
+
+            {/* PWA Install Banner */}
+            {deferredPrompt && (
+              <div className="rounded-2xl bg-slate-900 p-6 text-white shadow-xl dark:bg-white/10">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
+                      <Image src="/icons/spark.svg" alt="App Icon" width={24} height={24} />
+                    </div>
+                    <div>
+                      <p className="font-bold">GetDressAI App</p>
+                      <p className="text-xs text-slate-400">Иловани телефон ёки компьютерга ўрнатиб олинг</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      deferredPrompt.prompt();
+                      deferredPrompt.userChoice.then((choiceResult: any) => {
+                        if (choiceResult.outcome === 'accepted') {
+                          setDeferredPrompt(null);
+                        }
+                      });
+                    }}
+                    className="btn-primary rounded-xl px-6 py-3 text-sm font-bold"
+                  >
+                    {language === "uz" ? "Иловани ўрнатиш" : "Install App"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : null}
 
