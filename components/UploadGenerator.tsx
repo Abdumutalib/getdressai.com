@@ -723,6 +723,9 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       if (normalizedPreferredSize) {
         payload.set("preferredSize", normalizedPreferredSize);
       }
+      
+      // Сифатни ошириш ва харажатни камайтириш учун фонни тозалаш флагини қўшамиз
+      payload.set("removeBackground", "true");
 
       if (mode === "photo" && photoFile) {
         payload.set("file", photoFile);
