@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ExternalLink, LoaderCircle, Ruler, Share2, ShoppingBag, UploadCloud, Wand2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
 import { authFetch } from "@/lib/supabase-browser";
@@ -795,7 +796,13 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
   }
 
   return (
-    <div className="glass-panel rounded-[2rem] p-6">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="glass-panel rounded-[2rem] p-6"
+    >
       <div className="space-y-4">
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1355,6 +1362,6 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
         ) : null}
 
       </div>
-    </div>
+    </motion.div>
   );
 }

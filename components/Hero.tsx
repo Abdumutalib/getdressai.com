@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, PlayCircle, Sparkles, Stars } from "lucide-react";
+import { motion } from "framer-motion";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -252,30 +253,64 @@ export function Hero() {
       </div>
       <div className="grid-overlay absolute inset-0 opacity-40" />
       <div className="section-shell relative grid gap-14 pt-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
-        <div className="reveal-fade max-w-2xl space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-100 bg-fuchsia-50/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-700">
+        <div className="max-w-2xl space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 rounded-full border border-fuchsia-100 bg-fuchsia-50/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-700"
+          >
             <Stars className="size-4" />
             {copy.kicker}
-          </div>
+          </motion.div>
           <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-fuchsia-700">{t("hero.badge")}</p>
-            <h1 className="font-[var(--font-heading)] max-w-5xl text-5xl font-extrabold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-sm font-semibold uppercase tracking-[0.18em] text-fuchsia-700"
+            >
+              {t("hero.badge")}
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="font-[var(--font-heading)] max-w-5xl text-5xl font-extrabold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl dark:text-white"
+            >
               {copy.title}
-            </h1>
-            <p className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">{copy.copy}</p>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-2 text-sm font-medium text-slate-700 shadow-soft">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300"
+            >
+              {copy.copy}
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-2 text-sm font-medium text-slate-700 shadow-soft"
+            >
               <CheckCircle2 className="size-4 text-emerald-500" />
               {copy.proof}
               <span className="text-slate-400 dark:text-slate-500">|</span>
               <span>{copy.proofSub}</span>
-            </div>
+            </motion.div>
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="flex flex-col gap-4 sm:flex-row"
+          >
             <Link
               href="#studio"
               onClick={() => trackEvent("cta_clicked", { location: "hero_primary" })}
-              className="bg-gradient-brand inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/25 transition hover:-translate-y-1"
+              className="bg-gradient-brand inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/25 transition hover:-translate-y-1 hover:shadow-fuchsia-500/40"
             >
               {copy.primaryCta}
               <ArrowRight className="ml-2 size-4" />
@@ -288,7 +323,7 @@ export function Hero() {
               <PlayCircle className="mr-2 size-4" />
               {copy.secondaryCta}
             </Link>
-          </div>
+          </motion.div>
 
           <div className="flex items-center gap-4 text-sm text-slate-500">
             <div className="flex -space-x-2">

@@ -11,8 +11,9 @@ const UploadGenerator = dynamic(() => import("@/components/UploadGenerator").the
 const ExamplesGrid = dynamic(() => import("@/components/ExamplesGrid").then((module) => module.ExamplesGrid));
 const Testimonials = dynamic(() => import("@/components/Testimonials").then((module) => module.Testimonials));
 const PricingCards = dynamic(() => import("@/components/PricingCards").then((module) => module.PricingCards));
-const FAQ = dynamic(() => import("@/components/FAQ").then((module) => module.FAQ));
-const CTA = dynamic(() => import("@/components/CTA").then((module) => module.CTA));
+import { FAQ } from "@/components/FAQ";
+import { CTA } from "@/components/CTA";
+import { motion } from "framer-motion";
 
 function WhyUs() {
   const { t, tm } = useLanguage();
@@ -20,7 +21,13 @@ function WhyUs() {
   const safeRows = Array.isArray(rows) ? rows : [];
 
   return (
-    <section className="section-shell py-24">
+    <motion.section
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="section-shell py-24"
+    >
       <div className="mb-12 max-w-2xl space-y-4">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("whyUs.eyebrow")}</p>
         <h2 className="section-title">{t("whyUs.title")}</h2>
@@ -47,7 +54,7 @@ function WhyUs() {
           </tbody>
         </table>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -57,7 +64,13 @@ function ReferralLoop() {
   const safeBullets = Array.isArray(bullets) ? bullets : [];
 
   return (
-    <section className="section-shell py-24">
+    <motion.section
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="section-shell py-24"
+    >
       <div className="glass-panel grid gap-8 rounded-[2.25rem] p-10 lg:grid-cols-[1fr_0.9fr] lg:items-center">
         <div className="space-y-4">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("referralLoop.eyebrow")}</p>
@@ -72,7 +85,7 @@ function ReferralLoop() {
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -195,7 +208,13 @@ function LandingProof() {
   const copy = proofCopy[language as keyof typeof proofCopy] ?? proofCopy.en;
 
   return (
-    <section className="section-shell py-24">
+    <motion.section
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="section-shell py-24"
+    >
       <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft dark:border-white/10 dark:bg-white/5">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{copy.eyebrow}</p>
@@ -221,7 +240,7 @@ function LandingProof() {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -274,14 +293,21 @@ export default function HomePage() {
   return (
     <main>
       <Hero />
-      <section id="studio" className="section-shell py-24">
+      <motion.section
+        id="studio"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
+        className="section-shell py-24"
+      >
         <div className="mb-12 max-w-2xl space-y-4">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{localizedStudioCopy.eyebrow}</p>
           <h2 className="section-title">{localizedStudioCopy.title}</h2>
           <p className="section-copy">{localizedStudioCopy.copy}</p>
         </div>
         <UploadGenerator skipInitialLoad />
-      </section>
+      </motion.section>
       <HowItWorks />
       <ExamplesGrid />
       <WhyUs />
@@ -292,7 +318,13 @@ export default function HomePage() {
       <LandingProof />
       <TrustBadges />
       <CTA />
-      <section className="section-shell pb-24">
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="section-shell pb-24"
+      >
         <div className="rounded-[2rem] border border-slate-200 bg-slate-50 px-8 py-10 text-center dark:border-white/10 dark:bg-white/5">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("urgency.eyebrow")}</p>
           <h3 className="mt-4 text-3xl font-semibold text-slate-950 dark:text-white">
@@ -307,7 +339,7 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
     </main>
   );
 }
