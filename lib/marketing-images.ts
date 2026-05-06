@@ -15,16 +15,16 @@ export const marketingImageKeys = {
 } as const;
 
 const localMarketingImages = {
-  heroDemo: "/examples/luxury.svg",
-  before: "/examples/before.svg",
-  luxury: "/examples/luxury.svg",
-  streetwear: "/examples/streetwear.svg",
-  wedding: "/examples/wedding.svg",
-  office: "/examples/office.svg",
-  gym: "/examples/gym.svg",
-  anime: "/examples/anime.svg",
-  celebrity: "/examples/celebrity.svg",
-  casual: "/examples/casual.svg"
+  heroDemo: "/examples/hero-demo.png",
+  before: "/examples/before.png",
+  luxury: "/examples/luxury.png",
+  streetwear: "/examples/streetwear.png",
+  wedding: "/examples/wedding.png",
+  office: "/examples/office.png",
+  gym: "/examples/gym.png",
+  anime: "/examples/anime.png",
+  celebrity: "/examples/celebrity.png",
+  casual: "/examples/casual.png"
 } as const;
 
 function getMarketingBaseUrl() {

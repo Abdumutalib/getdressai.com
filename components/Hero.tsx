@@ -94,6 +94,146 @@ export function Hero() {
       floatingTitle: "Аввал трансформацияни кўрсатинг",
       floatingCopy: "Hero до/после натижани сотиши керак. Генераторни қизиқиш уйғонгандан кейин бериш тўғрироқ.",
     },
+    tr: {
+      kicker: "Küresel stil zekası",
+      title: "Dünyanın en iyi stilistleri artık sizin için çalışıyor.",
+      copy:
+        "GetDressAI milyonlarca görünümü ve trendi analiz ederek vücut tipinize, fotoğrafınıza ve zevkinize uyan bir kombin oluşturur. Bir fotoğraf ve küresel stilin merkezindesiniz.",
+      primaryCta: "İdeal kombnimi oluştur",
+      secondaryCta: "Nasıl çalışır",
+      proof: "Dünya standartlarında beğeni, anında eşleştirildi",
+      proofSub: "Bir fotoğraf. Saniyeler içinde kesin bir cevap.",
+      bullets: [
+        "Bir fotoğraf yükleyin ve saniyeler içinde daha iyi bir görünüm önizleyin.",
+        "Para harcamadan önce stilin vücut tipinize uyup uymadığını görün.",
+        "Rastgele ilham yerine pazar yeri eşleşmeleri alın.",
+      ],
+      statOne: "Önizlenen kombinler",
+      statTwo: "Ortalama ilk sonuç",
+      statThree: "Özel yükleme akışı",
+      socialProof: ["100K+ kombin önizlemesi", "Pazar yerine hazır eşleşmeler", "Varsayılan olarak özel"],
+      previewTitle: "Kullanıcıların anında bilmek istediği şeyler",
+      previewItems: [
+        "Bu stil bana yakışır mı?",
+        "Beden vücut tipimde doğru görünür mü?",
+        "Önizlemeden hemen sonra benzer kıyafetleri bulabilir miyim?",
+      ],
+      floatingLabel: "En iyi ilk adım",
+      floatingTitle: "Dönüşümle başlayın",
+      floatingCopy: "Hero öncesi/sonrası vaadini satmalı. Jeneratör ilgi uyandıktan sonra gösterilmeli.",
+    },
+    es: {
+      kicker: "Inteligencia de estilo global",
+      title: "Los mejores estilistas del mundo ahora trabajan para ti.",
+      copy:
+        "GetDressAI analiza millones de looks y tendencias para crear un outfit que se adapta a tu cuerpo, foto y gusto. Una foto y estás en el centro del estilo global.",
+      primaryCta: "Crear mi look ideal",
+      secondaryCta: "Cómo funciona",
+      proof: "Gusto de clase mundial, combinado al instante",
+      proofSub: "Una foto. Una respuesta precisa en segundos.",
+      bullets: [
+        "Sube una foto y previsualiza un look mejor en segundos.",
+        "Mira si el estilo se adapta a tu cuerpo antes de gastar dinero.",
+        "Obtén coincidencias del mercado en vez de inspiración aleatoria.",
+      ],
+      statOne: "Outfits previsualizados",
+      statTwo: "Primer resultado promedio",
+      statThree: "Subida privada",
+      socialProof: ["100K+ previsualizaciones", "Coincidencias de mercado", "Privado por defecto"],
+      previewTitle: "Lo que la gente quiere saber al instante",
+      previewItems: [
+        "¿Me quedará bien este estilo?",
+        "¿Se verá bien la talla en mi cuerpo?",
+        "¿Puedo encontrar ropa similar justo después de la previsualización?",
+      ],
+      floatingLabel: "El mejor primer paso",
+      floatingTitle: "Empieza con la transformación",
+      floatingCopy: "El hero debe vender la promesa antes/después. El generador se muestra mejor después del interés.",
+    },
+    fr: {
+      kicker: "Intelligence de style globale",
+      title: "Les meilleurs stylistes du monde travaillent désormais pour vous.",
+      copy:
+        "GetDressAI analyse des millions de looks et tendances pour créer une tenue adaptée à votre morphologie, photo et goûts. Une photo et vous êtes au centre du style mondial.",
+      primaryCta: "Créer mon look idéal",
+      secondaryCta: "Comment ça marche",
+      proof: "Un goût de classe mondiale, ajusté instantanément",
+      proofSub: "Une photo. Une réponse précise en quelques secondes.",
+      bullets: [
+        "Ajoutez une photo et prévisualisez un meilleur look en quelques secondes.",
+        "Voyez si le style correspond à votre morphologie avant de dépenser.",
+        "Recevez des correspondances de marché au lieu d'inspirations aléatoires.",
+      ],
+      statOne: "Tenues prévisualisées",
+      statTwo: "Premier résultat moyen",
+      statThree: "Envoi privé",
+      socialProof: ["100K+ prévisualisations", "Correspondances marché", "Privé par défaut"],
+      previewTitle: "Ce que les gens veulent savoir instantanément",
+      previewItems: [
+        "Ce style me conviendra-t-il ?",
+        "La taille sera-t-elle bien sur ma morphologie ?",
+        "Puis-je trouver des vêtements similaires juste après la prévisualisation ?",
+      ],
+      floatingLabel: "Le meilleur premier pas",
+      floatingTitle: "Commencez par la transformation",
+      floatingCopy: "Le hero doit vendre la promesse avant/après. Le générateur est mieux présenté après l'intérêt.",
+    },
+    de: {
+      kicker: "Globale Stil-Intelligenz",
+      title: "Die besten Stylisten der Welt arbeiten jetzt für Sie.",
+      copy:
+        "GetDressAI analysiert Millionen von Looks und Trends, um ein Outfit zu erstellen, das zu Ihrem Körper, Foto und Geschmack passt. Ein Foto und Sie stehen im Zentrum des globalen Stils.",
+      primaryCta: "Meinen idealen Look erstellen",
+      secondaryCta: "Wie es funktioniert",
+      proof: "Weltklasse-Geschmack, sofort abgestimmt",
+      proofSub: "Ein Foto. Eine präzise Antwort in Sekunden.",
+      bullets: [
+        "Laden Sie ein Foto hoch und sehen Sie in Sekunden einen besseren Look.",
+        "Sehen Sie, ob der Stil zu Ihrem Körper passt, bevor Sie Geld ausgeben.",
+        "Erhalten Sie Marktplatz-Treffer statt zufälliger Inspiration.",
+      ],
+      statOne: "Outfits vorgeschaut",
+      statTwo: "Durchschnittliches erstes Ergebnis",
+      statThree: "Privater Upload",
+      socialProof: ["100K+ Outfit-Vorschauen", "Marktplatz-Treffer", "Standardmäßig privat"],
+      previewTitle: "Was Nutzer sofort wissen möchten",
+      previewItems: [
+        "Steht mir dieser Stil?",
+        "Wird die Größe an meinem Körper richtig aussehen?",
+        "Kann ich ähnliche Kleidung direkt nach der Vorschau finden?",
+      ],
+      floatingLabel: "Der beste erste Schritt",
+      floatingTitle: "Beginnen Sie mit der Transformation",
+      floatingCopy: "Der Hero muss das Vorher/Nachher-Versprechen verkaufen. Der Generator wird besser nach dem Interesse gezeigt.",
+    },
+    ar: {
+      kicker: "ذكاء الأناقة العالمي",
+      title: "أفضل مصممي الأزياء في العالم يعملون الآن من أجلك.",
+      copy:
+        "GetDressAI يحلل ملايين الإطلالات والاتجاهات لإنشاء إطلالة تناسب شكل جسمك وصورتك وذوقك. صورة واحدة وتصبح في قلب الموضة العالمية.",
+      primaryCta: "ابتكر إطلالتي المثالية",
+      secondaryCta: "كيف يعمل",
+      proof: "ذوق عالمي المستوى، مُطابق فورياً",
+      proofSub: "صورة واحدة. إجابة دقيقة في ثوانٍ.",
+      bullets: [
+        "ارفع صورة واحدة واستعرض إطلالة أفضل في ثوانٍ.",
+        "تأكد أن الستايل يناسب جسمك قبل إنفاق المال.",
+        "احصل على توصيات من المتاجر بدلاً من إلهام عشوائي.",
+      ],
+      statOne: "إطلالات مستعرضة",
+      statTwo: "متوسط النتيجة الأولى",
+      statThree: "رفع خاص",
+      socialProof: ["100 ألف+ معاينة", "توصيات جاهزة للسوق", "خاص بشكل افتراضي"],
+      previewTitle: "ما يريد المستخدمون معرفته فوراً",
+      previewItems: [
+        "هل سيناسبني هذا الستايل؟",
+        "هل سيبدو المقاس صحيحاً على جسمي؟",
+        "هل يمكنني العثور على ملابس مشابهة بعد المعاينة مباشرة؟",
+      ],
+      floatingLabel: "أفضل خطوة أولى",
+      floatingTitle: "ابدأ بالتحول",
+      floatingCopy: "يجب أن يبيع الهيرو وعد قبل/بعد. المولّد يُعرض بشكل أفضل بعد إثارة الاهتمام.",
+    },
   } as const;
 
   const copy = marketingCopy[language as keyof typeof marketingCopy] ?? marketingCopy.en;
@@ -104,7 +244,7 @@ export function Hero() {
       <div className="absolute right-[-3rem] top-6 h-72 w-72 rounded-full bg-indigo-300/35 blur-3xl" />
       <div className="absolute bottom-0 left-1/4 h-64 w-64 rounded-full bg-pink-300/25 blur-3xl" />
 
-      <div className="absolute inset-x-0 top-0 z-10 border-b border-fuchsia-100/60 bg-white/55 backdrop-blur-xl">
+      <div className="absolute inset-x-0 top-20 z-20 border-b border-fuchsia-100/60 bg-white/55 backdrop-blur-xl">
         <div className="section-shell flex min-h-12 items-center justify-center gap-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-700 sm:text-sm">
           <Sparkles className="size-4" />
           {t("hero.founderDrop")}
@@ -164,7 +304,7 @@ export function Hero() {
         </div>
 
         <div className="reveal-fade grid gap-6 lg:ml-auto">
-          <div className="relative mx-auto w-full max-w-md">
+          <div className="relative mx-auto w-full max-w-full lg:max-w-md">
             <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-r from-fuchsia-400/20 to-indigo-400/20 blur-xl" />
             <BeforeAfterSlider beforeSrc={marketingImages.before} afterSrc={marketingImages.luxury} />
             <div className="absolute -bottom-5 -left-5 rounded-[1.5rem] bg-white px-4 py-4 shadow-xl">

@@ -15,9 +15,9 @@ export const syncedProductCopy = {
     presets: ['Hashamat', 'Streetwear', "To'y", 'Ofis', 'Sport', 'Anime', 'Mashhur uslub', 'Kundalik'],
   },
   tr: {
-    workflowEyebrow: 'Pro akis',
-    workflowCopy: "Her look'u olusturun, takip edin ve gelire cevirin.",
-    presets: ['Luks', 'Streetwear', 'Dugun', 'Ofis', 'Spor', 'Anime', 'Unlu stil', 'Gunluk'],
+    workflowEyebrow: 'Pro akış',
+    workflowCopy: "Her look'u oluşturun, takip edin ve gelire çevirin.",
+    presets: ['Lüks', 'Streetwear', 'Düğün', 'Ofis', 'Spor', 'Anime', 'Ünlü stil', 'Günlük'],
   },
   es: {
     workflowEyebrow: 'Flujo pro',
@@ -26,13 +26,13 @@ export const syncedProductCopy = {
   },
   fr: {
     workflowEyebrow: 'Flux pro',
-    workflowCopy: 'Creez, suivez et monetisez chaque look.',
-    presets: ['Luxe', 'Streetwear', 'Mariage', 'Bureau', 'Salle de sport', 'Anime', 'Celebrite', 'Casual'],
+    workflowCopy: 'Créez, suivez et monétisez chaque look.',
+    presets: ['Luxe', 'Streetwear', 'Mariage', 'Bureau', 'Salle de sport', 'Anime', 'Célébrité', 'Casual'],
   },
   de: {
     workflowEyebrow: 'Pro-Workflow',
     workflowCopy: 'Erstelle, verfolge und monetarisiere jeden Look.',
-    presets: ['Luxus', 'Streetwear', 'Hochzeit', 'Buero', 'Fitness', 'Anime', 'Promi', 'Casual'],
+    presets: ['Luxus', 'Streetwear', 'Hochzeit', 'Büro', 'Fitness', 'Anime', 'Promi', 'Casual'],
   },
   ar: {
     workflowEyebrow: 'وضع احترافي',

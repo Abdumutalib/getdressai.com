@@ -250,6 +250,31 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
       placeholder: "Razmerni tanlang",
       hint: "Agar odatda qaysi razmer kiyishingizni bilsangiz, shu yerga yozishingiz mumkin.",
     },
+    tr: {
+      label: "Bilinen kıyafet bedeni",
+      placeholder: "Beden seçin",
+      hint: "Genellikle giydiğiniz bedeni biliyorsanız buraya girebilirsiniz.",
+    },
+    es: {
+      label: "Talla de ropa conocida",
+      placeholder: "Seleccionar talla",
+      hint: "Si ya conoces tu talla habitual, puedes introducirla aquí.",
+    },
+    fr: {
+      label: "Taille de vêtement connue",
+      placeholder: "Choisir la taille",
+      hint: "Si vous connaissez déjà votre taille habituelle, vous pouvez l'indiquer ici.",
+    },
+    de: {
+      label: "Bekannte Kleidergröße",
+      placeholder: "Größe wählen",
+      hint: "Wenn du deine übliche Größe bereits kennst, kannst du sie hier eingeben.",
+    },
+    ar: {
+      label: "مقاس ملابس معروف",
+      placeholder: "اختر المقاس",
+      hint: "إذا كنت تعرف مقاسك المعتاد، يمكنك إدخاله هنا.",
+    },
   };
   const localizedKnownSizeCopy = knownSizeCopy[language] ?? knownSizeCopy.en;
   const presets = tm<string[]>("upload.presets");
@@ -873,7 +898,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           ) : null}
         </div>
 
-        <div className="flex flex-wrap gap-2 rounded-[1.5rem] bg-slate-100 p-2 dark:bg-white/5">
+        <div className="grid grid-cols-2 gap-2 rounded-[1.5rem] bg-slate-100 p-2 dark:bg-white/5">
           {([
             { value: "photo", label: t("upload.modePhoto") },
             { value: "mannequin", label: t("upload.modeMannequin") }
@@ -898,7 +923,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
             <p className="text-sm font-semibold text-slate-950 dark:text-white">{localizedGenderCopy.label}</p>
             <span className="text-xs text-slate-500 dark:text-slate-300">{localizedGenderCopy.hint}</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {genderOptions.map((option) => (
               <button
                 key={option.value}
@@ -1087,7 +1112,7 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
                   </select>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{localizedKnownSizeCopy.hint}</p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
                   {measurementFields.map((field) => (
                     <label key={field.key} className="space-y-2">
                       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">

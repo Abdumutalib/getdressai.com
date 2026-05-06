@@ -25,7 +25,7 @@ function WhyUs() {
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{t("whyUs.eyebrow")}</p>
         <h2 className="section-title">{t("whyUs.title")}</h2>
       </div>
-      <div className="overflow-hidden rounded-[2rem] border border-slate-200 shadow-soft dark:border-white/10">
+      <div className="overflow-x-auto rounded-[2rem] border border-slate-200 shadow-soft dark:border-white/10">
         <table className="w-full border-collapse bg-white text-left text-sm dark:bg-slate-950">
           <thead>
             <tr className="border-b border-slate-200 dark:border-white/10">
@@ -121,6 +121,76 @@ function LandingProof() {
         "Шунга ўхшаш кийимни дарров топа оламанми?",
       ],
     },
+    tr: {
+      eyebrow: "Neden sonuçlara güveniliyor",
+      title: "İnsanlar denemeden önce ne bilmek istiyor",
+      bullets: [
+        "Bir fotoğraf yükleyin ve saniyeler içinde daha iyi bir görünüm önizleyin.",
+        "Para harcamadan önce stilin vücut tipinize uyup uymadığını görün.",
+        "Rastgele ilham yerine pazar yeri eşleşmeleri alın.",
+      ],
+      questions: [
+        "Bu stil bana yakışır mı?",
+        "Beden vücut tipimde doğru görünür mü?",
+        "Önizlemeden hemen sonra benzer kıyafetleri bulabilir miyim?",
+      ],
+    },
+    es: {
+      eyebrow: "Por qué la gente confía en el resultado",
+      title: "Lo que la gente quiere saber antes de probarlo",
+      bullets: [
+        "Sube una foto y previsualiza un look mejor en segundos.",
+        "Mira si el estilo se adapta a tu cuerpo antes de gastar dinero.",
+        "Obtén coincidencias del mercado en vez de inspiración aleatoria.",
+      ],
+      questions: [
+        "¿Me quedará bien este estilo?",
+        "¿Se verá bien la talla en mi cuerpo?",
+        "¿Puedo encontrar ropa similar justo después?",
+      ],
+    },
+    fr: {
+      eyebrow: "Pourquoi les gens font confiance au résultat",
+      title: "Ce que les gens veulent savoir avant d'essayer",
+      bullets: [
+        "Ajoutez une photo et prévisualisez un meilleur look en quelques secondes.",
+        "Voyez si le style correspond à votre morphologie avant de dépenser.",
+        "Recevez des correspondances de marché au lieu d'inspirations aléatoires.",
+      ],
+      questions: [
+        "Ce style me conviendra-t-il ?",
+        "La taille sera-t-elle bien sur ma morphologie ?",
+        "Puis-je trouver des vêtements similaires juste après ?",
+      ],
+    },
+    de: {
+      eyebrow: "Warum Menschen dem Ergebnis vertrauen",
+      title: "Was Menschen wissen möchten, bevor sie es ausprobieren",
+      bullets: [
+        "Laden Sie ein Foto hoch und sehen Sie in Sekunden einen besseren Look.",
+        "Sehen Sie, ob der Stil zu Ihrem Körper passt, bevor Sie Geld ausgeben.",
+        "Erhalten Sie Marktplatz-Treffer statt zufälliger Inspiration.",
+      ],
+      questions: [
+        "Steht mir dieser Stil?",
+        "Wird die Größe an meinem Körper richtig aussehen?",
+        "Kann ich ähnliche Kleidung direkt nach der Vorschau finden?",
+      ],
+    },
+    ar: {
+      eyebrow: "لماذا يثق الناس بالنتيجة",
+      title: "ما يريد الناس معرفته قبل التجربة",
+      bullets: [
+        "ارفع صورة واحدة واستعرض إطلالة أفضل في ثوانٍ.",
+        "تأكد أن الستايل يناسب جسمك قبل إنفاق المال.",
+        "احصل على توصيات من المتاجر بدلاً من إلهام عشوائي.",
+      ],
+      questions: [
+        "هل سيناسبني هذا الستايل؟",
+        "هل سيبدو المقاس صحيحاً على جسمي؟",
+        "هل يمكنني العثور على ملابس مشابهة بعد المعاينة مباشرة؟",
+      ],
+    },
   } as const;
   const copy = proofCopy[language as keyof typeof proofCopy] ?? proofCopy.en;
 
@@ -172,6 +242,31 @@ export default function HomePage() {
       eyebrow: "AI fitting studio",
       title: "Фото, қомат ўлчами ва реал preview билан бошланг.",
       copy: "Бу GetDressAI ичидаги interactive studio: фото юкланг, moslikni sozlang ва харид қарорига ишонч билан яқинлашинг.",
+    },
+    tr: {
+      eyebrow: "AI deneme stüdyosu",
+      title: "Fotoğrafınız, beden detaylarınız ve gerçek bir stil önizlemesiyle başlayın.",
+      copy: "Bu GetDressAI'ın interaktif stüdyosu: bir kez yükleyin, bedeni ayarlayın ve satın alma kararınıza güvenle yaklaşın.",
+    },
+    es: {
+      eyebrow: "Estudio de prueba IA",
+      title: "Empieza con tu foto, detalles de talla y una previsualización real.",
+      copy: "Este es el estudio interactivo de GetDressAI: sube una vez, ajusta la talla y toma una decisión de compra con más confianza.",
+    },
+    fr: {
+      eyebrow: "Studio d'essayage IA",
+      title: "Commencez avec votre photo, vos mensurations et un vrai aperçu de style.",
+      copy: "C'est le studio interactif de GetDressAI : envoyez une fois, ajustez la coupe et prenez une décision d'achat en toute confiance.",
+    },
+    de: {
+      eyebrow: "AI-Anprobe-Studio",
+      title: "Starten Sie mit Ihrem Foto, Passformdetails und einer echten Stil-Vorschau.",
+      copy: "Das ist das interaktive Studio von GetDressAI: einmal hochladen, Passform anpassen und Kaufentscheidung mit mehr Vertrauen treffen.",
+    },
+    ar: {
+      eyebrow: "استوديو القياس بالذكاء الاصطناعي",
+      title: "ابدأ بصورتك، تفاصيل المقاس، ومعاينة حقيقية للستايل.",
+      copy: "هذا هو الاستوديو التفاعلي داخل GetDressAI: ارفع مرة واحدة، اضبط المقاس، واتخذ قرار الشراء بثقة أكبر.",
     },
   } as const;
   const localizedStudioCopy = studioCopy[language as keyof typeof studioCopy] ?? studioCopy.en;

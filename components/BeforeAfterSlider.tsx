@@ -35,11 +35,11 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({ beforeSrc, af
           />
         </div>
 
-        <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
-          <div className="rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3 sm:p-5">
+          <div className="rounded-full bg-black/45 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur sm:px-3 sm:py-1.5 sm:text-xs">
             {t("slider.before")}
           </div>
-          <div className="rounded-full bg-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-fuchsia-500/25">
+          <div className="rounded-full bg-fuchsia-600 px-2 py-1 text-[10px] font-semibold text-white shadow-lg shadow-fuchsia-500/25 sm:px-3 sm:py-1.5 sm:text-xs">
             {t("slider.after")}
           </div>
         </div>
