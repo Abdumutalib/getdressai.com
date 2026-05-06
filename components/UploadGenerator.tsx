@@ -1049,21 +1049,25 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
             <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
               <div className="rounded-[1.25rem] bg-white p-4 shadow-soft dark:bg-slate-950/60">
-                <div className="flex h-full min-h-[400px] items-center justify-center rounded-[1rem] bg-slate-50/30 dark:bg-white/5">
+                <div className="flex h-full min-h-[400px] items-center justify-center rounded-[1rem] bg-slate-100/50 dark:bg-white/5">
                   <div className="relative h-[350px] w-full">
                     <motion.div
                       animate={{ scaleX: mannequinScale.x, scaleY: mannequinScale.y }}
                       transition={{ type: "spring", stiffness: 100, damping: 20 }}
                       className="relative h-full w-full"
+                      style={{ clipPath: "polygon(0% 12%, 100% 12%, 100% 100%, 0% 100%)" }}
                     >
                       <Image
-                        src="/examples/mannequin-realistic.svg"
-                        alt="Realistic Headless Mannequin"
+                        src="/examples/before.png"
+                        alt="Realistic Human Mannequin"
                         fill
-                        className="object-contain opacity-100"
+                        className="object-contain brightness-[1.02] contrast-[1.05] saturate-[0.8] transition-opacity"
+                        style={{ filter: "sepia(0.1) contrast(1.05)" }}
                       />
                     </motion.div>
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-slate-900/50" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-200/40 to-transparent dark:from-slate-900/40" />
+                    {/* Neck Cap Effect */}
+                    <div className="absolute top-[11.5%] left-1/2 h-3 w-10 -translate-x-1/2 rounded-full bg-slate-300/80 shadow-inner blur-[1px] dark:bg-slate-700/80" />
                   </div>
                 </div>
                 <p className="mt-4 text-sm font-semibold text-slate-950 dark:text-white">{t("upload.mannequinTitle")}</p>
