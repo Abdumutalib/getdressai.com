@@ -483,6 +483,19 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
     };
   }, [gender, measurements]);
 
+  const mannequinScale = useMemo(() => {
+    const size = preferredSize.trim().toUpperCase();
+    switch (size) {
+      case "XS": return 0.85;
+      case "S": return 0.92;
+      case "M": return 1.0;
+      case "L": return 1.1;
+      case "XL": return 1.25;
+      case "XXL": return 1.4;
+      default: return 1.0;
+    }
+  }, [preferredSize]);
+
   const mannequinSummary = `${measurements.height}${t("upload.measurementUnit")} · ${measurements.chest}/${measurements.waist}/${measurements.hips}`;
   const resultIsRemote = Boolean(result?.resultUrl && !result.resultUrl.startsWith("/"));
   const previewIsRemote = Boolean(photoPreview && !photoPreview.startsWith("blob:") && !photoPreview.startsWith("/"));
@@ -1036,14 +1049,20 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
             <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
               <div className="rounded-[1.25rem] bg-white p-4 shadow-soft dark:bg-slate-950/60">
-                <div className="flex h-full min-h-56 items-end justify-center rounded-[1rem] bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.08),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_55%)]">
-                  <div className="relative h-64 w-full overflow-hidden rounded-[1rem]">
-                    <Image
-                      src={gender === "female" ? "/examples/before.png" : "/examples/streetwear.png"}
-                      alt="Realistic Mannequin"
-                      fill
-                      className="object-contain opacity-90 transition-opacity hover:opacity-100"
-                    />
+                <div className="flex h-full min-h-[350px] items-center justify-center rounded-[1rem] bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.08),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_55%)]">
+                  <div className="relative h-[300px] w-full overflow-hidden rounded-[1rem]">
+                    <motion.div
+                      animate={{ scale: mannequinScale }}
+                      transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                      className="relative h-full w-full"
+                    >
+                      <Image
+                        src={gender === "female" ? "/examples/before.png" : "/examples/streetwear.png"}
+                        alt="Realistic Mannequin"
+                        fill
+                        className="object-contain opacity-90 transition-opacity hover:opacity-100"
+                      />
+                    </motion.div>
                     <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent dark:from-slate-900/20" />
                   </div>
                 </div>
