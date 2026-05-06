@@ -2,7 +2,26 @@
 
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, ExternalLink, Loader2, LoaderCircle, Ruler, Share2, ShoppingBag, Sparkles, UploadCloud, Wand2 } from "lucide-react";
+import { 
+  Camera,
+  Download,
+  ExternalLink,
+  History,
+  Image as ImageIcon,
+  Loader2,
+  LoaderCircle,
+  Maximize2,
+  RefreshCcw,
+  Ruler,
+  Share2,
+  ShoppingBag,
+  Sparkles,
+  Upload,
+  UploadCloud,
+  User,
+  Wand2,
+  Zap
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/LanguageProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -1425,38 +1444,61 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
               </div>
             </div>
 
-            {/* PWA Install Banner */}
-            {deferredPrompt && (
-              <div className="rounded-2xl bg-slate-900 p-6 text-white shadow-xl dark:bg-white/10">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
-                      <Image src="/icons/spark.svg" alt="App Icon" width={24} height={24} />
-                    </div>
-                    <div>
-                      <p className="font-bold">GetDressAI App</p>
-                      <p className="text-xs text-slate-400">Иловани телефон ёки компьютерга ўрнатиб олинг</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      deferredPrompt.prompt();
-                      deferredPrompt.userChoice.then((choiceResult: any) => {
-                        if (choiceResult.outcome === 'accepted') {
-                          setDeferredPrompt(null);
-                        }
-                      });
-                    }}
-                    className="btn-primary rounded-xl px-6 py-3 text-sm font-bold"
-                  >
-                    {language === "uz" ? "Иловани ўрнатиш" : "Install App"}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         ) : null}
 
+        {/* Floating PWA Install Button (Always visible if installable) */}
+        {deferredPrompt && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ 
+              y: 0, 
+              opacity: 1,
+              scale: [1, 1.05, 1],
+            }}
+            transition={{ 
+              duration: 0.5,
+              scale: {
+                repeat: Infinity,
+                duration: 2,
+                ease: "easeInOut"
+              }
+            }}
+            className="fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 px-4 w-full max-w-md"
+          >
+            <div className="glass-panel overflow-hidden rounded-2xl border-2 border-accent/30 bg-white/90 p-4 shadow-2xl backdrop-blur-xl dark:bg-slate-950/90">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white shadow-lg">
+                    <Sparkles className="size-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">
+                      {language === "uz" ? "GetDressAI Иловасини ўрнатинг" : "Install GetDressAI App"}
+                    </p>
+                    <p className="text-[10px] font-medium text-slate-500">
+                      {language === "uz" ? "Тезкор ва қулай фойдаланиш учун" : "For faster & better experience"}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult: any) => {
+                      if (choiceResult.outcome === 'accepted') {
+                        setDeferredPrompt(null);
+                      }
+                    });
+                  }}
+                  className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shadow-lg shadow-accent/20"
+                >
+                  <Download className="size-3" />
+                  {language === "uz" ? "Ўрнатиш" : "Install"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );
