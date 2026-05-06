@@ -33,6 +33,15 @@ export function LanguageProvider({
         document.documentElement.dir = RTL_LANGUAGES.has(stored) ? "rtl" : "ltr";
         return;
       }
+      
+      const browserLang = navigator.language.split("-")[0] as SupportedLanguage;
+      if (supportedLanguages.includes(browserLang)) {
+        setLanguageState(browserLang);
+        document.documentElement.lang = browserLang;
+        document.documentElement.dir = RTL_LANGUAGES.has(browserLang) ? "rtl" : "ltr";
+        return;
+      }
+
       document.documentElement.lang = initialLanguage;
       document.documentElement.dir = RTL_LANGUAGES.has(initialLanguage) ? "rtl" : "ltr";
     } catch {

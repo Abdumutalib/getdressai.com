@@ -308,9 +308,9 @@ export function Hero() {
             className="flex flex-col gap-4 sm:flex-row"
           >
             <Link
-              href="#studio"
+              href="/#studio"
               onClick={() => trackEvent("cta_clicked", { location: "hero_primary" })}
-              className="bg-gradient-brand inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/25 transition hover:-translate-y-1 hover:shadow-fuchsia-500/40"
+              className="bg-gradient-brand inline-flex items-center justify-center rounded-full px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/25 transition hover:-translate-y-1 hover:scale-[1.02] hover:shadow-fuchsia-500/40"
             >
               {copy.primaryCta}
               <ArrowRight className="ml-2 size-4" />
