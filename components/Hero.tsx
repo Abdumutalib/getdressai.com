@@ -252,7 +252,7 @@ export function Hero() {
         </div>
       </div>
       <div className="grid-overlay absolute inset-0 opacity-40" />
-      <div className="section-shell relative grid gap-14 pt-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+      <div className="section-shell relative grid gap-14 pt-10 lg:grid-cols-2 lg:items-center">
         <div className="max-w-2xl space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -338,8 +338,8 @@ export function Hero() {
 
         </div>
 
-        <div className="reveal-fade grid gap-6 lg:ml-auto">
-          <div className="relative mx-auto w-full max-w-full lg:max-w-md">
+        <div className="reveal-fade grid gap-6">
+          <div className="relative mx-auto w-full max-w-full lg:max-w-lg">
             <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-r from-fuchsia-400/20 to-indigo-400/20 blur-xl" />
             <BeforeAfterSlider beforeSrc={marketingImages.before} afterSrc={marketingImages.luxury} />
             <div className="absolute -bottom-5 -left-5 rounded-[1.5rem] bg-white px-4 py-4 shadow-xl">
