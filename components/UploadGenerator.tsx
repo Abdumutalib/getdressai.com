@@ -1456,71 +1456,78 @@ export function UploadGenerator({ skipInitialLoad = false }: UploadGeneratorProp
           </div>
         ) : null}
 
-        {/* Floating PWA Install Button (Forced Visibility until installed) */}
+        {/* Floating PWA Install Button (Always Top, Aggressive Animation) */}
         {!isStandalone && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ 
               y: 0, 
               opacity: 1,
-              scale: [1, 1.05, 1],
+              scale: [1, 1.02, 1],
+              rotate: [0, -1, 1, -1, 1, 0] // Shake animation
             }}
             transition={{ 
-              duration: 0.5,
-              scale: {
-                repeat: Infinity,
-                duration: 2,
-                ease: "easeInOut"
-              }
+              y: { duration: 0.5 },
+              opacity: { duration: 0.5 },
+              scale: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+              rotate: { repeat: Infinity, duration: 3, repeatDelay: 1 } // Aggressive shake every 3s
             }}
-            className="fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 px-4 w-full max-w-md"
+            className="fixed bottom-8 left-1/2 z-[9999] -translate-x-1/2 px-4 w-full max-w-[420px]"
           >
-            <div className="glass-panel overflow-hidden rounded-2xl border-2 border-accent/30 bg-white/90 p-4 shadow-2xl backdrop-blur-xl dark:bg-slate-950/90">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white shadow-lg">
-                    <Sparkles className="size-5 animate-pulse" />
+            <div className="relative group">
+              {/* Glowing Halo Effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-accent via-fuchsia-500 to-accent rounded-2xl blur opacity-30 group-hover:opacity-60 animate-pulse transition duration-1000"></div>
+              
+              <div className="relative glass-panel overflow-hidden rounded-2xl border-2 border-accent/40 bg-white/95 p-4 shadow-[0_20px_50px_rgba(192,38,211,0.3)] backdrop-blur-2xl dark:bg-slate-950/95">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-fuchsia-600 text-white shadow-xl">
+                      <Sparkles className="size-6 animate-spin-slow" />
+                      <div className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-fuchsia-500"></span>
+                      </div>
+                    </div>
+                    <div className="max-w-[180px]">
+                      <p className="text-sm font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                        {language === "uz" ? "GetDressAI Иловаси" : "GetDressAI App"}
+                      </p>
+                      <p className="text-[10px] font-bold leading-tight text-accent dark:text-fuchsia-400">
+                        {isIOS 
+                          ? (language === "uz" ? "Улашиш > Асосий экранга қўшиш" : "Click Share > Add to Home Screen")
+                          : (language === "uz" ? "Тезкор ва қулай фойдаланиш учун" : "Install for best experience")
+                        }
+                      </p>
+                    </div>
                   </div>
-                  <div className="max-w-[180px]">
-                    <p className="text-sm font-black text-slate-900 dark:text-white">
-                      {language === "uz" ? "GetDressAI Иловаси" : "GetDressAI App"}
-                    </p>
-                    <p className="text-[10px] font-medium leading-tight text-slate-500">
-                      {isIOS 
-                        ? (language === "uz" ? "Улашиш > Асосий экранга қўшиш" : "Click Share > Add to Home Screen")
-                        : (language === "uz" ? "Тезкор ва қулай фойдаланиш учун" : "For faster & better experience")
-                      }
-                    </p>
-                  </div>
+                  {!isIOS ? (
+                    <button 
+                      onClick={() => {
+                        if (deferredPrompt) {
+                          deferredPrompt.prompt();
+                          deferredPrompt.userChoice.then((choiceResult: any) => {
+                            if (choiceResult.outcome === 'accepted') {
+                              setDeferredPrompt(null);
+                              setIsStandalone(true);
+                            }
+                          });
+                        } else {
+                          alert(language === "uz" 
+                            ? "Браузер менюсидан 'Ўрнатиш' тугмасини босинг" 
+                            : "Use 'Install' in browser menu");
+                        }
+                      }}
+                      className="btn-primary flex items-center gap-2 rounded-xl px-5 py-3 text-xs font-black shadow-[0_10px_20px_rgba(192,38,211,0.2)] hover:scale-105 active:scale-95 transition-all"
+                    >
+                      <Download className="size-4" />
+                      {language === "uz" ? "ЎРНАТИШ" : "INSTALL"}
+                    </button>
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10">
+                      <Share2 className="size-4 text-slate-400" />
+                    </div>
+                  )}
                 </div>
-                {!isIOS ? (
-                  <button 
-                    onClick={() => {
-                      if (deferredPrompt) {
-                        deferredPrompt.prompt();
-                        deferredPrompt.userChoice.then((choiceResult: any) => {
-                          if (choiceResult.outcome === 'accepted') {
-                            setDeferredPrompt(null);
-                            setIsStandalone(true);
-                          }
-                        });
-                      } else {
-                        // Fallback: If event didn't fire yet, show browser's own instruction or alert
-                        alert(language === "uz" 
-                          ? "Браузер менюсидан 'Ўрнатиш' тугмасини босинг" 
-                          : "Please use the 'Install' option in your browser menu");
-                      }
-                    }}
-                    className="btn-primary flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shadow-lg shadow-accent/20"
-                  >
-                    <Download className="size-3" />
-                    {language === "uz" ? "Ўрнатиш" : "Install"}
-                  </button>
-                ) : (
-                  <div className="rounded-lg bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-600 dark:bg-white/10">
-                    {language === "uz" ? "iOS да" : "On iOS"}
-                  </div>
-                )}
               </div>
             </div>
           </motion.div>

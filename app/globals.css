@@ -142,3 +142,11 @@ body::selection {
     0 18px 40px rgba(2, 6, 23, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
