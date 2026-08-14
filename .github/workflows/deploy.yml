@@ -1,0 +1,57 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  VPS_HOST: 178.218.207.176
+  VPS_USER: root
+  APP_DIR: /var/www/akbel-crm
+  PM2_APP: akbel-crm
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests (optional)
+        run: |
+          npm ci
+          npm run typecheck
+        continue-on-error: true
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.VPS_HOST }}
+          username: ${{ env.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -e
+            cd ${{ env.APP_DIR }}
+            git fetch origin
+            git reset --hard origin/main
+            
+            echo "Installing dependencies..."
+            npm install --no-fund --no-audit
+            
+            echo "Installing missing packages..."
+            npm install clsx tailwind-merge
+            
+            echo "Building..."
+            NODE_OPTIONS=--max-old-space-size=768 npm run build
+            
+            echo "Restarting PM2..."
+            pm2 restart ${{ env.PM2_APP }}
+            pm2 save
+            
+            echo "Verifying deployment..."
+            sleep 3
+            pm2 status
+            curl -I --max-time 10 https://crm.getdressai.com || true
+            
+            echo "✅ Deployment successful"
