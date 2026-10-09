@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth";
@@ -203,7 +204,7 @@ export async function POST(request: Request) {
       return fail("Сотув/киримда товарлар рўйхати йўқ.", 422);
     }
 
-    const { data: applied, error: applyError } = await supabase.rpc(rpcName, rpcArgs);
+    const { data: applied, error: applyError } = await supabase.rpc(rpcName as never, rpcArgs as never);
     if (applyError) {
       return fail(applyError.message, 400);
     }
