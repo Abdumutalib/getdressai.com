@@ -19,7 +19,8 @@ type SupportedOperation =
   | { entity: "sales"; operationType: "sales.create" | "sales.cash.create"; permission: "sales.create" }
   | { entity: "purchases"; operationType: "purchases.create"; permission: "purchases.create" }
   | { entity: "payments"; operationType: "payments.create"; permission: "payments.create" }
-  | { entity: "expenses"; operationType: "expenses.create"; permission: "expenses.create" };
+  | { entity: "expenses"; operationType: "expenses.create"; permission: "expenses.create" }
+  | { entity: "stock_transactions"; operationType: "warehouse.expense"; permission: "warehouse.expense" };
 
 function resolveOperation(entity: string, operationType: string): SupportedOperation | null {
   if (entity === "sales" && (operationType === "sales.create" || operationType === "sales.cash.create")) {
@@ -33,6 +34,9 @@ function resolveOperation(entity: string, operationType: string): SupportedOpera
   }
   if (entity === "expenses" && operationType === "expenses.create") {
     return { entity, operationType, permission: "expenses.create" };
+  }
+  if (entity === "stock_transactions" && operationType === "warehouse.expense") {
+    return { entity, operationType, permission: "warehouse.expense" };
   }
   return null;
 }
@@ -179,10 +183,17 @@ export async function POST(request: Request) {
         p_user_id: user.id,
         p_device_id: parsed.data.device_id,
       };
-    } else {
+    } else if (operation.entity === "expenses") {
       rpcName = "register_expense";
       rpcArgs = {
         p_expense: { ...payload, employee_id: user.id, idempotency_key: parsed.data.idempotency_key },
+        p_user_id: user.id,
+        p_device_id: parsed.data.device_id,
+      };
+    } else {
+      rpcName = "register_stock_expense";
+      rpcArgs = {
+        p_stock_expense: { ...payload, employee_id: user.id, idempotency_key: parsed.data.idempotency_key },
         p_user_id: user.id,
         p_device_id: parsed.data.device_id,
       };
