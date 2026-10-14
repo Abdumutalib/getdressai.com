@@ -40,19 +40,35 @@ jobs:
       - run: flutter test
       - run: flutter build web --release --base-href /
 
+      - name: Ensure the VPS can extract the deployment archive
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 178.218.207.176
+          username: root
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            if ! command -v tar >/dev/null 2>&1; then
+              if ! command -v apt-get >/dev/null 2>&1; then
+                echo "tar is missing and this server has no apt-get package manager" >&2
+                exit 1
+              fi
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y tar
+            fi
+            command -v tar
+
+      - name: Package web build
+        run: tar -czf "zenith-web-${GITHUB_RUN_ID}.tar.gz" -C build/web .
+
       - name: Upload web build to the VPS
-        env:
-          VPS_DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
-        run: |
-          install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$VPS_DEPLOY_KEY" > "$HOME/.ssh/zenith_deploy_key"
-          chmod 600 "$HOME/.ssh/zenith_deploy_key"
-          trap 'rm -f "$HOME/.ssh/zenith_deploy_key"' EXIT
-          ssh-keyscan -H 178.218.207.176 >> "$HOME/.ssh/known_hosts"
-          ssh -i "$HOME/.ssh/zenith_deploy_key" root@178.218.207.176 \
-            "mkdir -p /tmp/zenith-web-${GITHUB_RUN_ID}"
-          scp -i "$HOME/.ssh/zenith_deploy_key" -r build/web/. \
-            "root@178.218.207.176:/tmp/zenith-web-${GITHUB_RUN_ID}/"
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 178.218.207.176
+          username: root
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: zenith-web-${{ github.run_id }}.tar.gz
+          target: /tmp
+          overwrite: true
 
       - name: Deploy behind a dedicated HTTPS virtual host
         uses: appleboy/ssh-action@v1.2.0
@@ -67,14 +83,13 @@ jobs:
             APP_ROOT=/var/www/getdressai.com
             RELEASE="$APP_ROOT/releases/${{ github.sha }}-${{ github.run_id }}"
             CURRENT="$APP_ROOT/current"
-            UPLOAD_DIR="/tmp/zenith-web-${{ github.run_id }}"
+            ARCHIVE="/tmp/zenith-web-${{ github.run_id }}.tar.gz"
             MARKER="# Managed by Zenith deployment workflow"
             RUN_ID="${{ github.run_id }}"
 
-            test -s "$UPLOAD_DIR/index.html"
-            test -s "$UPLOAD_DIR/main.dart.js"
+            test -s "$ARCHIVE"
             mkdir -p "$APP_ROOT/releases" "$RELEASE"
-            cp -a "$UPLOAD_DIR"/. "$RELEASE"/
+            tar -xzf "$ARCHIVE" -C "$RELEASE"
             test -s "$RELEASE/index.html"
             test -s "$RELEASE/main.dart.js"
             chmod -R a+rX "$RELEASE"
@@ -291,5 +306,5 @@ jobs:
               grep -Fq '<title>Zenith: Focus &amp; Build</title>'
 
             CHANGED=0
-            rm -rf "$UPLOAD_DIR"
+            rm -f "$ARCHIVE"
             echo "Zenith is live at https://getdressai.com/"
