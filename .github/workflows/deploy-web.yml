@@ -40,22 +40,36 @@ jobs:
       - run: flutter test
       - run: flutter build web --release --base-href /
 
-      - name: Ensure the VPS can extract the deployment archive
+      - name: Ensure the VPS has deployment prerequisites
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: 178.218.207.176
           username: root
           key: ${{ secrets.VPS_DEPLOY_KEY }}
           script: |
-            if ! command -v tar >/dev/null 2>&1; then
-              if ! command -v apt-get >/dev/null 2>&1; then
-                echo "tar is missing and this server has no apt-get package manager" >&2
+            if ! command -v tar >/dev/null 2>&1 ||
+                ! command -v certbot >/dev/null 2>&1; then
+              if command -v apt-get >/dev/null 2>&1; then
+                apt-get update
+                DEBIAN_FRONTEND=noninteractive apt-get install -y tar certbot
+              elif command -v dnf >/dev/null 2>&1; then
+                dnf install -y tar certbot
+              elif command -v yum >/dev/null 2>&1; then
+                yum install -y tar
+                if ! command -v certbot >/dev/null 2>&1; then
+                  yum install -y epel-release
+                  yum install -y certbot
+                fi
+              elif command -v zypper >/dev/null 2>&1; then
+                zypper --non-interactive install tar certbot
+              else
+                echo "Cannot install tar and Certbot: no supported package manager is available" >&2
+                cat /etc/os-release >&2
                 exit 1
               fi
-              apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y tar
             fi
             command -v tar
+            command -v certbot
 
       - name: Package web build
         run: tar -czf "zenith-web-${GITHUB_RUN_ID}.tar.gz" -C build/web .
