@@ -300,19 +300,30 @@ jobs:
             nginx -t
             systemctl reload nginx
 
-            if systemctl list-unit-files --type=timer --no-legend |
-                awk '$1 == "certbot.timer" { found = 1 } END { exit !found }'; then
-              systemctl enable --now certbot.timer
-            elif [ -f /etc/cron.d/certbot ] || [ -x /etc/cron.daily/certbot ]; then
-              if ! systemctl is-active --quiet cron &&
-                  ! systemctl is-active --quiet crond; then
-                echo "Certbot renewal is installed but no cron service is active" >&2
-                exit 1
-              fi
-            else
-              echo "No automatic Certbot renewal timer or cron job is configured" >&2
-              exit 1
-            fi
+            CERTBOT_BIN="$(command -v certbot)"
+            cat > /etc/systemd/system/zenith-certbot-renew.service <<SERVICE
+            [Unit]
+            Description=Renew Let's Encrypt certificates for Zenith
+
+            [Service]
+            Type=oneshot
+            ExecStart=$CERTBOT_BIN renew --quiet
+            SERVICE
+            cat > /etc/systemd/system/zenith-certbot-renew.timer <<'TIMER'
+            [Unit]
+            Description=Twice-daily Let's Encrypt renewal check for Zenith
+
+            [Timer]
+            OnCalendar=*-*-* 03,15:00:00
+            RandomizedDelaySec=1h
+            Persistent=true
+
+            [Install]
+            WantedBy=timers.target
+            TIMER
+            systemctl daemon-reload
+            systemctl enable --now zenith-certbot-renew.timer
+            systemctl is-active --quiet zenith-certbot-renew.timer
 
             curl --fail --silent --show-error \
               --resolve getdressai.com:443:127.0.0.1 \
