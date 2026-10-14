@@ -102,3 +102,15 @@ jobs:
             else
               printf '%s\n' 'No Let’s Encrypt certificate found for getdressai.com'
             fi
+
+            printf '%s\n' 'Current page title:'
+            curl -ksS --connect-timeout 5 --max-time 10 https://getdressai.com/ |
+              grep -oi '<title[^>]*>[^<]*</title>' | head -n 1 || true
+
+            printf '%s\n' 'Current HTTPS redirect target:'
+            curl -ksSI --connect-timeout 5 --max-time 10 https://getdressai.com/ |
+              awk 'tolower($1) == "location:" { sub(/\?.*/, "?[redacted]", $2); print $2; exit }' || true
+
+            printf '%s\n' 'Current TLS certificate:'
+            echo | openssl s_client -connect getdressai.com:443 -servername getdressai.com 2>/dev/null |
+              openssl x509 -noout -subject -issuer -dates -ext subjectAltName || true
