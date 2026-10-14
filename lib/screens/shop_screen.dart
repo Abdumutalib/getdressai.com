@@ -14,7 +14,6 @@ class ShopScreen extends StatelessWidget {
       tagline: 'A quiet place to begin.',
       icon: Icons.park_rounded,
       colors: [Color(0xFF264F4D), Color(0xFF162B39)],
-      cost: 0,
     ),
     _Biome(
       id: 'moonlit_lake',
@@ -22,7 +21,6 @@ class ShopScreen extends StatelessWidget {
       tagline: 'Still water. Clear mind.',
       icon: Icons.nightlight_round,
       colors: [Color(0xFF46417F), Color(0xFF202344)],
-      cost: 150,
     ),
     _Biome(
       id: 'desert_dawn',
@@ -30,7 +28,6 @@ class ShopScreen extends StatelessWidget {
       tagline: 'Find your warm horizon.',
       icon: Icons.wb_twilight_rounded,
       colors: [Color(0xFF9B5C54), Color(0xFF47334A)],
-      cost: 300,
     ),
   ];
 
@@ -99,7 +96,7 @@ class ShopScreen extends StatelessWidget {
                     }
                     final didUnlock = await context
                         .read<FocusProvider>()
-                        .unlockBiome(biomeId: biome.id, cost: biome.cost);
+                        .unlockBiome(biomeId: biome.id);
                     if (didUnlock && context.mounted) {
                       await context.read<FocusProvider>().selectBiome(biome.id);
                     }
@@ -145,7 +142,6 @@ class _Biome {
     required this.tagline,
     required this.icon,
     required this.colors,
-    required this.cost,
   });
 
   final String id;
@@ -153,7 +149,6 @@ class _Biome {
   final String tagline;
   final IconData icon;
   final List<Color> colors;
-  final int cost;
 }
 
 class _BiomeCard extends StatelessWidget {
@@ -175,7 +170,7 @@ class _BiomeCard extends StatelessWidget {
         ? 'Selected'
         : unlocked
         ? 'Select'
-        : '${biome.cost}';
+        : '${FocusProvider.biomeCosts[biome.id]}';
 
     return Container(
       height: 156,

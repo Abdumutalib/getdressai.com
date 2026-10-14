@@ -10,6 +10,11 @@ import '../models/focus_session.dart';
 class FocusProvider extends ChangeNotifier {
   static const int coinsPerCompletedSession = 25;
   static const String starterBiomeId = 'zen_grove';
+  static const Map<String, int> biomeCosts = {
+    starterBiomeId: 0,
+    'moonlit_lake': 150,
+    'desert_dawn': 300,
+  };
   static const String _storageKey = 'zenith.focus_state.v1';
 
   SharedPreferences? _preferences;
@@ -114,7 +119,7 @@ class FocusProvider extends ChangeNotifier {
   void setSessionDuration(Duration duration) {
     if (_isResetting ||
         _isRunning ||
-        duration < const Duration(minutes: 1) ||
+        duration < const Duration(seconds: 1) ||
         duration > const Duration(minutes: 180)) {
       return;
     }
@@ -161,8 +166,9 @@ class FocusProvider extends ChangeNotifier {
 
   bool isBiomeUnlocked(String biomeId) => _unlockedBiomeIds.contains(biomeId);
 
-  Future<bool> unlockBiome({required String biomeId, required int cost}) async {
-    if (_isResetting || biomeId.isEmpty || cost < 0) {
+  Future<bool> unlockBiome({required String biomeId}) async {
+    final cost = biomeCosts[biomeId];
+    if (_isResetting || cost == null) {
       _operationError = 'This biome is not available.';
       _notifyListeners();
       return false;
@@ -340,7 +346,7 @@ class FocusProvider extends ChangeNotifier {
         .toList(growable: false);
     final restoredBiomes = <String>{starterBiomeId};
     for (final value in unlockedValue) {
-      if (value is! String || value.isEmpty) {
+      if (value is! String || !biomeCosts.containsKey(value)) {
         throw const FormatException('A saved biome ID is invalid.');
       }
       restoredBiomes.add(value);

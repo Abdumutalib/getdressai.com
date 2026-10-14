@@ -16,7 +16,7 @@ void main() {
   test('backgrounding resets an unfinished session without a reward', () async {
     final provider = FocusProvider();
     await provider.initialize();
-    provider.setSessionDuration(const Duration(minutes: 1));
+    provider.setSessionDuration(const Duration(seconds: 1));
 
     provider.startSession();
     expect(provider.isRunning, isTrue);
@@ -24,7 +24,7 @@ void main() {
     provider.handleAppBackgrounded();
 
     expect(provider.isRunning, isFalse);
-    expect(provider.remaining, const Duration(minutes: 1));
+    expect(provider.remaining, const Duration(seconds: 1));
     expect(provider.sessions, isEmpty);
     expect(provider.zenCoins, 0);
     expect(provider.notice, contains('background'));
@@ -67,10 +67,7 @@ void main() {
     final provider = FocusProvider();
     await provider.initialize();
 
-    final unlocked = await provider.unlockBiome(
-      biomeId: 'moonlit_lake',
-      cost: 150,
-    );
+    final unlocked = await provider.unlockBiome(biomeId: 'moonlit_lake');
     expect(unlocked, isTrue);
     await provider.selectBiome('moonlit_lake');
     provider.dispose();
@@ -96,7 +93,7 @@ void main() {
     final provider = FocusProvider();
     await provider.initialize();
 
-    final unlock = provider.unlockBiome(biomeId: 'moonlit_lake', cost: 150);
+    final unlock = provider.unlockBiome(biomeId: 'moonlit_lake');
     provider.startSession();
     expect(provider.isRunning, isTrue);
 
@@ -129,6 +126,51 @@ void main() {
     expect(provider.zenCoins, 0);
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.containsKey('zenith.focus_state.v1'), isFalse);
+    provider.dispose();
+  });
+
+  test(
+    'unknown biomes cannot be unlocked with caller-selected prices',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'zenith.focus_state.v1': jsonEncode({
+          'sessions': <Object>[],
+          'zenCoins': 150,
+          'unlockedBiomeIds': [FocusProvider.starterBiomeId],
+          'selectedBiomeId': FocusProvider.starterBiomeId,
+        }),
+      });
+      final provider = FocusProvider();
+      await provider.initialize();
+
+      expect(await provider.unlockBiome(biomeId: 'unknown_world'), isFalse);
+      expect(provider.zenCoins, 150);
+      expect(provider.unlockedBiomeIds, {FocusProvider.starterBiomeId});
+      provider.dispose();
+    },
+  );
+
+  test('a completed focus session earns one reward and is persisted', () async {
+    final provider = FocusProvider();
+    await provider.initialize();
+    provider.setSessionDuration(const Duration(seconds: 1));
+    provider.startSession();
+
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+    expect(provider.isRunning, isFalse);
+    expect(provider.sessions, hasLength(1));
+    expect(provider.sessions.single.durationSeconds, 1);
+    expect(provider.sessions.single.coinsEarned, 25);
+    expect(provider.zenCoins, 25);
+
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    final preferences = await SharedPreferences.getInstance();
+    final saved =
+        jsonDecode(preferences.getString('zenith.focus_state.v1')!)
+            as Map<String, dynamic>;
+    expect(saved['zenCoins'], 25);
+    expect((saved['sessions'] as List), hasLength(1));
     provider.dispose();
   });
 }
