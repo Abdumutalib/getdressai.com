@@ -45,3 +45,60 @@ jobs:
                 find "$directory" -maxdepth 2 -type d \( -iname '*getdressai*' -o -iname '*dressai*' \) -print 2>/dev/null || true
               fi
             done
+
+            printf '%s\n' 'Default Nginx server roots:'
+            nginx -T 2>/dev/null | awk '
+              /^[[:space:]]*server[[:space:]]*\{/ {
+                in_server = 1
+                depth = 0
+                is_default = 0
+                details = ""
+              }
+
+              in_server {
+                line = $0
+                if (line ~ /^[[:space:]]*listen[[:space:]]/ &&
+                    line ~ /default_server/) {
+                  is_default = 1
+                }
+                if (line ~ /^[[:space:]]*(listen|server_name|root|alias)[[:space:]]/) {
+                  directive = line
+                  sub(/^[[:space:]]*/, "", directive)
+                  details = details "  " directive "\n"
+                } else if (line ~ /^[[:space:]]*proxy_pass[[:space:]]/) {
+                  details = details "  proxy_pass: configured\n"
+                }
+
+                braces = line
+                sub(/[[:space:]]*#.*/, "", braces)
+                opened = gsub(/\{/, "", braces)
+                closed = gsub(/\}/, "", braces)
+                depth += opened - closed
+
+                if (depth == 0) {
+                  if (is_default) {
+                    found = 1
+                    printf "%s", details
+                  }
+                  in_server = 0
+                }
+              }
+
+              END {
+                if (!found) {
+                  print "No explicit default_server block configured"
+                }
+              }
+            '
+
+            printf '%s\n' 'Public domain HTTP response:'
+            curl -sSI --connect-timeout 5 --max-time 10 http://getdressai.com/ | sed -n '1,5p' || true
+
+            printf '%s\n' 'Public domain HTTPS response:'
+            curl -ksSI --connect-timeout 5 --max-time 10 https://getdressai.com/ | sed -n '1,5p' || true
+
+            if [ -f /etc/letsencrypt/live/getdressai.com/fullchain.pem ]; then
+              printf '%s\n' 'Let’s Encrypt certificate exists for getdressai.com'
+            else
+              printf '%s\n' 'No Let’s Encrypt certificate found for getdressai.com'
+            fi
