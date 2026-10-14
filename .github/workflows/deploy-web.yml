@@ -1,0 +1,289 @@
+name: Deploy Zenith Web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zenith-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the apex domain points to the production VPS
+        run: |
+          getent ahostsv4 getdressai.com |
+            awk '$1 == "178.218.207.176" { found = 1 } END { exit !found }'
+          curl --fail --silent --show-error --max-time 15 \
+            http://getdressai.com/ --output /dev/null
+
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release --base-href /
+
+      - name: Package web build
+        run: tar -czf "zenith-web-${GITHUB_RUN_ID}.tar.gz" -C build/web .
+
+      - name: Upload web build to the VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 178.218.207.176
+          username: root
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: zenith-web-${{ github.run_id }}.tar.gz
+          target: /tmp
+          overwrite: true
+
+      - name: Deploy behind a dedicated HTTPS virtual host
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 178.218.207.176
+          username: root
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          command_timeout: 20m
+          script: |
+            set -eu
+
+            APP_ROOT=/var/www/getdressai.com
+            RELEASE="$APP_ROOT/releases/${{ github.sha }}-${{ github.run_id }}"
+            CURRENT="$APP_ROOT/current"
+            ARCHIVE="/tmp/zenith-web-${{ github.run_id }}.tar.gz"
+            MARKER="# Managed by Zenith deployment workflow"
+            RUN_ID="${{ github.run_id }}"
+
+            test -s "$ARCHIVE"
+            mkdir -p "$APP_ROOT/releases" "$RELEASE"
+            tar -xzf "$ARCHIVE" -C "$RELEASE"
+            test -s "$RELEASE/index.html"
+            test -s "$RELEASE/main.dart.js"
+            chmod -R a+rX "$RELEASE"
+
+            if [ -e "$CURRENT" ] && [ ! -L "$CURRENT" ]; then
+              echo "Refusing to replace a non-symlink production path: $CURRENT" >&2
+              exit 1
+            fi
+            OLD_TARGET=""
+            if [ -L "$CURRENT" ]; then
+              OLD_TARGET="$(readlink "$CURRENT")"
+              case "$(readlink -f "$CURRENT")" in
+                "$APP_ROOT"/releases/*) ;;
+                *)
+                  echo "Refusing to replace a symlink outside the Zenith releases directory" >&2
+                  exit 1
+                  ;;
+              esac
+            fi
+
+            NGINX_CONFIGS="$(nginx -T 2>/dev/null | sed -n 's/^# configuration file \(.*\):$/\1/p')"
+            if printf '%s\n' "$NGINX_CONFIGS" | grep -q '^/etc/nginx/conf.d/'; then
+              SITE_CONFIG=/etc/nginx/conf.d/getdressai.com.conf
+              SITE_LINK=""
+            elif printf '%s\n' "$NGINX_CONFIGS" | grep -q '^/etc/nginx/sites-enabled/'; then
+              SITE_CONFIG=/etc/nginx/sites-available/getdressai.com
+              SITE_LINK=/etc/nginx/sites-enabled/getdressai.com
+            else
+              echo "Could not find an active Nginx include directory for a dedicated site config" >&2
+              exit 1
+            fi
+
+            if [ -e "$SITE_CONFIG" ]; then
+              if ! grep -Fq "$MARKER" "$SITE_CONFIG"; then
+                echo "Refusing to overwrite an unmanaged Nginx configuration: $SITE_CONFIG" >&2
+                exit 1
+              fi
+              HAD_CONFIG=1
+              CONFIG_BACKUP="/var/backups/zenith-getdressai-${RUN_ID}.conf"
+              mkdir -p /var/backups
+              cp "$SITE_CONFIG" "$CONFIG_BACKUP"
+            else
+              HAD_CONFIG=0
+              CONFIG_BACKUP=""
+            fi
+
+            HAD_LINK=0
+            if [ -n "$SITE_LINK" ] && [ -e "$SITE_LINK" ]; then
+              if [ ! -L "$SITE_LINK" ] ||
+                  [ "$(readlink -f "$SITE_LINK")" != "$SITE_CONFIG" ]; then
+                echo "Refusing to replace an unmanaged Nginx site link: $SITE_LINK" >&2
+                exit 1
+              fi
+              HAD_LINK=1
+            fi
+
+            NGINX_DUMP="$(nginx -T 2>/dev/null)"
+            if printf '%s\n' "$NGINX_DUMP" |
+                grep -Eq '^[[:space:]]*server_name[^;]*[[:space:]]getdressai\.com([[:space:];]|$)|^[[:space:]]*server_name[[:space:]]+getdressai\.com([[:space:];]|$)' &&
+                ! printf '%s\n' "$NGINX_DUMP" | grep -Fq "$MARKER"; then
+              echo "An unmanaged Nginx virtual host already claims getdressai.com" >&2
+              exit 1
+            fi
+
+            if [ ! -s /etc/letsencrypt/live/getdressai.com/fullchain.pem ] ||
+                [ ! -s /etc/letsencrypt/live/getdressai.com/privkey.pem ]; then
+              if ! command -v certbot >/dev/null 2>&1; then
+                if ! command -v apt-get >/dev/null 2>&1; then
+                  echo "Certbot is missing and this server has no apt-get package manager" >&2
+                  exit 1
+                fi
+                apt-get update
+                DEBIAN_FRONTEND=noninteractive apt-get install -y certbot
+              fi
+              if ! certbot certonly --help all 2>&1 |
+                  grep -q -- '--register-unsafely-without-email'; then
+                echo "Installed Certbot cannot create a certificate without sharing a contact email" >&2
+                exit 1
+              fi
+              NEED_CERT=1
+            else
+              NEED_CERT=0
+            fi
+
+            CHANGED=0
+            restore_previous_site() {
+              STATUS=$?
+              if [ "$STATUS" -ne 0 ] && [ "$CHANGED" -eq 1 ]; then
+                if [ "$HAD_CONFIG" -eq 1 ]; then
+                  cp "$CONFIG_BACKUP" "$SITE_CONFIG"
+                else
+                  rm -f "$SITE_CONFIG"
+                fi
+                if [ -n "$SITE_LINK" ] && [ "$HAD_LINK" -eq 0 ]; then
+                  rm -f "$SITE_LINK"
+                fi
+                if [ -n "$OLD_TARGET" ]; then
+                  ln -sfn "$OLD_TARGET" "$CURRENT.rollback-${RUN_ID}"
+                  mv -Tf "$CURRENT.rollback-${RUN_ID}" "$CURRENT"
+                else
+                  rm -f "$CURRENT"
+                fi
+                nginx -t && systemctl reload nginx || true
+              fi
+              exit "$STATUS"
+            }
+            trap restore_previous_site EXIT
+
+            CHANGED=1
+            ln -sfn "$RELEASE" "$CURRENT.next-${RUN_ID}"
+            mv -Tf "$CURRENT.next-${RUN_ID}" "$CURRENT"
+
+            if [ "$NEED_CERT" -eq 1 ]; then
+              cat > "$SITE_CONFIG.tmp-${RUN_ID}" <<'NGINX'
+            # Managed by Zenith deployment workflow
+            server {
+                listen 80;
+                listen [::]:80;
+                server_name getdressai.com;
+                root /var/www/getdressai.com/current;
+                index index.html;
+
+                location ^~ /.well-known/acme-challenge/ {
+                    try_files $uri =404;
+                }
+
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+            }
+            NGINX
+              mv "$SITE_CONFIG.tmp-${RUN_ID}" "$SITE_CONFIG"
+              if [ -n "$SITE_LINK" ] && [ "$HAD_LINK" -eq 0 ]; then
+                ln -s "$SITE_CONFIG" "$SITE_LINK"
+              fi
+              nginx -t
+              systemctl reload nginx
+
+              certbot certonly \
+                --webroot \
+                --webroot-path "$CURRENT" \
+                --domain getdressai.com \
+                --cert-name getdressai.com \
+                --register-unsafely-without-email \
+                --agree-tos \
+                --non-interactive
+            fi
+
+            test -s /etc/letsencrypt/live/getdressai.com/fullchain.pem
+            test -s /etc/letsencrypt/live/getdressai.com/privkey.pem
+
+            cat > "$SITE_CONFIG.tmp-${RUN_ID}" <<'NGINX'
+            # Managed by Zenith deployment workflow
+            server {
+                listen 80;
+                listen [::]:80;
+                server_name getdressai.com;
+                root /var/www/getdressai.com/current;
+
+                location ^~ /.well-known/acme-challenge/ {
+                    try_files $uri =404;
+                }
+
+                location / {
+                    return 301 https://getdressai.com$request_uri;
+                }
+            }
+
+            server {
+                listen 443 ssl;
+                listen [::]:443 ssl;
+                server_name getdressai.com;
+                root /var/www/getdressai.com/current;
+                index index.html;
+
+                ssl_certificate /etc/letsencrypt/live/getdressai.com/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/getdressai.com/privkey.pem;
+
+                location = /index.html {
+                    add_header Cache-Control "no-cache, no-store, must-revalidate";
+                }
+
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+            }
+            NGINX
+            mv "$SITE_CONFIG.tmp-${RUN_ID}" "$SITE_CONFIG"
+
+            if [ -n "$SITE_LINK" ] && [ "$HAD_LINK" -eq 0 ]; then
+              ln -s "$SITE_CONFIG" "$SITE_LINK"
+            fi
+
+            nginx -t
+            systemctl reload nginx
+
+            if systemctl list-unit-files --type=timer --no-legend |
+                awk '$1 == "certbot.timer" { found = 1 } END { exit !found }'; then
+              systemctl enable --now certbot.timer
+            elif [ -f /etc/cron.d/certbot ] || [ -x /etc/cron.daily/certbot ]; then
+              if ! systemctl is-active --quiet cron &&
+                  ! systemctl is-active --quiet crond; then
+                echo "Certbot renewal is installed but no cron service is active" >&2
+                exit 1
+              fi
+            else
+              echo "No automatic Certbot renewal timer or cron job is configured" >&2
+              exit 1
+            fi
+
+            curl --fail --silent --show-error \
+              --resolve getdressai.com:443:127.0.0.1 \
+              https://getdressai.com/ |
+              grep -Fq '<title>Zenith: Focus &amp; Build</title>'
+
+            CHANGED=0
+            rm -f "$ARCHIVE"
+            echo "Zenith is live at https://getdressai.com/"
