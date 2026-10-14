@@ -22,11 +22,16 @@ flutter build web --release --base-href /
 
 The generated static site is written to `build/web`.
 
-Pushing to `main` runs the production web deployment workflow. It publishes to
-a dedicated Nginx site root on the VPS, requests a Let's Encrypt certificate
-without registering a contact email, and enables automatic certificate
-renewal. Since no contact email is registered, certificate expiry notices
-are not sent. The existing default Nginx document root is left untouched.
+Before the first production deployment, configure a public DNS-only `A` record
+for the apex domain (`@`) pointing to the VPS at `178.218.207.176`. The deploy
+workflow checks that the domain resolves and serves HTTP before uploading any
+files. It publishes to a dedicated Nginx site root on the VPS, requests a Let's
+Encrypt certificate without registering a contact email, and enables automatic
+certificate renewal. Since no contact email is registered, certificate expiry
+notices are not sent. The existing default Nginx document root is left
+untouched.
+
+Pushing to `main` runs the production web deployment workflow.
 
 ## Project map
 
