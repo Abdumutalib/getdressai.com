@@ -1,0 +1,89 @@
+name: Inspect production web root
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-vps-root.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find the getdressai.com Nginx site root
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 178.218.207.176
+          username: root
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -eu
+            nginx -T 2>/dev/null | awk '
+              function reset_server() {
+                in_server = 0
+                depth = 0
+                is_target = 0
+                server_names = ""
+                directives = ""
+              }
+
+              /^[[:space:]]*server[[:space:]]*\{/ {
+                reset_server()
+                in_server = 1
+              }
+
+              in_server {
+                line = $0
+                if (line ~ /^[[:space:]]*server_name[[:space:]]/) {
+                  names = line
+                  sub(/^[[:space:]]*server_name[[:space:]]+/, "", names)
+                  sub(/;.*/, "", names)
+                  server_names = names
+                  count = split(names, parts, /[[:space:]]+/)
+                  for (i = 1; i <= count; i++) {
+                    if (parts[i] == "getdressai.com" ||
+                        parts[i] == "www.getdressai.com") {
+                      is_target = 1
+                    }
+                  }
+                }
+
+                if (line ~ /^[[:space:]]*(root|alias)[[:space:]]/) {
+                  directive = line
+                  sub(/^[[:space:]]*/, "", directive)
+                  directives = directives "  " directive "\n"
+                } else if (line ~ /^[[:space:]]*proxy_pass[[:space:]]/) {
+                  directives = directives "  proxy_pass: configured\n"
+                }
+
+                braces = line
+                sub(/[[:space:]]*#.*/, "", braces)
+                opened = gsub(/\{/, "", braces)
+                closed = gsub(/\}/, "", braces)
+                depth += opened - closed
+
+                if (depth == 0) {
+                  if (is_target) {
+                    found = 1
+                    print "server_name " server_names
+                    if (directives == "") {
+                      print "  no root, alias, or proxy_pass directive found"
+                    } else {
+                      printf "%s", directives
+                    }
+                  }
+                  reset_server()
+                }
+              }
+
+              END {
+                if (!found) {
+                  print "No active Nginx server block matches getdressai.com"
+                  exit 1
+                }
+              }
+            '

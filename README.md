@@ -12,6 +12,16 @@ flutter pub get
 flutter run
 ```
 
+## Web
+
+Build the browser version for the root of a domain with:
+
+```sh
+flutter build web --release --base-href /
+```
+
+The generated static site is written to `build/web`.
+
 ## Project map
 
 ```text
