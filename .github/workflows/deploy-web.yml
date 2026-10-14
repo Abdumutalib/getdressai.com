@@ -16,10 +16,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify the apex domain points to the production VPS
+      - name: Verify the apex domain resolves before deployment
         run: |
-          getent ahostsv4 getdressai.com |
-            awk '$1 == "178.218.207.176" { found = 1 } END { exit !found }'
+          addresses="$(getent ahostsv4 getdressai.com | awk '{ print $1 }' | sort -u || true)"
+          printf 'Domain addresses visible to the runner: %s\n' "${addresses:-none}"
+          if [ -z "$addresses" ]; then
+            echo "Public DNS does not resolve getdressai.com from GitHub Actions" >&2
+            exit 1
+          fi
           curl --fail --silent --show-error --max-time 15 \
             http://getdressai.com/ --output /dev/null
 

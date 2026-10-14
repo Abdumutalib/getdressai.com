@@ -24,6 +24,11 @@ jobs:
             set -eu
             printf '%s\n' 'DNS addresses:'
             getent ahostsv4 getdressai.com | awk '!seen[$1]++ { print $1 }' || true
+            if grep -Eq '(^|[[:space:]])getdressai\.com([[:space:]]|$)' /etc/hosts; then
+              printf '%s\n' 'The domain also has an /etc/hosts entry on this VPS'
+            else
+              printf '%s\n' 'The domain has no /etc/hosts override on this VPS'
+            fi
 
             printf '%s\n' 'Active web servers:'
             for service in nginx apache2 httpd caddy traefik; do
