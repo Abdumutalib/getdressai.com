@@ -22,68 +22,26 @@ jobs:
           key: ${{ secrets.VPS_DEPLOY_KEY }}
           script: |
             set -eu
-            nginx -T 2>/dev/null | awk '
-              function reset_server() {
-                in_server = 0
-                depth = 0
-                is_target = 0
-                server_names = ""
-                directives = ""
-              }
+            printf '%s\n' 'DNS addresses:'
+            getent ahostsv4 getdressai.com | awk '!seen[$1]++ { print $1 }' || true
 
-              /^[[:space:]]*server[[:space:]]*\{/ {
-                reset_server()
-                in_server = 1
-              }
+            printf '%s\n' 'Active web servers:'
+            for service in nginx apache2 httpd caddy traefik; do
+              if systemctl is-active --quiet "$service"; then
+                printf '%s\n' "$service"
+              fi
+            done
 
-              in_server {
-                line = $0
-                if (line ~ /^[[:space:]]*server_name[[:space:]]/) {
-                  names = line
-                  sub(/^[[:space:]]*server_name[[:space:]]+/, "", names)
-                  sub(/;.*/, "", names)
-                  server_names = names
-                  count = split(names, parts, /[[:space:]]+/)
-                  for (i = 1; i <= count; i++) {
-                    if (parts[i] == "getdressai.com" ||
-                        parts[i] == "www.getdressai.com") {
-                      is_target = 1
-                    }
-                  }
-                }
+            printf '%s\n' 'Configuration files mentioning the domain:'
+            for directory in /etc/nginx /etc/apache2 /etc/caddy /etc/traefik; do
+              if [ -d "$directory" ]; then
+                grep -RIlE '(^|[[:space:]])(getdressai\.com|www\.getdressai\.com)([[:space:];]|$)' "$directory" 2>/dev/null || true
+              fi
+            done
 
-                if (line ~ /^[[:space:]]*(root|alias)[[:space:]]/) {
-                  directive = line
-                  sub(/^[[:space:]]*/, "", directive)
-                  directives = directives "  " directive "\n"
-                } else if (line ~ /^[[:space:]]*proxy_pass[[:space:]]/) {
-                  directives = directives "  proxy_pass: configured\n"
-                }
-
-                braces = line
-                sub(/[[:space:]]*#.*/, "", braces)
-                opened = gsub(/\{/, "", braces)
-                closed = gsub(/\}/, "", braces)
-                depth += opened - closed
-
-                if (depth == 0) {
-                  if (is_target) {
-                    found = 1
-                    print "server_name " server_names
-                    if (directives == "") {
-                      print "  no root, alias, or proxy_pass directive found"
-                    } else {
-                      printf "%s", directives
-                    }
-                  }
-                  reset_server()
-                }
-              }
-
-              END {
-                if (!found) {
-                  print "No active Nginx server block matches getdressai.com"
-                  exit 1
-                }
-              }
-            '
+            printf '%s\n' 'Matching web directories:'
+            for directory in /var/www /srv/www; do
+              if [ -d "$directory" ]; then
+                find "$directory" -maxdepth 2 -type d \( -iname '*getdressai*' -o -iname '*dressai*' \) -print 2>/dev/null || true
+              fi
+            done
