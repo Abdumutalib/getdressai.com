@@ -40,18 +40,19 @@ jobs:
       - run: flutter test
       - run: flutter build web --release --base-href /
 
-      - name: Package web build
-        run: tar -czf "zenith-web-${GITHUB_RUN_ID}.tar.gz" -C build/web .
-
       - name: Upload web build to the VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: 178.218.207.176
-          username: root
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: zenith-web-${{ github.run_id }}.tar.gz
-          target: /tmp
-          overwrite: true
+        env:
+          VPS_DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$VPS_DEPLOY_KEY" > "$HOME/.ssh/zenith_deploy_key"
+          chmod 600 "$HOME/.ssh/zenith_deploy_key"
+          trap 'rm -f "$HOME/.ssh/zenith_deploy_key"' EXIT
+          ssh-keyscan -H 178.218.207.176 >> "$HOME/.ssh/known_hosts"
+          ssh -i "$HOME/.ssh/zenith_deploy_key" root@178.218.207.176 \
+            "mkdir -p /tmp/zenith-web-${GITHUB_RUN_ID}"
+          scp -i "$HOME/.ssh/zenith_deploy_key" -r build/web/. \
+            "root@178.218.207.176:/tmp/zenith-web-${GITHUB_RUN_ID}/"
 
       - name: Deploy behind a dedicated HTTPS virtual host
         uses: appleboy/ssh-action@v1.2.0
@@ -66,13 +67,14 @@ jobs:
             APP_ROOT=/var/www/getdressai.com
             RELEASE="$APP_ROOT/releases/${{ github.sha }}-${{ github.run_id }}"
             CURRENT="$APP_ROOT/current"
-            ARCHIVE="/tmp/zenith-web-${{ github.run_id }}.tar.gz"
+            UPLOAD_DIR="/tmp/zenith-web-${{ github.run_id }}"
             MARKER="# Managed by Zenith deployment workflow"
             RUN_ID="${{ github.run_id }}"
 
-            test -s "$ARCHIVE"
+            test -s "$UPLOAD_DIR/index.html"
+            test -s "$UPLOAD_DIR/main.dart.js"
             mkdir -p "$APP_ROOT/releases" "$RELEASE"
-            tar -xzf "$ARCHIVE" -C "$RELEASE"
+            cp -a "$UPLOAD_DIR"/. "$RELEASE"/
             test -s "$RELEASE/index.html"
             test -s "$RELEASE/main.dart.js"
             chmod -R a+rX "$RELEASE"
@@ -289,5 +291,5 @@ jobs:
               grep -Fq '<title>Zenith: Focus &amp; Build</title>'
 
             CHANGED=0
-            rm -f "$ARCHIVE"
+            rm -rf "$UPLOAD_DIR"
             echo "Zenith is live at https://getdressai.com/"
