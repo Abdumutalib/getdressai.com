@@ -31,6 +31,34 @@ void main() {
     provider.dispose();
   });
 
+  testWidgets('transient inactive lifecycle does not cancel focus session', (tester) async {
+    final provider = FocusProvider();
+    await provider.initialize();
+    provider.setSessionDuration(const Duration(minutes: 1));
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: provider,
+        child: const ZenithApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    provider.startSession();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+
+    expect(provider.isRunning, isTrue);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    expect(provider.isRunning, isFalse);
+    expect(provider.zenCoins, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+    provider.dispose();
+  });
+
   testWidgets('focus, stats, and worlds tabs render', (tester) async {
     await tester.pumpWidget(
       ChangeNotifierProvider(

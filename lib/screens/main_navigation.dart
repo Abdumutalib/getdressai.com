@@ -37,8 +37,9 @@ class _MainNavigationState extends State<MainNavigation>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
+    // "inactive" can be a brief interruption (for example, a system dialog).
+    // Only discard the session once the app is actually backgrounded or detached.
+    if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
       context.read<FocusProvider>().handleAppBackgrounded();

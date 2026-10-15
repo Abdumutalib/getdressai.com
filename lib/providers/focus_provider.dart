@@ -110,6 +110,9 @@ class FocusProvider extends ChangeNotifier {
       _initializationError =
           'Saved focus data could not be read. Reset local data to continue. '
           '${error.message}';
+    } catch (error) {
+      _initializationError =
+          'Zenith could not load local data: $error';
     }
 
     _isLoading = false;
@@ -397,6 +400,8 @@ class FocusProvider extends ChangeNotifier {
         _operationError =
             'Zenith local storage is unavailable: '
             '${error.message ?? 'plugin not registered'}';
+      } catch (error) {
+        _operationError = 'Progress could not be saved: $error';
       }
       _notifyListeners();
     });
