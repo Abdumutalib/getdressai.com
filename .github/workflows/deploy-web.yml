@@ -1,9 +1,17 @@
 name: Deploy Zenith Web
 
 on:
-  push:
-    branches: [main]
+  # Production deployment must be explicitly requested. A normal push to main
+  # must never replace the live site automatically.
   workflow_dispatch:
+    inputs:
+      confirm_deployment:
+        description: "Choose yes only after confirming the target is the Zenith production site"
+        required: true
+        type: choice
+        options:
+          - "no"
+          - "yes"
 
 permissions:
   contents: read
@@ -14,6 +22,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: inputs.confirm_deployment == 'yes'
     runs-on: ubuntu-latest
     steps:
       - name: Verify the apex domain resolves before deployment
